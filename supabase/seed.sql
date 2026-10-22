@@ -1,0 +1,1 @@
+-- Archivo seed intencionalmente vacío (sin datos de prueba).
