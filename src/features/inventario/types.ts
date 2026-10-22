@@ -1,0 +1,127 @@
+import { TenantId } from '@/types';
+
+export type StockStatus = 'normal' | 'low' | 'out_of_stock' | 'negative';
+
+export interface Category {
+  id: string;
+  companyId: TenantId;
+  name: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface Product {
+  id: string;
+  sku: string;
+  barcode: string;
+  name: string;
+  categoryId?: string;
+  category: string;
+  salePrice: number;
+  costPrice: number;
+  stock: number;
+  minStock: number;
+  unit: string;
+  status: StockStatus;
+  description?: string;
+  isActive?: boolean;
+}
+
+export interface ProductFormData {
+  name: string;
+  sku: string;
+  barcode: string;
+  categoryId?: string;
+  category: string;
+  costPrice: number;
+  salePrice: number;
+  minStock: number;
+  unit?: string;
+  description?: string;
+}
+
+export interface CartItem {
+  productId: string;
+  sku: string;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+  currentStock: number;
+}
+
+export interface CartState {
+  items: CartItem[];
+  discountPercent: number;
+  subtotal: number;
+  discountAmount: number;
+  total: number;
+}
+
+export type PaymentMethod =
+  | 'efectivo'
+  | 'transferencia'
+  | 'debito'
+  | 'credito'
+  | 'cheque';
+
+export interface PaymentEntry {
+  id: string;
+  method: PaymentMethod;
+  amount: number;
+  cashReceived?: number;
+  cashChange?: number;
+  reference?: string;
+}
+
+export interface Sale {
+  id: string;
+  tenantId: TenantId;
+  saleNumber: string;
+  createdAt: string;
+  clientName: string;
+  items: CartItem[];
+  subtotal: number;
+  discountPercent: number;
+  discountAmount: number;
+  total: number;
+  payments: PaymentEntry[];
+  status: 'completada';
+}
+
+export type StockMovementDirection = 'increase' | 'decrease';
+
+export type StockMovementReason =
+  | 'initial_load'
+  | 'purchase'
+  | 'physical_count'
+  | 'loss_damage'
+  | 'internal_use'
+  | 'sale';
+
+export interface StockMovement {
+  id: string;
+  companyId: TenantId;
+  productId: string;
+  productName: string;
+  productSku: string;
+  direction: StockMovementDirection;
+  reason: StockMovementReason;
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  referenceSaleId?: string;
+  referenceDoc?: string;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface StockAdjustmentData {
+  productId: string;
+  reason: StockMovementReason;
+  direction: StockMovementDirection;
+  quantity: number;
+  notes?: string;
+  referenceDoc?: string;
+}

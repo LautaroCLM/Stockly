@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #060A13;
+    --surface: #0B1220;
+    --surface-2: #101A2E;
+    --border: #1C2742;
+    --text: #E8EEFB;
+    --text-muted: #7C8AA8;
+    --primary: #2F6BFF;
+    --accent: #27D3F5;
+    --success: #34D399;
+    --warning: #F5B942;
+    --danger: #F2576B;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Números tabulares automáticos para tablas, importes y KPIs */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Scrollbars estilizadas sutiles en tema oscuro */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #060A13;
+}
+::-webkit-scrollbar-thumb {
+  background: #1C2742;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2A3B63;
+}
