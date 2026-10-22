@@ -105,56 +105,103 @@ CREATE OR REPLACE FUNCTION public.invite_user_to_company(
   p_email TEXT,
   p_role TEXT
 )
-RETURNS UUID
+RETURNS TEXT -- Retorna el token en claro para que el frontend lo envíe por correo
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_invitation_id UUID;
+  v_caller_id UUID := auth.uid();
+  v_owner_id UUID;
+  v_clean_email TEXT;
   v_token_raw TEXT;
   v_token_hash TEXT;
-  v_owner_id UUID;
+  v_existing_active BOOLEAN;
+  v_invitation_id UUID;
 BEGIN
-  -- Validar membresía activa como master_admin
+  -- Validar que el llamador sea un master_admin activo de la empresa
   PERFORM private.assert_company_role(p_company_id, 'master_admin');
 
-  -- Bloqueo pesimista en companies para serializar operaciones de miembros
+  IF p_role NOT IN ('master_admin', 'employee') THEN
+    RAISE EXCEPTION 'Rol no válido: %. Solo se permiten master_admin o employee.', p_role;
+  END IF;
+
+  v_clean_email := pg_catalog.lower(pg_catalog.btrim(p_email));
+  IF v_clean_email = '' OR v_clean_email IS NULL THEN
+    RAISE EXCEPTION 'El correo electrónico es obligatorio.';
+  END IF;
+
+  -- Jerarquía estricta: Solo el titular (owner_id) puede invitar a un master_admin
   SELECT owner_id INTO v_owner_id
   FROM public.companies
-  WHERE id = p_company_id
-  FOR NO KEY UPDATE;
+  WHERE id = p_company_id;
 
-  IF p_role NOT IN ('master_admin', 'employee') THEN
-    RAISE EXCEPTION 'Rol inválido: %. Permitidos: master_admin, employee', p_role;
+  IF p_role = 'master_admin' AND v_caller_id != v_owner_id THEN
+    RAISE EXCEPTION 'Operación restringida: Solo el titular (owner_id) de la empresa puede invitar a un nuevo master_admin.';
   END IF;
 
-  -- Regla de Jerarquía: Solo el titular vigente (owner_id) puede invitar administradores
-  IF p_role = 'master_admin' AND auth.uid() != v_owner_id THEN
-    RAISE EXCEPTION 'Solo el titular de la empresa puede invitar o promover administradores (master_admin)';
+  -- Comprobar si ya existe membresía previa (activa o inactiva)
+  SELECT cm.is_active INTO v_existing_active
+  FROM public.company_members cm
+  JOIN public.profiles p ON p.id = cm.user_id
+  WHERE cm.company_id = p_company_id
+    AND pg_catalog.lower(p.email) = v_clean_email;
+
+  IF FOUND THEN
+    IF v_existing_active = true THEN
+      RAISE EXCEPTION 'El usuario % ya es miembro activo de esta empresa.', v_clean_email;
+    ELSE
+      -- H-03: Impedir reactivación encubierta mediante invitación
+      RAISE EXCEPTION 'El usuario % posee una membresía inactiva previa en esta empresa. Debe ser reactivado mediante reactivate_member indicando el motivo.', v_clean_email;
+    END IF;
   END IF;
 
-  -- Validar que no sea ya un miembro activo
+  -- A-01: Marcar como 'expired' cualquier invitación previa en 'pending' cuya vigencia haya caducado
+  UPDATE public.company_invitations
+  SET status = 'expired'
+  WHERE company_id = p_company_id
+    AND pg_catalog.lower(email) = v_clean_email
+    AND status = 'pending'
+    AND expires_at <= pg_catalog.now();
+
+  -- Comprobar si ya existe una invitación vigente sin consumir
   IF EXISTS (
-    SELECT 1 FROM public.company_members cm
-    JOIN public.profiles p ON p.id = cm.user_id
-    WHERE cm.company_id = p_company_id AND p.email = p_email AND cm.is_active = true
+    SELECT 1 FROM public.company_invitations
+    WHERE company_id = p_company_id
+      AND pg_catalog.lower(email) = v_clean_email
+      AND status = 'pending'
+      AND expires_at > pg_catalog.now()
   ) THEN
-    RAISE EXCEPTION 'El usuario con email % ya es un miembro activo de la empresa', p_email;
+    RAISE EXCEPTION 'Ya existe una invitación pendiente y vigente para % en esta empresa.', v_clean_email;
   END IF;
 
-  -- Generar token aleatorio y su hash SHA-256
-  v_token_raw := encode(gen_random_bytes(32), 'hex');
-  v_token_hash := encode(digest(v_token_raw, 'sha256'), 'hex');
+  -- Generar token criptográfico de 32 bytes (64 caracteres hexadecimales)
+  v_token_raw := pg_catalog.encode(extensions.gen_random_bytes(32), 'hex');
+  v_token_hash := pg_catalog.encode(extensions.digest(v_token_raw, 'sha256'), 'hex');
 
+  -- Registrar invitación con vigencia de 7 días y estado pending
   INSERT INTO public.company_invitations (
     company_id, email, role, token_hash, invited_by, status, expires_at
   ) VALUES (
-    p_company_id, p_email, p_role, v_token_hash, auth.uid(), 'pending', (pg_catalog.now() + interval '7 days')
+    p_company_id,
+    v_clean_email,
+    p_role,
+    v_token_hash,
+    v_caller_id,
+    'pending',
+    pg_catalog.now() + interval '7 days'
   ) RETURNING id INTO v_invitation_id;
 
-  -- Retorna el ID de invitación. El servicio de correo recibe v_token_raw para el link
-  RETURN v_invitation_id;
+  -- M-06: Auditoría atómica de la emisión de invitación
+  INSERT INTO public.audit_log (
+    company_id, table_name, record_id, action, new_data, performed_by, actor_role
+  ) VALUES (
+    p_company_id, 'company_invitations', v_invitation_id::text, 'INSERT',
+    jsonb_build_object('email', v_clean_email, 'role', p_role, 'status', 'pending'),
+    v_caller_id, 'master_admin'
+  );
+
+  RETURN v_token_raw;
 END;
 $$;
 
@@ -167,55 +214,112 @@ GRANT EXECUTE ON FUNCTION public.invite_user_to_company(UUID, TEXT, TEXT) TO aut
 CREATE OR REPLACE FUNCTION public.accept_company_invitation(
   p_token TEXT
 )
-RETURNS UUID
+RETURNS UUID -- Retorna el company_id asignado
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_token_hash TEXT;
-  v_invitation RECORD;
-  v_user_email TEXT;
   v_user_id UUID := auth.uid();
+  v_user_email TEXT;
+  v_token_hash TEXT;
+  v_target_company_id UUID;
+  v_invitation RECORD;
+  v_existing_active BOOLEAN;
 BEGIN
   IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'Usuario no autenticado';
+    RAISE EXCEPTION 'Usuario no autenticado.';
   END IF;
 
-  SELECT email INTO v_user_email FROM public.profiles WHERE id = v_user_id;
+  SELECT lower(email) INTO v_user_email
+  FROM public.profiles
+  WHERE id = v_user_id;
 
-  v_token_hash := encode(digest(p_token, 'sha256'), 'hex');
+  -- Calcular hash SHA-256 del token provisto
+  v_token_hash := pg_catalog.encode(extensions.digest(pg_catalog.btrim(p_token), 'sha256'), 'hex');
 
-  -- Bloqueo de la invitación
+  -- 1. Identificar la empresa receptora asociada al token sin retener bloqueos aún
+  SELECT company_id INTO v_target_company_id
+  FROM public.company_invitations
+  WHERE token_hash = v_token_hash;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'La invitación es inválida, ha expirado o ya ha sido utilizada.';
+  END IF;
+
+  -- 2. ORDEN CANÓNICO DE BLOQUEOS (Paso 1: companies -> Paso 2: company_invitations)
+  -- Bloquear fila de la empresa en primer término para evitar interbloqueos (deadlocks) con deactivate_company (A-02)
+  PERFORM 1
+  FROM public.companies
+  WHERE id = v_target_company_id
+    AND is_active = true
+  FOR NO KEY UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'La empresa receptora se encuentra inactiva o deshabilitada.';
+  END IF;
+
+  -- 3. Bloquear la invitación en segundo término bajo bloqueo pesimista FOR UPDATE (HN-01)
   SELECT * INTO v_invitation
   FROM public.company_invitations
-  WHERE token_hash = v_token_hash AND status = 'pending' AND expires_at > pg_catalog.now()
+  WHERE token_hash = v_token_hash
+    AND status = 'pending'
+    AND expires_at > pg_catalog.now()
   FOR UPDATE;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Invitación no válida, expirada o ya procesada';
+    RAISE EXCEPTION 'La invitación es inválida, ha expirado o ya ha sido utilizada.';
   END IF;
 
-  IF lower(v_invitation.email) != lower(v_user_email) THEN
-    RAISE EXCEPTION 'La invitación fue emitida para % pero ha iniciado sesión como %', v_invitation.email, v_user_email;
+  -- Validar coincidencia de identidad de correo (normalizada)
+  IF lower(v_invitation.email) != v_user_email THEN
+    RAISE EXCEPTION 'Esta invitación fue emitida para % y tu cuenta corresponde a %.', v_invitation.email, v_user_email;
   END IF;
 
-  -- Bloquear fila de la empresa para consistencia
-  PERFORM 1 FROM public.companies WHERE id = v_invitation.company_id AND is_active = true FOR NO KEY UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'La empresa receptora se encuentra inactiva o deshabilitada';
+  -- H-03: Validar que no exista registro previo con is_active = false
+  SELECT is_active INTO v_existing_active
+  FROM public.company_members
+  WHERE company_id = v_invitation.company_id AND user_id = v_user_id;
+
+  IF FOUND THEN
+    IF v_existing_active = false THEN
+      RAISE EXCEPTION 'El usuario posee una membresía inactiva previa en esta empresa. Debe ser reactivado por un administrador mediante reactivate_member.';
+    ELSE
+      RAISE EXCEPTION 'El usuario ya es miembro activo de esta empresa.';
+    END IF;
   END IF;
 
-  -- Insertar o reactivar membresía
-  INSERT INTO public.company_members (company_id, user_id, role, is_active)
-  VALUES (v_invitation.company_id, v_user_id, v_invitation.role, true)
-  ON CONFLICT (company_id, user_id) DO UPDATE
-  SET role = EXCLUDED.role, is_active = true, updated_at = pg_catalog.now();
+  -- Insertar membresía nueva
+  INSERT INTO public.company_members (
+    company_id, user_id, role, is_active
+  ) VALUES (
+    v_invitation.company_id, v_user_id, v_invitation.role, true
+  );
 
   -- Marcar invitación como aceptada
   UPDATE public.company_invitations
-  SET status = 'accepted', accepted_at = pg_catalog.now()
+  SET status = 'accepted',
+      accepted_at = pg_catalog.now()
   WHERE id = v_invitation.id;
+
+  -- Registrar en auditoría la membresía
+  INSERT INTO public.audit_log (
+    company_id, table_name, record_id, action, new_data, performed_by, actor_role
+  ) VALUES (
+    v_invitation.company_id, 'company_members', v_user_id::text, 'INSERT',
+    jsonb_build_object('user_id', v_user_id, 'role', v_invitation.role),
+    v_user_id, v_invitation.role
+  );
+
+  -- M-06: Registrar en auditoría el canje de la invitación
+  INSERT INTO public.audit_log (
+    company_id, table_name, record_id, action, old_data, new_data, performed_by, actor_role
+  ) VALUES (
+    v_invitation.company_id, 'company_invitations', v_invitation.id::text, 'UPDATE',
+    jsonb_build_object('status', 'pending'),
+    jsonb_build_object('status', 'accepted', 'accepted_by', v_user_id),
+    v_user_id, v_invitation.role
+  );
 
   RETURN v_invitation.company_id;
 END;
@@ -229,7 +333,7 @@ GRANT EXECUTE ON FUNCTION public.accept_company_invitation(TEXT) TO authenticate
 ```sql
 CREATE OR REPLACE FUNCTION public.transfer_company_ownership(
   p_company_id UUID,
-  p_new_owner_user_id UUID
+  p_new_owner_id UUID
 )
 RETURNS VOID
 LANGUAGE plpgsql
@@ -237,38 +341,57 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_current_owner UUID;
+  v_caller_id UUID := auth.uid();
+  v_current_owner_id UUID;
+  v_target_role TEXT;
+  v_target_active BOOLEAN;
 BEGIN
-  -- Bloqueo pesimista exclusivo de la empresa
-  SELECT owner_id INTO v_current_owner
+  IF v_caller_id IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado.';
+  END IF;
+
+  -- Bloqueo pesimista de fila en companies
+  SELECT owner_id INTO v_current_owner_id
   FROM public.companies
-  WHERE id = p_company_id AND is_active = true
+  WHERE id = p_company_id
   FOR UPDATE;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Empresa no encontrada o inactiva';
+    RAISE EXCEPTION 'Empresa no encontrada.';
   END IF;
 
-  IF auth.uid() != v_current_owner THEN
-    RAISE EXCEPTION 'Solo el titular vigente (owner_id) puede transferir la titularidad de la empresa';
+  IF v_current_owner_id != v_caller_id THEN
+    RAISE EXCEPTION 'Operación denegada: Solo el titular vigente de la empresa puede transferir la titularidad.';
   END IF;
 
-  IF p_new_owner_user_id = v_current_owner THEN
-    RAISE EXCEPTION 'El usuario seleccionado ya es el titular de la empresa';
+  IF p_new_owner_id = v_caller_id THEN
+    RAISE EXCEPTION 'El usuario indicado ya es el titular actual de la empresa.';
   END IF;
 
-  -- Validar que el nuevo titular sea un master_admin activo
-  IF NOT EXISTS (
-    SELECT 1 FROM public.company_members
-    WHERE company_id = p_company_id AND user_id = p_new_owner_user_id AND role = 'master_admin' AND is_active = true
-  ) THEN
-    RAISE EXCEPTION 'El nuevo titular debe ser un miembro activo con rol master_admin';
+  -- Validar que el destinatario sea un master_admin activo de la misma empresa
+  SELECT role, is_active INTO v_target_role, v_target_active
+  FROM public.company_members
+  WHERE company_id = p_company_id AND user_id = p_new_owner_id;
+
+  IF NOT FOUND OR NOT v_target_active OR v_target_role != 'master_admin' THEN
+    RAISE EXCEPTION 'El nuevo titular debe ser un master_admin activo de la empresa.';
   END IF;
 
-  -- Actualizar titularidad vigente
+  -- Actualizar titularidad
   UPDATE public.companies
-  SET owner_id = p_new_owner_user_id, updated_at = pg_catalog.now()
+  SET owner_id = p_new_owner_id,
+      updated_at = pg_catalog.now()
   WHERE id = p_company_id;
+
+  -- Auditoría de traspaso de mando
+  INSERT INTO public.audit_log (
+    company_id, table_name, record_id, action, old_data, new_data, performed_by, actor_role
+  ) VALUES (
+    p_company_id, 'companies', p_company_id::text, 'UPDATE',
+    jsonb_build_object('owner_id', v_caller_id),
+    jsonb_build_object('owner_id', p_new_owner_id),
+    v_caller_id, 'master_admin'
+  );
 END;
 $$;
 
@@ -290,36 +413,62 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
+  v_caller_id UUID := auth.uid();
   v_owner_id UUID;
+  v_old_is_active BOOLEAN;
+  v_old_role TEXT;
 BEGIN
+  IF v_caller_id IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado.';
+  END IF;
+
   PERFORM private.assert_company_role(p_company_id, 'master_admin');
 
-  SELECT owner_id INTO v_owner_id FROM public.companies WHERE id = p_company_id FOR NO KEY UPDATE;
+  SELECT owner_id INTO v_owner_id
+  FROM public.companies
+  WHERE id = p_company_id
+  FOR NO KEY UPDATE;
 
   IF p_new_role NOT IN ('master_admin', 'employee') THEN
-    RAISE EXCEPTION 'Rol inválido: %', p_new_role;
+    RAISE EXCEPTION 'Rol no válido: %. Permitidos: master_admin, employee.', p_new_role;
   END IF;
 
-  -- Jerarquía: Asignar master_admin requiere ser titular vigente
-  IF p_new_role = 'master_admin' AND auth.uid() != v_owner_id THEN
-    RAISE EXCEPTION 'Solo el titular vigente de la empresa puede reactivar a un usuario con rol master_admin';
+  -- A-04: Jerarquía estricta: Solo el titular vigente (owner_id) puede reactivar o promover con rol master_admin
+  IF p_new_role = 'master_admin' AND v_caller_id != v_owner_id THEN
+    RAISE EXCEPTION 'Operación restringida: Solo el titular vigente de la empresa puede reactivar a un usuario con rol master_admin.';
   END IF;
 
-  IF p_reason IS NULL OR pg_catalog.trim(p_reason) = '' THEN
-    RAISE EXCEPTION 'Debe especificar el motivo de reactivación';
+  IF p_reason IS NULL OR pg_catalog.btrim(p_reason) = '' THEN
+    RAISE EXCEPTION 'Se requiere especificar un motivo justificatorio para la reactivación.';
   END IF;
 
-  PERFORM 1 FROM public.company_members
+  SELECT is_active, role INTO v_old_is_active, v_old_role
+  FROM public.company_members
   WHERE company_id = p_company_id AND user_id = p_user_id
   FOR UPDATE;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Membresía no encontrada para este usuario';
+    RAISE EXCEPTION 'Membresía no encontrada para el usuario en esta empresa.';
+  END IF;
+
+  IF v_old_is_active = true THEN
+    RAISE EXCEPTION 'El usuario ya es un miembro activo de esta empresa.';
   END IF;
 
   UPDATE public.company_members
-  SET is_active = true, role = p_new_role, updated_at = pg_catalog.now()
+  SET is_active = true,
+      role = p_new_role,
+      updated_at = pg_catalog.now()
   WHERE company_id = p_company_id AND user_id = p_user_id;
+
+  INSERT INTO public.audit_log (
+    company_id, table_name, record_id, action, old_data, new_data, performed_by, actor_role
+  ) VALUES (
+    p_company_id, 'company_members', p_user_id::text, 'UPDATE',
+    jsonb_build_object('is_active', false, 'role', v_old_role),
+    jsonb_build_object('is_active', true, 'role', p_new_role, 'reason', p_reason),
+    v_caller_id, 'master_admin'
+  );
 END;
 $$;
 
@@ -330,8 +479,7 @@ GRANT EXECUTE ON FUNCTION public.reactivate_member(UUID, UUID, TEXT, TEXT) TO au
 ### 3.6. `deactivate_company()` (Baja Lógica de Empresa)
 ```sql
 CREATE OR REPLACE FUNCTION public.deactivate_company(
-  p_company_id UUID,
-  p_reason TEXT
+  p_company_id UUID
 )
 RETURNS VOID
 LANGUAGE plpgsql
@@ -339,33 +487,118 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 DECLARE
-  v_owner_id UUID;
+  v_caller_id UUID := auth.uid();
+  v_current_owner_id UUID;
+  v_is_active BOOLEAN;
+  v_revoked_invitation RECORD;
 BEGIN
-  SELECT owner_id INTO v_owner_id
+  IF v_caller_id IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado.';
+  END IF;
+
+  SELECT owner_id, is_active INTO v_current_owner_id, v_is_active
   FROM public.companies
-  WHERE id = p_company_id AND is_active = true
+  WHERE id = p_company_id
   FOR UPDATE;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Empresa no encontrada o ya se encuentra deshabilitada';
+    RAISE EXCEPTION 'Empresa no encontrada.';
   END IF;
 
-  IF auth.uid() != v_owner_id THEN
-    RAISE EXCEPTION 'Solo el titular vigente (owner_id) puede desactivar la empresa';
+  IF NOT v_is_active THEN
+    RAISE EXCEPTION 'La empresa ya se encuentra inactiva.';
   END IF;
 
-  IF p_reason IS NULL OR pg_catalog.trim(p_reason) = '' THEN
-    RAISE EXCEPTION 'Debe proporcionar un motivo para la baja de la empresa';
+  IF v_current_owner_id != v_caller_id THEN
+    RAISE EXCEPTION 'Operación denegada: Solo el titular de la empresa puede desactivarla.';
   END IF;
 
   UPDATE public.companies
-  SET is_active = false, updated_at = pg_catalog.now()
+  SET is_active = false,
+      updated_at = pg_catalog.now()
   WHERE id = p_company_id;
+
+  -- M-06: Revocar invitaciones pendientes al desactivar la empresa y auditar individualmente
+  FOR v_revoked_invitation IN
+    UPDATE public.company_invitations
+    SET status = 'revoked'
+    WHERE company_id = p_company_id
+      AND status = 'pending'
+    RETURNING id
+  LOOP
+    INSERT INTO public.audit_log (
+      company_id, table_name, record_id, action, old_data, new_data, performed_by, actor_role
+    ) VALUES (
+      p_company_id, 'company_invitations', v_revoked_invitation.id::text, 'UPDATE',
+      jsonb_build_object('status', 'pending'),
+      jsonb_build_object('status', 'revoked', 'reason', 'company_deactivation'),
+      v_caller_id, 'master_admin'
+    );
+  END LOOP;
+
+  INSERT INTO public.audit_log (
+    company_id, table_name, record_id, action, old_data, new_data, performed_by, actor_role
+  ) VALUES (
+    p_company_id, 'companies', p_company_id::text, 'UPDATE',
+    jsonb_build_object('is_active', true),
+    jsonb_build_object('is_active', false, 'revoked_pending_invitations', true),
+    v_caller_id, 'master_admin'
+  );
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.deactivate_company(UUID, TEXT) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.deactivate_company(UUID, TEXT) TO authenticated;
+REVOKE ALL ON FUNCTION public.deactivate_company(UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.deactivate_company(UUID) TO authenticated;
+```
+
+### 3.7. `revoke_company_invitation()` (Revocación de Invitación Pendiente)
+```sql
+CREATE OR REPLACE FUNCTION public.revoke_company_invitation(
+  p_company_id UUID,
+  p_invitation_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_caller_id UUID := auth.uid();
+  v_invitation RECORD;
+BEGIN
+  PERFORM private.assert_company_role(p_company_id, 'master_admin');
+
+  SELECT * INTO v_invitation
+  FROM public.company_invitations
+  WHERE id = p_invitation_id
+    AND company_id = p_company_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Invitación no encontrada en esta empresa';
+  END IF;
+
+  IF v_invitation.status != 'pending' THEN
+    RAISE EXCEPTION 'Solo se pueden revocar invitaciones en estado pendiente (estado actual: %)', v_invitation.status;
+  END IF;
+
+  UPDATE public.company_invitations
+  SET status = 'revoked'
+  WHERE id = p_invitation_id;
+
+  INSERT INTO public.audit_log (
+    company_id, table_name, record_id, action, old_data, new_data, performed_by, actor_role
+  ) VALUES (
+    p_company_id, 'company_invitations', p_invitation_id::text, 'UPDATE',
+    jsonb_build_object('status', 'pending'),
+    jsonb_build_object('status', 'revoked'),
+    v_caller_id, 'master_admin'
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.revoke_company_invitation(UUID, UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.revoke_company_invitation(UUID, UUID) TO authenticated;
 ```
 
 ---

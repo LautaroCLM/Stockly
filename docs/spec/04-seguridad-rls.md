@@ -12,9 +12,22 @@ Para contrarrestar la configuración por defecto de Supabase (que otorga privile
 ```sql
 -- 1. Crear esquema privado no expuesto a la API REST de PostgREST
 CREATE SCHEMA IF NOT EXISTS private;
+COMMENT ON SCHEMA private IS 'Esquema interno aislado para funciones de autorización RLS y procedimientos del sistema.';
+
+-- Revocación universal por omisión
 REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated;
 
--- 2. Revocar todos los permisos a anon en public
+-- El rol postgres y service_role retienen administración
+GRANT USAGE ON SCHEMA private TO postgres, service_role;
+
+-- En PostgreSQL, cuando una política RLS invoca una función definida en un esquema auxiliar,
+-- el rol que ejecuta la consulta (authenticated) requiere permiso USAGE sobre el esquema
+-- para resolver las llamadas durante la planificación de la consulta.
+-- PostgREST no expone el esquema private a la web (solo expone los esquemas en pgrst.db_schemas).
+GRANT USAGE ON SCHEMA private TO authenticated;
+
+-- 2. Revocar todos los permisos a anon en public y private (Principio de Mínimo Privilegio)
+REVOKE ALL ON SCHEMA private FROM anon;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon;
 REVOKE ALL ON ALL ROUTINES IN SCHEMA public FROM anon;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon;
@@ -26,6 +39,11 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon;
 
 -- Revocar privilegios por defecto otorgados a authenticated en tablas creadas a futuro
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM authenticated;
+
+-- En esquema private, ningún rol web hereda permisos sobre objetos nuevos
+ALTER DEFAULT PRIVILEGES IN SCHEMA private REVOKE ALL ON TABLES FROM PUBLIC, anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA private REVOKE ALL ON ROUTINES FROM PUBLIC, anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA private REVOKE ALL ON SEQUENCES FROM PUBLIC, anon, authenticated;
 ```
 
 ---
@@ -49,6 +67,22 @@ AS $$
   WHERE cm.user_id = auth.uid()
     AND cm.is_active = true
     AND c.is_active = true;
+$$;
+
+-- H-04: Retorna empresas activas para todos los miembros, y también empresas inactivas si el usuario es master_admin
+CREATE OR REPLACE FUNCTION private.my_accessible_company_ids()
+RETURNS SETOF UUID
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT cm.company_id
+  FROM public.company_members cm
+  JOIN public.companies c ON c.id = cm.company_id
+  WHERE cm.user_id = auth.uid()
+    AND cm.is_active = true
+    AND (c.is_active = true OR cm.role = 'master_admin');
 $$;
 
 -- Verifica si el usuario autenticado ostenta un rol determinado en la empresa activa
@@ -120,9 +154,20 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION private.my_active_company_ids() FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION private.has_company_role(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+-- Revocación de funciones auxiliares a anon y PUBLIC
+REVOKE ALL ON FUNCTION private.my_active_company_ids() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION private.my_accessible_company_ids() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION private.has_company_role(UUID, TEXT) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION private.assert_company_role(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+
+-- Concesión de ejecución a authenticated EXCLUSIVAMENTE para las funciones evaluadas en políticas RLS:
+-- (PostgreSQL verifica permisos de ejecución en tiempo de parseo/planificación de la consulta del usuario)
+GRANT EXECUTE ON FUNCTION private.my_active_company_ids() TO authenticated;
+GRANT EXECUTE ON FUNCTION private.my_accessible_company_ids() TO authenticated;
+GRANT EXECUTE ON FUNCTION private.has_company_role(UUID, TEXT) TO authenticated;
+
+-- NOTA DE SEGURIDAD: private.assert_company_role() permanece REVOCADA de authenticated.
+-- Solo es ejecutada internamente por procedimientos RPC en public definidos con SECURITY DEFINER.
 ```
 
 ---
@@ -133,11 +178,11 @@ Todas las vistas de la base de datos se crean obligatoriamente con `WITH (securi
 
 | Tabla | Operación | Rol `master_admin` | Rol `employee` | Detalle de la Política RLS |
 |---|---|:---:|:---:|---|
-| **`companies`** | SELECT | ✅ | ✅ | `id IN (SELECT private.my_active_company_ids())`. En empresas inactivas, solo admins vigentes conservan SELECT histórico. |
+| **`companies`** | SELECT | ✅ | ✅ | `id IN (SELECT private.my_accessible_company_ids())`. En empresas inactivas, solo admins vigentes conservan SELECT histórico. |
 | | MUTACIONES | ❌ | ❌ | **Revocado para todos.** Altas y bajas se administran vía `create_company` y `deactivate_company`. |
-| **`company_members`** | SELECT | ✅ Toda la empresa | 👤 Solo miembros de su empresa | `company_id IN (SELECT private.my_active_company_ids())`. |
+| **`company_members`** | SELECT | ✅ Toda la empresa | 👤 Solo miembros de su empresa | `company_id IN (SELECT private.my_accessible_company_ids())`. |
 | | MUTACIONES | ❌ | ❌ | **Revocado.** Se administran vía `invite_user_to_company`, `accept_company_invitation`, etc. |
-| **`company_invitations`**| SELECT | ✅ | ❌ | `company_id IN (SELECT company_id FROM public.company_members WHERE user_id = auth.uid() AND role = 'master_admin' AND is_active = true) OR email = (SELECT email FROM public.profiles WHERE id = auth.uid())`. |
+| **`company_invitations`**| SELECT | ✅ | ❌ | `company_id IN (SELECT company_id FROM public.company_members WHERE user_id = auth.uid() AND role = 'master_admin' AND is_active = true) OR pg_catalog.lower(email) = (SELECT pg_catalog.lower(email) FROM public.profiles WHERE id = auth.uid())`. |
 | | MUTACIONES | ❌ | ❌ | **Revocado.** Gestionado exclusivamente por RPC. |
 | **`company_counters`** | ALL | ❌ | ❌ | **Acceso revocado a PostgREST.** Solo administrado por funciones RPC en transacciones comerciales. |
 | **`profiles`** | SELECT | 👤 Solo propio | 👤 Solo propio | `id = auth.uid()`. |

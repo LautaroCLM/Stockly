@@ -28,18 +28,20 @@ Siguiendo la regla de "cero errores" de [AGENTS.md](file:///c:/Users/herna/Deskt
 
 #### 2. Aislamiento RLS con Claims Autenticadas
 > [!IMPORTANT]
-> Las pruebas de RLS se ejecutan estrictamente bajo el rol `authenticated` configurando las variables de sesión del JWT (`SET LOCAL ROLE authenticated; SET LOCAL "request.jwt.claims" = '{"sub": "...", "role": "authenticated"}';`). Está terminantemente prohibido validar RLS usando el rol superusuario `postgres` o conexiones con atributo `BYPASSRLS`.
+> Las pruebas de RLS se ejecutan estrictamente bajo el rol `authenticated` configurando las variables de sesión del JWT (`SET LOCAL ROLE authenticated; SELECT set_config('request.jwt.claim.sub', '...', true);`). Está terminantemente prohibido validar RLS usando el rol superusuario `postgres` o conexiones con atributo `BYPASSRLS`.
 - **Hermeticidad entre Tenants:** El usuario de la Empresa A no puede leer ni mutar ninguna fila perteneciente a la Empresa B (todas las consultas retornan 0 filas).
 - **Confidencialidad de Costos y Finanzas:** Empleados autenticados de la Empresa A obtienen 0 filas al consultar `product_costs`, `movement_costs`, `purchases`, `purchase_items`, `transactions` y `audit_log`.
-- **Empresa Desactivada:** Si `companies.is_active = false`, las consultas ordinarias de empleados quedan bloqueadas; el titular y administradores vigentes conservan acceso de solo lectura para auditoría legal; todas las mutaciones son rechazadas.
+- **Empresa Desactivada:** Si `companies.is_active = false`, las consultas ordinarias de empleados quedan bloqueadas; el titular y administradores vigentes conservan acceso de solo lectura histórico para auditoría legal vía `private.my_accessible_company_ids()`; todas las mutaciones son rechazadas.
 
 #### 3. Autorización y Jerarquía en Funciones Privilegiadas (RPCs)
 - **Jerarquía de Administradores:** Un `master_admin` común no puede invitar ni promover a otro `master_admin`, recibiendo excepción controlada. Dicha operación solo procede si `auth.uid() = companies.owner_id`.
-- **Reactivación Explícita:** Comprobar que una invitación nueva no reactiva a un usuario con membresía previa revocada. La reactivación requiere invocar `reactivate_member` auditando el motivo.
+- **Reactivación Explícita:** Comprobar que una invitación nueva no reactiva a un usuario con membresía previa revocada. La reactivación requiere invocar `reactivate_member` indicando nuevo rol y justificando el motivo en auditoría.
 - **Protección del Último Admin:** Intentos concurrentes o individuales de degradar, desactivar o eliminar al único `master_admin` activo de una empresa son abortados mediante el trigger con bloqueo pesimista `FOR NO KEY UPDATE` en `companies`.
 - **Traspaso de Titularidad:** `transfer_company_ownership` solo puede ser ejecutado por el `owner_id` vigente y transfiere la titularidad exclusivamente a otro `master_admin` activo.
 
 #### 4. Concurrencia Pesimista Multi-Sesión TCP Real
+- **Prueba de Carrera en Invitaciones (HN-01):** Dos sesiones concurrentes compiten por canjear la misma invitación; exactamente una procede y la segunda aborta sin generar membresías duplicadas.
+- **Prueba de Carrera en Desactivación e Invitación (HN-03):** Se verifica el orden canónico de bloqueos (`companies` -> `company_invitations`) eliminando riesgos de interbloqueo (deadlocks).
 - **Prueba de Carrera en Productos:** 10 transacciones paralelas en conexiones TCP independientes ejecutando `process_sale` sobre los mismos productos. Validación de que el ordenamiento `ORDER BY id FOR UPDATE` previene deadlocks y `current_stock` coincide con el delta total.
 - **Prueba de Carrera en Numeración:** Concurrencia pesimista en `company_counters` ejecutando ventas simultáneas. Validación de correlatividad perfecta (`VTA-00000001`, `VTA-00000002`...) sin huecos no revertidos ni colisiones de clave única.
 - **Stock Negativo:** Verificación de que una venta autorizada con saldo insuficiente decrementa el stock dejando `current_stock < 0` sin fallar la transacción, congelando el costo al último valor de reposición.
@@ -76,15 +78,17 @@ Para resolver ordenadamente las dependencias cruzadas y garantizar estabilidad e
 
 ### Tanda 2.1: Núcleo Multiempresa, Identidad Global, Membresías y Gobernanza
 - **Objetivos y Migraciones:**
-  - Tablas: `profiles` (desacoplada: `id, email, full_name`), `companies` (`created_by`, `owner_id`, `tax_id` con algoritmo CUIT opcional, `timezone`, `currency`, `is_active`), `company_members` (`company_id, user_id, role, is_active`), `company_invitations` (token hash SHA-256), `company_counters` (`company_id, kind, last_value`), `audit_log` (`company_id NULL`, `record_id TEXT`, `actor_role`).
-  - Rutinas de autorización en esquema `private`: `private.my_active_company_ids()`, `private.has_company_role()`, `private.assert_company_role()`.
-  - Funciones RPC de gobernanza: `create_company()`, `invite_user_to_company()`, `accept_company_invitation()`, `transfer_company_ownership()`, `reactivate_member()`, `deactivate_company()`.
-  - Triggers: `handle_new_user` sobre `auth.users`, salvaguarda del último `master_admin` (`check_last_active_master_admin` con bloqueo pesimista en `companies`), trigger universal de auditoría multiempresa.
+  - Tablas: `profiles` (desacoplada: `id, email, full_name`), `companies` (`created_by`, `owner_id`, `tax_id` con algoritmo CUIT opcional módulo 11, `timezone` con validación IANA, `currency`, `is_active`), `company_members` (`company_id, user_id, role, is_active`), `company_invitations` (token hash SHA-256, status explícito `'pending'`, `'accepted'`, `'revoked'`, `'expired'`, índice parcial único), `company_counters` (`company_id, kind, last_value`), `audit_log` (`company_id NULL`, `record_id TEXT`, `actor_role`).
+  - Rutinas de autorización en esquema `private`: `private.my_active_company_ids()`, `private.my_accessible_company_ids()`, `private.has_company_role()`, `private.assert_company_role()`.
+  - Funciones RPC de gobernanza: `create_company()`, `invite_user_to_company()`, `accept_company_invitation()`, `transfer_company_ownership()`, `reactivate_member()`, `deactivate_company()`, `revoke_company_invitation()`, `validate_cuit()`.
+  - Triggers: `handle_new_user` sobre `auth.users`, salvaguarda del último `master_admin` (`check_last_active_master_admin` con bloqueo pesimista en `companies`), `protect_company_created_by`, `validate_company_timezone`, trigger universal de auditoría multiempresa.
   - Políticas RLS y revocación de mutaciones directas.
+  - Suite automatizada de 58 pruebas unitarias pgTAP (`SELECT plan(58);`) y arnés de concurrencia multi-sesión TCP real para HN-01 y HN-03.
 - **Criterios de Aceptación:**
   - Creación atómica de empresas con membresía del titular e inicialización de contadores.
-  - Verificación de jerarquía: solo el titular invita administradores.
+  - Verificación de jerarquía: solo el titular invita o reactiva administradores.
   - Salvaguarda anti-acéfala verificada ante intentos de degradación.
+  - 58 aserciones pgTAP aprobadas con código de salida 0.
 
 ---
 

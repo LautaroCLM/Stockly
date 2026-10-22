@@ -143,13 +143,13 @@ CREATE OR REPLACE FUNCTION public.validate_cuit(p_cuit TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 IMMUTABLE
+SET search_path = ''
 AS $$
 DECLARE
   v_clean_cuit TEXT;
   v_digits INT[];
   v_multipliers INT[] := ARRAY[5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
   v_sum INT := 0;
-  v_verifier INT;
   v_calc_verifier INT;
   i INT;
 BEGIN
@@ -157,15 +157,19 @@ BEGIN
     RETURN TRUE;
   END IF;
   
-  -- Quitar guiones y espacios
-  v_clean_cuit := regexp_replace(p_cuit, '[^0-9]', '', 'g');
+  -- Formato estricto: exactamente 11 dígitos numéricos o formato estándar XX-XXXXXXXX-X
+  IF p_cuit !~ '^[0-9]{11}$' AND p_cuit !~ '^[0-9]{2}-[0-9]{8}-[0-9]$' THEN
+    RETURN FALSE;
+  END IF;
   
-  IF length(v_clean_cuit) != 11 THEN
+  v_clean_cuit := pg_catalog.regexp_replace(p_cuit, '-', '', 'g');
+
+  IF pg_catalog.length(v_clean_cuit) != 11 THEN
     RETURN FALSE;
   END IF;
   
   FOR i IN 1..11 LOOP
-    v_digits[i] := substring(v_clean_cuit FROM i FOR 1)::INT;
+    v_digits[i] := pg_catalog.substr(v_clean_cuit, i, 1)::INT;
   END LOOP;
   
   FOR i IN 1..10 LOOP
@@ -179,8 +183,7 @@ BEGIN
     v_calc_verifier := 9;
   END IF;
   
-  v_verifier := v_digits[11];
-  RETURN v_calc_verifier = v_verifier;
+  RETURN v_calc_verifier = v_digits[11];
 END;
 $$;
 
@@ -195,7 +198,8 @@ CREATE TABLE public.companies (
   owner_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT check_cuit_format CHECK (tax_id IS NULL OR public.validate_cuit(tax_id))
+  CONSTRAINT chk_company_name_non_empty CHECK (pg_catalog.btrim(name) <> ''),
+  CONSTRAINT chk_company_tax_id_cuit CHECK (tax_id IS NULL OR public.validate_cuit(tax_id))
 );
 
 -- Validación de zona horaria IANA contra pg_timezone_names
@@ -230,7 +234,7 @@ CREATE TABLE public.company_members (
 );
 ```
 
-### 3.4. `company_invitations` (Invitaciones por Token Hasheado)
+### 3.4. `company_invitations` (Invitaciones por Token Hasheado con Estado Explícito)
 ```sql
 CREATE TABLE public.company_invitations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -243,8 +247,13 @@ CREATE TABLE public.company_invitations (
   expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '7 days'),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   accepted_at TIMESTAMPTZ,
-  CONSTRAINT uq_pending_invitation_per_email UNIQUE (company_id, email, status)
+  CONSTRAINT uq_company_invitation_composite UNIQUE (company_id, id)
 );
+
+-- Índice único parcial insensible a mayúsculas para impedir más de una invitación pendiente por empresa y correo
+CREATE UNIQUE INDEX uq_company_invitations_pending_email
+  ON public.company_invitations (company_id, pg_catalog.lower(email))
+  WHERE status = 'pending';
 ```
 
 ### 3.5. `company_counters` (Numeración Comercial Aislada)
