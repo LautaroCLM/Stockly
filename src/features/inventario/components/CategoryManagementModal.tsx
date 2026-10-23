@@ -12,6 +12,7 @@ import {
   Search,
   Layers,
   Lock,
+  Loader2,
 } from 'lucide-react';
 
 interface CategoryManagementModalProps {
@@ -19,10 +20,12 @@ interface CategoryManagementModalProps {
   companyName: string;
   categories: Category[];
   products: Product[];
+  isLoading?: boolean;
+  error?: string | null;
   onClose: () => void;
-  onCreateCategory: (name: string, description?: string) => { success: boolean; error?: string };
-  onRenameCategory: (id: string, newName: string) => { success: boolean; error?: string };
-  onDeleteCategory: (id: string, productCount: number) => { success: boolean; error?: string };
+  onCreateCategory: (name: string, description?: string) => Promise<{ success: boolean; error?: string; category?: Category }> | { success: boolean; error?: string; category?: Category };
+  onRenameCategory: (id: string, newName: string) => Promise<{ success: boolean; error?: string; category?: Category }> | { success: boolean; error?: string; category?: Category };
+  onDeleteCategory: (id: string, productCount: number) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
 }
 
 export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = ({
@@ -30,6 +33,8 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   companyName,
   categories,
   products,
+  isLoading = false,
+  error = null,
   onClose,
   onCreateCategory,
   onRenameCategory,
@@ -38,6 +43,7 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   const [newCategoryName, setNewCategoryName] = useState('');
   const [creationError, setCreationError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOperating, setIsOperating] = useState(false);
 
   // Editing state
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -94,7 +100,7 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
 
   if (!isOpen) return null;
 
-  function handleCreate(e: React.FormEvent) {
+  async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setCreationError(null);
     setActionAlert(null);
@@ -105,12 +111,17 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
       return;
     }
 
-    const res = onCreateCategory(clean);
-    if (!res.success) {
-      setCreationError(res.error || 'Error al crear la categoría.');
-    } else {
-      setNewCategoryName('');
-      setActionAlert({ type: 'success', message: `Categoría "${clean}" creada correctamente.` });
+    setIsOperating(true);
+    try {
+      const res = await onCreateCategory(clean);
+      if (!res.success) {
+        setCreationError(res.error || 'Error al crear la categoría.');
+      } else {
+        setNewCategoryName('');
+        setActionAlert({ type: 'success', message: `Categoría "${clean}" creada correctamente.` });
+      }
+    } finally {
+      setIsOperating(false);
     }
   }
 
@@ -121,7 +132,7 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     setActionAlert(null);
   }
 
-  function handleSaveEdit(id: string) {
+  async function handleSaveEdit(id: string) {
     setEditError(null);
     setActionAlert(null);
 
@@ -131,19 +142,24 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
       return;
     }
 
-    const res = onRenameCategory(id, clean);
-    if (!res.success) {
-      setEditError(res.error || 'Error al renombrar la categoría.');
-    } else {
-      setEditingCategoryId(null);
-      setActionAlert({
-        type: 'success',
-        message: `Categoría renombrada a "${clean}" y productos actualizados.`,
-      });
+    setIsOperating(true);
+    try {
+      const res = await onRenameCategory(id, clean);
+      if (!res.success) {
+        setEditError(res.error || 'Error al renombrar la categoría.');
+      } else {
+        setEditingCategoryId(null);
+        setActionAlert({
+          type: 'success',
+          message: `Categoría renombrada a "${clean}" correctamente.`,
+        });
+      }
+    } finally {
+      setIsOperating(false);
     }
   }
 
-  function handleDelete(cat: Category) {
+  async function handleDelete(cat: Category) {
     setActionAlert(null);
     const count = productCountMap.get(cat.id) || 0;
 
@@ -155,14 +171,19 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
       return;
     }
 
-    const res = onDeleteCategory(cat.id, 0);
-    if (!res.success) {
-      setActionAlert({ type: 'error', message: res.error || 'Error al eliminar la categoría.' });
-    } else {
-      setActionAlert({
-        type: 'success',
-        message: `Categoría "${cat.name}" eliminada correctamente.`,
-      });
+    setIsOperating(true);
+    try {
+      const res = await onDeleteCategory(cat.id, 0);
+      if (!res.success) {
+        setActionAlert({ type: 'error', message: res.error || 'Error al eliminar la categoría.' });
+      } else {
+        setActionAlert({
+          type: 'success',
+          message: `Categoría "${cat.name}" eliminada correctamente.`,
+        });
+      }
+    } finally {
+      setIsOperating(false);
     }
   }
 
@@ -202,6 +223,14 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
           </div>
 
           <div className="p-5 space-y-4">
+            {/* Global/Server Error Alert */}
+            {error && (
+              <div className="p-3 rounded-xl border border-danger/30 bg-danger/10 text-xs text-danger flex items-center gap-2 animate-in fade-in">
+                <AlertTriangle size={15} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             {/* Feedback Alert */}
             {actionAlert && (
               <div
@@ -229,22 +258,24 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
               <div className="flex items-center gap-2">
                 <input
                   type="text"
+                  disabled={isOperating}
                   value={newCategoryName}
                   onChange={(e) => {
                     setNewCategoryName(e.target.value);
                     if (creationError) setCreationError(null);
                   }}
                   placeholder="Nombre de la categoría (ej. Pinturas, Abrasivos)..."
-                  className="flex-1 h-9 px-3 text-xs bg-surface-3 border border-border/80 focus:border-primary rounded-lg text-text-primary focus:outline-none"
+                  className="flex-1 h-9 px-3 text-xs bg-surface-3 border border-border/80 focus:border-primary rounded-lg text-text-primary focus:outline-none disabled:opacity-50"
                 />
 
                 <Button
                   type="submit"
                   variant="primary"
                   size="sm"
+                  disabled={isOperating}
                   className="h-9 px-3 gap-1.5 font-medium shrink-0"
                 >
-                  <Plus size={15} />
+                  {isOperating ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
                   <span>Crear</span>
                 </Button>
               </div>
@@ -259,8 +290,9 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
 
             {/* List Header & Search */}
             <div className="flex items-center justify-between gap-3 pt-1">
-              <span className="text-xs font-semibold text-text-secondary">
-                Listado de Categorías ({filteredCategories.length})
+              <span className="text-xs font-semibold text-text-secondary flex items-center gap-2">
+                <span>Listado de Categorías ({filteredCategories.length})</span>
+                {isLoading && <Loader2 size={13} className="animate-spin text-primary" />}
               </span>
 
               <div className="relative w-48">
@@ -280,7 +312,12 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
 
             {/* Categories List */}
             <div className="max-h-64 overflow-y-auto border border-border/70 rounded-xl divide-y divide-border/50 bg-surface-2/30">
-              {filteredCategories.length === 0 ? (
+              {isLoading && categories.length === 0 ? (
+                <div className="p-8 text-center text-text-muted text-xs flex items-center justify-center gap-2">
+                  <Loader2 size={15} className="animate-spin text-primary" />
+                  <span>Cargando categorías desde la base de datos...</span>
+                </div>
+              ) : filteredCategories.length === 0 ? (
                 <div className="p-8 text-center text-text-muted text-xs">
                   No se encontraron categorías para mostrar.
                 </div>

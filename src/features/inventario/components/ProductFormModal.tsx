@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Product, ProductFormData } from '../types';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
-import { X, PlusCircle, Save, AlertTriangle, Info, Check } from 'lucide-react';
+import { X, PlusCircle, Save, AlertTriangle, Info, Check, Loader2 } from 'lucide-react';
 
 interface ProductFormModalProps {
   isOpen: boolean;
   mode: 'create' | 'edit';
   initialProduct?: Product | null;
   existingCategories: string[];
+  canManageCosts?: boolean;
   onClose: () => void;
-  onSubmit: (data: ProductFormData) => { success: boolean; error?: string };
+  onSubmit: (data: ProductFormData) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
 }
 
 export const ProductFormModal: React.FC<ProductFormModalProps> = ({
@@ -18,6 +19,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   mode,
   initialProduct,
   existingCategories,
+  canManageCosts = true,
   onClose,
   onSubmit,
 }) => {
@@ -25,41 +27,43 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [sku, setSku] = useState('');
   const [barcode, setBarcode] = useState('');
   const [category, setCategory] = useState('');
-  const [customCategory, setCustomCategory] = useState('');
-  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [costPrice, setCostPrice] = useState('0');
   const [salePrice, setSalePrice] = useState('0');
   const [minStock, setMinStock] = useState('5');
-  const [unit, setUnit] = useState('u.');
+  const [unit, setUnit] = useState('unidad');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Populate form fields on open or product change
   useEffect(() => {
     if (isOpen) {
       setFormError(null);
+      setIsSubmitting(false);
       if (mode === 'edit' && initialProduct) {
         setName(initialProduct.name);
         setSku(initialProduct.sku);
         setBarcode(initialProduct.barcode || '');
         setCategory(initialProduct.category);
-        setCostPrice(initialProduct.costPrice.toString());
+        setCostPrice(
+          initialProduct.costPrice !== null && initialProduct.costPrice !== undefined
+            ? initialProduct.costPrice.toString()
+            : ''
+        );
         setSalePrice(initialProduct.salePrice.toString());
         setMinStock(initialProduct.minStock.toString());
-        setUnit(initialProduct.unit || 'u.');
+        setUnit(initialProduct.unit || 'unidad');
         setDescription(initialProduct.description || '');
-        setIsAddingNewCategory(false);
       } else {
         setName('');
         setSku('');
         setBarcode('');
-        setCategory(existingCategories[0] || 'General');
-        setCostPrice('0');
+        setCategory(existingCategories[0] || '');
+        setCostPrice('');
         setSalePrice('0');
         setMinStock('5');
-        setUnit('u.');
+        setUnit('unidad');
         setDescription('');
-        setIsAddingNewCategory(false);
       }
     }
   }, [isOpen, mode, initialProduct, existingCategories]);
@@ -77,18 +81,19 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Real-time commercial metrics
-  const parsedCost = parseFloat(costPrice) || 0;
+  // Real-time commercial metrics (evita presentar un costo ausente como $0)
+  const hasCost = costPrice.trim() !== '' && !isNaN(Number(costPrice));
+  const parsedCost = hasCost ? parseFloat(costPrice) : null;
   const parsedSale = parseFloat(salePrice) || 0;
-  const grossProfit = parsedSale - parsedCost;
-  const margin = parsedSale > 0 ? ((parsedSale - parsedCost) / parsedSale) * 100 : null;
-  const isNegativeMargin = parsedSale > 0 && parsedCost > parsedSale;
+  const grossProfit = parsedCost !== null ? parsedSale - parsedCost : null;
+  const margin = parsedCost !== null && parsedSale > 0 ? ((parsedSale - parsedCost) / parsedSale) * 100 : null;
+  const isNegativeMargin = parsedCost !== null && parsedSale > 0 && parsedCost > parsedSale;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
 
-    const finalCategory = isAddingNewCategory ? customCategory.trim() : category.trim();
+    const finalCategory = category.trim();
 
     if (!name.trim()) {
       setFormError('El nombre del producto es obligatorio.');
@@ -98,11 +103,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setFormError('El código SKU es obligatorio.');
       return;
     }
-    if (!finalCategory) {
-      setFormError('Debe seleccionar o indicar una categoría.');
+    if (existingCategories.length === 0) {
+      setFormError('No hay categorías registradas en la empresa. Debe crear una categoría desde la sección "Categorías" antes de continuar.');
       return;
     }
-    if (parsedCost < 0) {
+    if (!finalCategory) {
+      setFormError('Debe seleccionar una categoría para el producto.');
+      return;
+    }
+    if (canManageCosts && parsedCost !== null && parsedCost < 0) {
       setFormError('El costo no puede ser negativo.');
       return;
     }
@@ -120,18 +129,25 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       sku: sku.trim().toUpperCase(),
       barcode: barcode.trim(),
       category: finalCategory,
-      costPrice: parsedCost,
+      costPrice: canManageCosts ? parsedCost : undefined,
       salePrice: parsedSale,
       minStock: Math.max(0, parseInt(minStock, 10) || 0),
-      unit: unit.trim() || 'u.',
+      unit: unit.trim().toLowerCase() || 'unidad',
       description: description.trim() || undefined,
     };
 
-    const res = onSubmit(payload);
-    if (!res.success) {
-      setFormError(res.error || 'Ocurrió un error al guardar el producto.');
-    } else {
-      onClose();
+    setIsSubmitting(true);
+    try {
+      const res = await onSubmit(payload);
+      if (!res.success) {
+        setFormError(res.error || 'Ocurrió un error al guardar el producto.');
+      } else {
+        onClose();
+      }
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Error al guardar el producto.');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -221,58 +237,58 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-text-secondary">
-                  Categoría <span className="text-danger">*</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsAddingNewCategory(!isAddingNewCategory)}
-                  className="text-[11px] text-primary hover:underline"
-                >
-                  {isAddingNewCategory ? 'Elegir lista' : '+ Nueva'}
-                </button>
-              </div>
+              <label className="text-xs font-semibold text-text-secondary">
+                Categoría <span className="text-danger">*</span>
+              </label>
 
-              {isAddingNewCategory ? (
-                <input
-                  type="text"
-                  value={customCategory}
-                  onChange={(e) => setCustomCategory(e.target.value)}
-                  placeholder="Nombre de categoría..."
-                  className="w-full h-9 px-3 text-xs bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none"
-                />
-              ) : (
+              {existingCategories.length > 0 ? (
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full h-9 px-3 text-xs bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none cursor-pointer"
                 >
+                  <option value="" disabled>
+                    Seleccione una categoría...
+                  </option>
                   {existingCategories.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
                   ))}
                 </select>
+              ) : (
+                <div className="p-2 bg-warning/10 border border-warning/30 rounded-lg text-[11px] text-warning leading-snug">
+                  No hay categorías registradas. Debe crear una desde el botón &quot;Categorías&quot;.
+                </div>
               )}
+              <p className="text-[10px] text-text-muted">
+                Para crear o editar categorías, use el módulo &quot;Categorías&quot; del inventario.
+              </p>
             </div>
           </div>
 
           {/* Row 3: Precios, Costo, Stock Mínimo y Unidad */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-text-secondary">
-                Costo Compra ($)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={costPrice}
-                onChange={(e) => setCostPrice(e.target.value)}
-                className="w-full h-9 px-3 text-xs font-semibold text-right bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none tabular-nums"
-              />
-            </div>
+          <div className={`grid grid-cols-1 ${canManageCosts ? 'sm:grid-cols-4' : 'sm:grid-cols-3'} gap-3`}>
+            {canManageCosts && (
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-text-secondary">
+                  Costo Compra ($)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={costPrice}
+                  placeholder={
+                    mode === 'edit' && (initialProduct?.costPrice === null || initialProduct?.costPrice === undefined)
+                      ? 'Sin costo asignado'
+                      : '0.00'
+                  }
+                  onChange={(e) => setCostPrice(e.target.value)}
+                  className="w-full h-9 px-3 text-xs font-semibold text-right bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none tabular-nums"
+                />
+              </div>
+            )}
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-text-secondary">
@@ -311,60 +327,67 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 onChange={(e) => setUnit(e.target.value)}
                 className="w-full h-9 px-3 text-xs bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none"
               >
-                <option value="u.">Unidad (u.)</option>
+                <option value="unidad">Unidad (unidad)</option>
+                <option value="bulto">Bulto / Caja (bulto)</option>
+                <option value="par">Par (par)</option>
                 <option value="kg">Kilogramo (kg)</option>
-                <option value="m">Metro (m)</option>
-                <option value="m²">Metro cuadrado (m²)</option>
-                <option value="m³">Metro cúbico (m³)</option>
-                <option value="caja">Caja</option>
-                <option value="rollo">Rollo</option>
-                <option value="bolsa">Bolsa</option>
-                <option value="balde">Balde</option>
-                <option value="pallet">Pallet</option>
+                <option value="litro">Litro (litro)</option>
+                <option value="metro">Metro (metro)</option>
               </select>
             </div>
           </div>
 
-          {/* Real-time Margin & Profit Box */}
-          <div className="bg-surface-2/60 border border-border rounded-xl p-3.5 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-text-muted">Ganancia bruta estimada:</span>
-              <span
-                className={`font-bold tabular-nums ${
-                  grossProfit >= 0 ? 'text-emerald-400' : 'text-danger'
-                }`}
-              >
-                {grossProfit >= 0 ? '+' : ''}
-                {formatCurrency(grossProfit)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-text-muted">Margen sobre precio de venta:</span>
-              <span
-                className={`font-bold tabular-nums ${
-                  margin === null
-                    ? 'text-text-muted'
-                    : margin >= 20
-                    ? 'text-emerald-400'
-                    : margin >= 0
-                    ? 'text-amber-400'
-                    : 'text-danger'
-                }`}
-              >
-                {margin !== null ? `${margin.toFixed(1)}%` : 'No calculable (Precio $0)'}
-              </span>
-            </div>
-
-            {isNegativeMargin && (
-              <div className="pt-2 border-t border-border/50 text-[11px] text-amber-400 flex items-center gap-1.5">
-                <AlertTriangle size={13} className="shrink-0" />
-                <span>
-                  Atención: El costo de compra supera el precio de venta (Margen negativo).
+          {/* Real-time Margin & Profit Box (Solo para roles autorizados) */}
+          {canManageCosts && (
+            <div className="bg-surface-2/60 border border-border rounded-xl p-3.5 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-text-muted">Ganancia bruta estimada:</span>
+                <span
+                  className={`font-bold tabular-nums ${
+                    grossProfit === null
+                      ? 'text-text-muted font-normal'
+                      : grossProfit >= 0
+                      ? 'text-emerald-400'
+                      : 'text-danger'
+                  }`}
+                >
+                  {grossProfit !== null
+                    ? `${grossProfit >= 0 ? '+' : ''}${formatCurrency(grossProfit)}`
+                    : 'No disponible (sin costo asignado)'}
                 </span>
               </div>
-            )}
-          </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-text-muted">Margen sobre precio de venta:</span>
+                <span
+                  className={`font-bold tabular-nums ${
+                    margin === null
+                      ? 'text-text-muted font-normal'
+                      : margin >= 20
+                      ? 'text-emerald-400'
+                      : margin >= 0
+                      ? 'text-amber-400'
+                      : 'text-danger'
+                  }`}
+                >
+                  {margin !== null
+                    ? `${margin.toFixed(1)}%`
+                    : grossProfit === null
+                    ? 'No disponible (sin costo asignado)'
+                    : 'No calculable (Precio $0)'}
+                </span>
+              </div>
+
+              {isNegativeMargin && (
+                <div className="pt-2 border-t border-border/50 text-[11px] text-amber-400 flex items-center gap-1.5">
+                  <AlertTriangle size={13} className="shrink-0" />
+                  <span>
+                    Atención: El costo de compra supera el precio de venta (Margen negativo).
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Description (Optional) */}
           <div className="space-y-1">
@@ -391,11 +414,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
           {/* Footer Actions */}
           <div className="pt-3 border-t border-border flex items-center justify-end gap-2.5">
-            <Button variant="secondary" size="md" type="button" onClick={onClose}>
+            <Button variant="secondary" size="md" type="button" onClick={onClose} disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button variant="primary" size="md" type="submit" className="gap-1.5 shadow-md">
-              <Check size={15} />
+            <Button variant="primary" size="md" type="submit" className="gap-1.5 shadow-md" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
               <span>{mode === 'create' ? 'Crear Producto' : 'Guardar Cambios'}</span>
             </Button>
           </div>

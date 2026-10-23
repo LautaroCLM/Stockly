@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { RouteId, Company } from '@/types';
+import type { CompanyRole } from '@/features/companies/types';
 import { Sale, PaymentEntry } from '@/features/inventario/types';
 import { MOCK_DATASETS, NAV_SECTIONS } from '@/data/mockData';
 import { useCart } from '@/features/inventario/hooks/useCart';
@@ -31,6 +32,7 @@ interface AppWorkspaceProps {
   profile: ProfileRow | null;
   companies: Company[];
   activeCompany: Company;
+  userRole: CompanyRole | null;
   onSelectCompany: (company: Company) => void;
   onSignOut: () => void;
 }
@@ -40,14 +42,18 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   profile,
   companies,
   activeCompany,
+  userRole,
   onSelectCompany,
   onSignOut,
 }) => {
   const [activeRoute, setActiveRoute] = useState<RouteId>('dashboard');
+  const isMasterAdmin = userRole === 'master_admin';
 
   // Centralized products state per tenant with stock adjustment capabilities
   const {
     products,
+    isLoading: isProductsLoading,
+    error: productsError,
     createProduct,
     updateProduct,
     renameCategoryInProducts,
@@ -55,11 +61,13 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     reactivateProduct,
     adjustStock,
     syncProductsFromTransaction,
-  } = useProducts(activeCompany.id);
+  } = useProducts(activeCompany.id, isMasterAdmin);
 
   // Formal categories catalog per tenant with cascade renaming to products
   const {
     categories,
+    isLoading: isCategoriesLoading,
+    error: categoriesError,
     createCategory,
     renameCategory,
     deleteCategory,
@@ -228,6 +236,11 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             company={activeCompany}
             products={products}
             categories={categories}
+            isProductsLoading={isProductsLoading}
+            productsError={productsError}
+            isCategoriesLoading={isCategoriesLoading}
+            categoriesError={categoriesError}
+            isMasterAdmin={isMasterAdmin}
             cartItemsCount={totalItemsCount}
             cartTotal={cartTotal}
             getItemQuantityInCart={getItemQuantityInCart}
@@ -322,6 +335,7 @@ const AppAuthShell: React.FC = () => {
   const {
     companies,
     activeCompany,
+    userRole,
     isLoading: isCompanyLoading,
     error: companyError,
     selectCompany,
@@ -385,6 +399,7 @@ const AppAuthShell: React.FC = () => {
       profile={profile}
       companies={companies}
       activeCompany={activeCompany}
+      userRole={userRole}
       onSelectCompany={(comp) => selectCompany(comp.id)}
       onSignOut={signOut}
     />

@@ -1,4 +1,3 @@
-
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -55,16 +54,36 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"companies": {
+                },"categories": {
                   Row: {
-                    "created_at": string,"created_by": string,"currency": string,"id": string,"is_active": boolean,"name": string,"owner_id": string,"tax_id": string | null,"timezone": string,"updated_at": string
+                    "company_id": string,"created_at": string,"description": string | null,"id": string,"is_active": boolean,"name": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"created_by": string,"currency"?: string,"id"?: string,"is_active"?: boolean,"name": string,"owner_id": string,"tax_id"?: string | null,"timezone"?: string,"updated_at"?: string
+                    "company_id": string,"created_at"?: string,"description"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"created_by"?: string,"currency"?: string,"id"?: string,"is_active"?: boolean,"name"?: string,"owner_id"?: string,"tax_id"?: string | null,"timezone"?: string,"updated_at"?: string
+                    "company_id"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "categories_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"companies": {
+                  Row: {
+                    "allow_negative_stock": boolean,"created_at": string,"created_by": string,"currency": string,"id": string,"is_active": boolean,"name": string,"owner_id": string,"tax_id": string | null,"timezone": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allow_negative_stock"?: boolean,"created_at"?: string,"created_by": string,"currency"?: string,"id"?: string,"is_active"?: boolean,"name": string,"owner_id": string,"tax_id"?: string | null,"timezone"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "allow_negative_stock"?: boolean,"created_at"?: string,"created_by"?: string,"currency"?: string,"id"?: string,"is_active"?: boolean,"name"?: string,"owner_id"?: string,"tax_id"?: string | null,"timezone"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -177,6 +196,134 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"movement_costs": {
+                  Row: {
+                    "company_id": string,"movement_id": string,"total_cost": number,"unit_cost": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"movement_id": string,"total_cost"?: number,"unit_cost"?: number
+                  }
+                  Update: {
+                    "company_id"?: string,"movement_id"?: string,"total_cost"?: number,"unit_cost"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_movement_costs_movement"
+      columns: ["company_id","movement_id"]
+isOneToOne: true
+      referencedRelation: "stock_movements"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "movement_costs_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"operation_idempotency": {
+                  Row: {
+                    "company_id": string,"created_at": string,"created_by": string,"expires_at": string,"id": string,"idempotency_key": string,"operation_type": string,"request_hash": string,"response_payload": Json | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"created_by": string,"expires_at"?: string,"id"?: string,"idempotency_key": string,"operation_type": string,"request_hash": string,"response_payload"?: Json | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"expires_at"?: string,"id"?: string,"idempotency_key"?: string,"operation_type"?: string,"request_hash"?: string,"response_payload"?: Json | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "operation_idempotency_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "operation_idempotency_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "operation_idempotency_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"product_costs": {
+                  Row: {
+                    "company_id": string,"cost_price": number,"product_id": string,"updated_at": string,"updated_by": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"cost_price"?: number,"product_id": string,"updated_at"?: string,"updated_by": string
+                  }
+                  Update: {
+                    "company_id"?: string,"cost_price"?: number,"product_id"?: string,"updated_at"?: string,"updated_by"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_product_costs_product"
+      columns: ["company_id","product_id"]
+isOneToOne: true
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "product_costs_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_costs_updated_by_fkey"
+      columns: ["updated_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_costs_updated_by_fkey"
+      columns: ["updated_by"]
+isOneToOne: false
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"products": {
+                  Row: {
+                    "barcode": string | null,"category_id": string | null,"company_id": string,"created_at": string,"current_stock": number,"description": string | null,"id": string,"is_active": boolean,"min_stock": number,"name": string,"selling_price": number,"sku": string,"supplier_id": string | null,"unit": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "barcode"?: string | null,"category_id"?: string | null,"company_id": string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name": string,"selling_price"?: number,"sku": string,"supplier_id"?: string | null,"unit"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "barcode"?: string | null,"category_id"?: string | null,"company_id"?: string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name"?: string,"selling_price"?: number,"sku"?: string,"supplier_id"?: string | null,"unit"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_products_category"
+      columns: ["company_id","category_id"]
+isOneToOne: false
+      referencedRelation: "categories"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_products_supplier"
+      columns: ["company_id","supplier_id"]
+isOneToOne: false
+      referencedRelation: "suppliers"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "products_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "created_at": string,"email": string,"full_name": string,"id": string,"updated_at": string
@@ -190,6 +337,64 @@ isOneToOne: false
                   }
                   Relationships: [
 
+                  ]
+                },"stock_movements": {
+                  Row: {
+                    "company_id": string,"created_at": string,"created_by": string,"direction": string,"id": string,"new_stock": number,"notes": string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc": string | null,"reference_purchase_id": string | null,"reference_sale_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"created_by": string,"direction": string,"id"?: string,"new_stock": number,"notes"?: string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"direction"?: string,"id"?: string,"new_stock"?: number,"notes"?: string | null,"previous_stock"?: number,"product_id"?: string,"quantity"?: number,"reason"?: string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_stock_movements_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "stock_movements_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stock_movements_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stock_movements_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"suppliers": {
+                  Row: {
+                    "address": string | null,"company_id": string,"contact_name": string | null,"created_at": string,"email": string | null,"id": string,"is_active": boolean,"name": string,"phone": string | null,"tax_id": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "address"?: string | null,"company_id": string,"contact_name"?: string | null,"created_at"?: string,"email"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "address"?: string | null,"company_id"?: string,"contact_name"?: string | null,"created_at"?: string,"email"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "suppliers_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
                   ]
                 }
           }
@@ -214,11 +419,26 @@ isOneToOne: false
             "accept_company_invitation":
 { Args: { "p_token": string }; Returns: string
                            },
+"bulk_update_prices":
+{ Args: { "p_category_id"?: string,"p_company_id": string,"p_fixed_delta"?: number,"p_percentage"?: number,"p_product_ids"?: (string)[] }; Returns: number
+                           },
 "create_company":
 { Args: { "p_currency"?: string,"p_name": string,"p_tax_id": string,"p_timezone"?: string }; Returns: string
                            },
+"create_product":
+{ Args: { "p_barcode"?: string,"p_category_id"?: string,"p_company_id": string,"p_cost_price"?: number,"p_description"?: string,"p_min_stock"?: number,"p_name": string,"p_selling_price"?: number,"p_sku": string,"p_supplier_id"?: string,"p_unit"?: string }; Returns: string
+                           },
 "deactivate_company":
 { Args: { "p_company_id": string }; Returns: undefined
+                           },
+"deactivate_member":
+{ Args: { "p_company_id": string,"p_reason": string,"p_user_id": string }; Returns: undefined
+                           },
+"import_initial_stock":
+{ Args: { "p_company_id": string,"p_idempotency_key": string,"p_items": Json }; Returns: Json
+                           },
+"import_products":
+{ Args: { "p_company_id": string,"p_on_duplicate"?: string,"p_products": Json }; Returns: number
                            },
 "invite_user_to_company":
 { Args: { "p_company_id": string,"p_email": string,"p_role": string }; Returns: string
@@ -229,11 +449,29 @@ isOneToOne: false
 "reactivate_member":
 { Args: { "p_company_id": string,"p_new_role": string,"p_reason": string,"p_user_id": string }; Returns: undefined
                            },
+"register_stock_adjustment":
+{ Args: { "p_company_id": string,"p_direction": string,"p_idempotency_key": string,"p_notes"?: string,"p_product_id": string,"p_quantity": number,"p_reason": string,"p_reference_doc"?: string }; Returns: Json
+                           },
 "revoke_company_invitation":
 { Args: { "p_company_id": string,"p_invitation_id": string }; Returns: undefined
                            },
+"set_company_negative_stock_policy":
+{ Args: { "p_allow_negative_stock": boolean,"p_company_id": string,"p_reason": string }; Returns: undefined
+                           },
 "transfer_company_ownership":
 { Args: { "p_company_id": string,"p_new_owner_id": string }; Returns: undefined
+                           },
+"update_product":
+{ Args: { "p_barcode"?: string,"p_category_id"?: string,"p_company_id": string,"p_description"?: string,"p_is_active"?: boolean,"p_min_stock": number,"p_name": string,"p_product_id": string,"p_selling_price": number,"p_sku": string,"p_supplier_id"?: string,"p_unit": string }; Returns: undefined
+                           },
+"update_product_cost":
+{ Args: { "p_company_id": string,"p_cost_price": number,"p_product_id": string }; Returns: undefined
+                           },
+"upsert_category":
+{ Args: { "p_category_id"?: string,"p_company_id": string,"p_description"?: string,"p_is_active"?: boolean,"p_name": string }; Returns: string
+                           },
+"upsert_supplier":
+{ Args: { "p_address"?: string,"p_company_id": string,"p_contact_name"?: string,"p_email"?: string,"p_is_active"?: boolean,"p_name": string,"p_phone"?: string,"p_supplier_id"?: string,"p_tax_id"?: string }; Returns: string
                            },
 "validate_cuit":
 { Args: { "p_cuit": string }; Returns: boolean

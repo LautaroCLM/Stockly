@@ -18,25 +18,32 @@ import {
   ChevronRight,
   PackageX,
   FolderTree,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface InventarioPageProps {
   company: Company;
   products: Product[];
   categories: Category[];
+  isProductsLoading?: boolean;
+  productsError?: string | null;
+  isCategoriesLoading?: boolean;
+  categoriesError?: string | null;
+  isMasterAdmin?: boolean;
   cartItemsCount: number;
   cartTotal: number;
   getItemQuantityInCart: (productId: string) => number;
   onAddToCart: (product: Product) => void;
   onOpenCart: () => void;
-  onCreateProduct: (data: ProductFormData) => { success: boolean; error?: string };
-  onUpdateProduct: (id: string, data: ProductFormData) => { success: boolean; error?: string };
-  onDeactivateProduct: (id: string) => { success: boolean; error?: string };
-  onReactivateProduct: (id: string) => { success: boolean; error?: string };
+  onCreateProduct: (data: ProductFormData) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
+  onUpdateProduct: (id: string, data: ProductFormData) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
+  onDeactivateProduct: (id: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
+  onReactivateProduct: (id: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   onAdjustStock: (data: StockAdjustmentData) => { success: boolean; error?: string };
-  onCreateCategory: (name: string, description?: string) => { success: boolean; error?: string; category?: Category };
-  onRenameCategory: (id: string, newName: string) => { success: boolean; error?: string; category?: Category };
-  onDeleteCategory: (id: string, productCount: number) => { success: boolean; error?: string };
+  onCreateCategory: (name: string, description?: string) => Promise<{ success: boolean; error?: string; category?: Category }>;
+  onRenameCategory: (id: string, newName: string) => Promise<{ success: boolean; error?: string; category?: Category }>;
+  onDeleteCategory: (id: string, productCount: number) => Promise<{ success: boolean; error?: string }>;
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -45,6 +52,11 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
   company,
   products,
   categories,
+  isProductsLoading = false,
+  productsError = null,
+  isCategoriesLoading = false,
+  categoriesError = null,
+  isMasterAdmin = true,
   cartItemsCount,
   cartTotal,
   getItemQuantityInCart,
@@ -157,31 +169,35 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
 
         {/* Action Buttons: Gestionar Categorías + Nuevo Producto + Carrito */}
         <div className="flex items-center gap-2.5">
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={() => setIsCategoryModalOpen(true)}
-            className="gap-1.5 font-medium border-border hover:bg-surface-2"
-            title="Administrar el catálogo formal de categorías de esta empresa"
-          >
-            <FolderTree size={16} className="text-primary" />
-            <span>Gestionar categorías</span>
-          </Button>
+          {isMasterAdmin && (
+            <>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="gap-1.5 font-medium border-border hover:bg-surface-2"
+                title="Administrar el catálogo formal de categorías de esta empresa"
+              >
+                <FolderTree size={16} className="text-primary" />
+                <span>Gestionar categorías</span>
+              </Button>
 
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={() => {
-              setFormMode('create');
-              setProductToEdit(null);
-              setIsFormOpen(true);
-            }}
-            className="gap-1.5 font-medium border-border hover:bg-surface-2"
-            title="Crear un nuevo producto en esta empresa"
-          >
-            <Plus size={16} className="text-primary" />
-            <span>Nuevo Producto</span>
-          </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setFormMode('create');
+                  setProductToEdit(null);
+                  setIsFormOpen(true);
+                }}
+                className="gap-1.5 font-medium border-border hover:bg-surface-2"
+                title="Crear un nuevo producto en esta empresa"
+              >
+                <Plus size={16} className="text-primary" />
+                <span>Nuevo Producto</span>
+              </Button>
+            </>
+          )}
 
           <Button
             variant="primary"
@@ -199,6 +215,14 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Global Products Error Alert */}
+      {productsError && (
+        <div className="p-3 bg-danger/10 border border-danger/30 rounded-xl text-xs text-danger flex items-center gap-2 animate-in fade-in">
+          <AlertTriangle size={15} className="shrink-0" />
+          <span>{productsError}</span>
+        </div>
+      )}
 
       {/* Filters & Search Toolbar */}
       <ProductFilters
@@ -231,7 +255,16 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
               </thead>
 
               <tbody>
-                {paginatedProducts.length === 0 ? (
+                {isProductsLoading && products.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="flex items-center justify-center gap-2 text-xs text-text-muted">
+                        <Loader2 size={16} className="animate-spin text-primary" />
+                        <span>Cargando catálogo de productos desde PostgreSQL...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : paginatedProducts.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-text-muted">
@@ -265,17 +298,25 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
                       isSelected={selectedRowIndex === idx}
                       onSelectRow={() => setSelectedRowIndex(idx)}
                       onAddToCart={onAddToCart}
-                      onEdit={(p) => {
-                        setFormMode('edit');
-                        setProductToEdit(p);
-                        setIsFormOpen(true);
-                      }}
-                      onAdjustStock={(p) => {
-                        setProductToAdjust(p);
-                        setIsAdjustmentModalOpen(true);
-                      }}
-                      onDeactivate={(p) => setProductToDeactivate(p)}
-                      onReactivate={(p) => onReactivateProduct(p.id)}
+                      onEdit={
+                        isMasterAdmin
+                          ? (p) => {
+                              setFormMode('edit');
+                              setProductToEdit(p);
+                              setIsFormOpen(true);
+                            }
+                          : undefined
+                      }
+                      onAdjustStock={
+                        isMasterAdmin
+                          ? (p) => {
+                              setProductToAdjust(p);
+                              setIsAdjustmentModalOpen(true);
+                            }
+                          : undefined
+                      }
+                      onDeactivate={isMasterAdmin ? (p) => setProductToDeactivate(p) : undefined}
+                      onReactivate={isMasterAdmin ? (p) => onReactivateProduct(p.id) : undefined}
                     />
                   ))
                 )}
@@ -328,21 +369,15 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
         mode={formMode}
         initialProduct={productToEdit}
         existingCategories={categoryNames}
+        canManageCosts={isMasterAdmin}
         onClose={() => {
           setIsFormOpen(false);
           setProductToEdit(null);
         }}
-        onSubmit={(formData) => {
-          let catId = categories.find(
+        onSubmit={async (formData) => {
+          const catId = categories.find(
             (c) => c.name.toLowerCase() === formData.category.trim().toLowerCase()
           )?.id;
-
-          if (!catId) {
-            const createRes = onCreateCategory(formData.category.trim());
-            if (createRes.success && createRes.category) {
-              catId = createRes.category.id;
-            }
-          }
 
           const payloadWithCatId = {
             ...formData,
@@ -350,9 +385,9 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
           };
 
           if (formMode === 'create') {
-            return onCreateProduct(payloadWithCatId);
+            return await onCreateProduct(payloadWithCatId);
           } else if (productToEdit) {
-            return onUpdateProduct(productToEdit.id, payloadWithCatId);
+            return await onUpdateProduct(productToEdit.id, payloadWithCatId);
           }
           return { success: false, error: 'Operación no válida' };
         }}
@@ -374,9 +409,9 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
         isOpen={!!productToDeactivate}
         product={productToDeactivate}
         onClose={() => setProductToDeactivate(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (productToDeactivate) {
-            onDeactivateProduct(productToDeactivate.id);
+            await onDeactivateProduct(productToDeactivate.id);
             setProductToDeactivate(null);
           }
         }}
@@ -388,6 +423,8 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
         companyName={company.name}
         categories={categories}
         products={products}
+        isLoading={isCategoriesLoading}
+        error={categoriesError}
         onClose={() => setIsCategoryModalOpen(false)}
         onCreateCategory={onCreateCategory}
         onRenameCategory={onRenameCategory}

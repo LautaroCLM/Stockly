@@ -18,7 +18,7 @@ export interface Product {
   categoryId?: string;
   category: string;
   salePrice: number;
-  costPrice: number;
+  costPrice: number | null;
   stock: number;
   minStock: number;
   unit: string;
@@ -33,7 +33,7 @@ export interface ProductFormData {
   barcode: string;
   categoryId?: string;
   category: string;
-  costPrice: number;
+  costPrice?: number | null;
   salePrice: number;
   minStock: number;
   unit?: string;

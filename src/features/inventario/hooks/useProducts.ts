@@ -1,18 +1,335 @@
-import { useState, useEffect, useCallback } from 'react';
-import { TenantId } from '@/types';
-import { Product, ProductFormData, StockStatus, StockMovement, StockAdjustmentData, CartItem } from '../types';
-import { getMockProducts } from '@/data/mockProducts';
-import { loadMovementsFromStorage, saveMovementsToStorage } from './useStockMovements';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { TenantId } from '@/types';
+import type { Product, ProductFormData, StockMovement, StockAdjustmentData } from '../types';
+import {
+  fetchProducts,
+  createProductRpc,
+  updateProductRpc,
+  setProductActiveRpc,
+  isNetworkOrUncertainError,
+} from '../api/productsApi';
+
+export interface ProductOperationResult {
+  success: boolean;
+  partial?: boolean;
+  uncertain?: boolean;
+  error?: string;
+  product?: Product;
+}
+
+export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const isMountedRef = useRef<boolean>(true);
+  const currentCompanyIdRef = useRef<string>(tenantId);
+
+  currentCompanyIdRef.current = tenantId;
+
+  const loadProducts = useCallback(
+    async (targetCompanyId: string) => {
+      if (!targetCompanyId) {
+        setProducts([]);
+        setIsLoading(false);
+        setError(null);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await fetchProducts(targetCompanyId, isMasterAdmin);
+        if (isMountedRef.current && currentCompanyIdRef.current === targetCompanyId) {
+          setProducts(data);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        if (isMountedRef.current && currentCompanyIdRef.current === targetCompanyId) {
+          const message = err instanceof Error ? err.message : 'Error al cargar los productos.';
+          setError(message);
+          setProducts([]);
+          setIsLoading(false);
+        }
+      }
+    },
+    [isMasterAdmin]
+  );
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    setProducts([]);
+    loadProducts(tenantId);
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [tenantId, loadProducts]);
+
+  const createProduct = useCallback(
+    async (formData: ProductFormData): Promise<ProductOperationResult> => {
+      const cleanSku = formData.sku.trim().toUpperCase();
+      const cleanName = formData.name.trim();
+
+      if (!cleanSku || !cleanName) {
+        return { success: false, error: 'SKU y nombre de producto son obligatorios.' };
+      }
+
+      try {
+        const newId = await createProductRpc({
+          companyId: tenantId,
+          sku: cleanSku,
+          name: cleanName,
+          unit: (formData.unit || 'unidad').toLowerCase(),
+          sellingPrice: formData.salePrice,
+          costPrice: formData.costPrice,
+          minStock: formData.minStock,
+          barcode: formData.barcode?.trim() || undefined,
+          description: formData.description?.trim() || undefined,
+          categoryId: formData.categoryId || undefined,
+        });
+
+        // Recarga atómica desde Supabase tras mutación exitosa
+        const fresh = await fetchProducts(tenantId, isMasterAdmin);
+        if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+          setProducts(fresh);
+        }
+
+        const created = fresh.find((p) => p.id === newId);
+        return { success: true, product: created };
+      } catch (err) {
+        if (isNetworkOrUncertainError(err)) {
+          // Intentar recuperación por si PostgreSQL aplicó la inserción antes del corte
+          try {
+            const fresh = await fetchProducts(tenantId, isMasterAdmin);
+            if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+              setProducts(fresh);
+            }
+            const maybeCreated = fresh.find((p) => p.sku === cleanSku);
+            if (maybeCreated) {
+              return { success: true, product: maybeCreated };
+            }
+          } catch {
+            // Silencio en recarga de recuperación
+          }
+          return {
+            success: false,
+            uncertain: true,
+            error:
+              'Error de comunicación con el servidor al crear el producto. El resultado es incierto; por favor verifique si el producto aparece en el catálogo antes de reintentar.',
+          };
+        }
+        const message = err instanceof Error ? err.message : 'Error al crear el producto.';
+        return { success: false, error: message };
+      }
+    },
+    [tenantId, isMasterAdmin]
+  );
+
+  const updateProduct = useCallback(
+    async (id: string, formData: ProductFormData): Promise<ProductOperationResult> => {
+      const existing = products.find((p) => p.id === id);
+      if (!existing) {
+        return { success: false, error: 'Producto no encontrado.' };
+      }
+
+      const execResult = await updateProductRpc(
+        {
+          companyId: tenantId,
+          productId: id,
+          sku: formData.sku,
+          name: formData.name,
+          unit: (formData.unit || existing.unit || 'unidad').toLowerCase(),
+          sellingPrice: formData.salePrice,
+          costPrice: formData.costPrice !== undefined ? formData.costPrice : undefined,
+          currentCostPrice: existing.costPrice,
+          minStock: formData.minStock,
+          barcode: formData.barcode,
+          description: formData.description,
+          categoryId: formData.categoryId,
+          isActive: existing.isActive,
+        },
+        isMasterAdmin
+      );
+
+      // Si hubo mutación general o el estado es incierto, recargamos inmediatamente desde Supabase
+      // para que la interfaz refleje el estado real y no conserve datos locales desactualizados.
+      if (execResult.generalDataSaved || execResult.status === 'uncertain') {
+        try {
+          const fresh = await fetchProducts(tenantId, isMasterAdmin);
+          if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+            setProducts(fresh);
+          }
+          const updated = fresh.find((p) => p.id === id);
+
+          if (execResult.status === 'success') {
+            return { success: true, product: updated };
+          }
+          if (execResult.status === 'partial') {
+            return { success: false, partial: true, error: execResult.message, product: updated };
+          }
+          if (execResult.status === 'uncertain') {
+            return { success: false, uncertain: true, error: execResult.message, product: updated };
+          }
+        } catch (reloadErr) {
+          console.warn('Error al refrescar productos tras actualización:', reloadErr);
+        }
+      }
+
+      if (execResult.status === 'success') {
+        return { success: true };
+      }
+
+      return {
+        success: false,
+        partial: execResult.status === 'partial',
+        uncertain: execResult.status === 'uncertain',
+        error: execResult.message || 'Error al actualizar el producto.',
+      };
+    },
+    [tenantId, products, isMasterAdmin]
+  );
+
+  const deactivateProduct = useCallback(
+    async (id: string): Promise<ProductOperationResult> => {
+      const existing = products.find((p) => p.id === id);
+      if (!existing) {
+        return { success: false, error: 'Producto no encontrado.' };
+      }
+
+      try {
+        await setProductActiveRpc(tenantId, existing, false);
+        const fresh = await fetchProducts(tenantId, isMasterAdmin);
+        if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+          setProducts(fresh);
+        }
+        return { success: true };
+      } catch (err) {
+        if (isNetworkOrUncertainError(err)) {
+          try {
+            const fresh = await fetchProducts(tenantId, isMasterAdmin);
+            if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+              setProducts(fresh);
+            }
+            const updated = fresh.find((p) => p.id === id);
+            if (updated && !updated.isActive) {
+              return { success: true, product: updated };
+            }
+          } catch {
+            // Ignorar error de recarga en fallo de red
+          }
+          return {
+            success: false,
+            uncertain: true,
+            error:
+              'Error de red al desactivar el producto. El estado en la base de datos es incierto; por favor verifique antes de reintentar.',
+          };
+        }
+        const message = err instanceof Error ? err.message : 'Error al desactivar el producto.';
+        return { success: false, error: message };
+      }
+    },
+    [tenantId, products, isMasterAdmin]
+  );
+
+  const reactivateProduct = useCallback(
+    async (id: string): Promise<ProductOperationResult> => {
+      const existing = products.find((p) => p.id === id);
+      if (!existing) {
+        return { success: false, error: 'Producto no encontrado.' };
+      }
+
+      try {
+        await setProductActiveRpc(tenantId, existing, true);
+        const fresh = await fetchProducts(tenantId, isMasterAdmin);
+        if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+          setProducts(fresh);
+        }
+        return { success: true };
+      } catch (err) {
+        if (isNetworkOrUncertainError(err)) {
+          try {
+            const fresh = await fetchProducts(tenantId, isMasterAdmin);
+            if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+              setProducts(fresh);
+            }
+            const updated = fresh.find((p) => p.id === id);
+            if (updated && updated.isActive) {
+              return { success: true, product: updated };
+            }
+          } catch {
+            // Ignorar error de recarga en fallo de red
+          }
+          return {
+            success: false,
+            uncertain: true,
+            error:
+              'Error de red al reactivar el producto. El estado en la base de datos es incierto; por favor verifique antes de reintentar.',
+          };
+        }
+        const message = err instanceof Error ? err.message : 'Error al reactivar el producto.';
+        return { success: false, error: message };
+      }
+    },
+    [tenantId, products, isMasterAdmin]
+  );
+
+  const renameCategoryInProducts = useCallback(
+    (categoryId: string, oldName: string, newName: string) => {
+      // En base de datos la relación es por category_id (FK), actualizamos la representación en memoria
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.categoryId === categoryId || p.category.toLowerCase() === oldName.toLowerCase()
+            ? { ...p, category: newName }
+            : p
+        )
+      );
+    },
+    []
+  );
+
+  /**
+   * Los movimientos de stock serán integrados en el Paso 25E.
+   * Para evitar inconsistencias, no se persisten saldos ficticios en localStorage.
+   */
+  const adjustStock = useCallback(
+    (_data: StockAdjustmentData): { success: boolean; error?: string; movement?: StockMovement } => {
+      return {
+        success: false,
+        error:
+          'Los ajustes manuales de existencias se integrarán en el Paso 25E (Módulo de Movimientos). Las existencias actuales reflejan el saldo real en PostgreSQL.',
+      };
+    },
+    []
+  );
+
+  const syncProductsFromTransaction = useCallback((_updatedProducts: Product[]) => {
+    // No-op: el stock real es gobernado exclusivamente por el backend PostgreSQL
+  }, []);
+
+  return {
+    products,
+    isLoading,
+    error,
+    createProduct,
+    updateProduct,
+    renameCategoryInProducts,
+    deactivateProduct,
+    reactivateProduct,
+    adjustStock,
+    syncProductsFromTransaction,
+    reloadProducts: () => loadProducts(tenantId),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers transitorios de compatibilidad con checkout/ventas locales (Paso 25E)
+// ---------------------------------------------------------------------------
+export { computeStatus } from '../api/productsApi';
 
 export function getProductStorageKey(tenantId: TenantId): string {
   return `stockly_products_${tenantId}_v1`;
-}
-
-export function computeStatus(stock: number, minStock: number): StockStatus {
-  if (stock < 0) return 'negative';
-  if (stock === 0) return 'out_of_stock';
-  if (stock <= minStock) return 'low';
-  return 'normal';
 }
 
 export function loadProductsFromStorage(tenantId: TenantId): Product[] {
@@ -20,30 +337,14 @@ export function loadProductsFromStorage(tenantId: TenantId): Product[] {
     const raw = localStorage.getItem(getProductStorageKey(tenantId));
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((p: Product) => ({
-          ...p,
-          isActive: p.isActive !== false,
-        }));
+      if (Array.isArray(parsed)) {
+        return parsed;
       }
     }
   } catch (err) {
-    console.warn(`Error al leer productos de ${tenantId} desde localStorage:`, err);
+    console.warn('Error al leer productos locales:', err);
   }
-
-  // Seed default mock catalog if none exists for this tenant
-  const initial = getMockProducts(tenantId).map((p) => ({
-    ...p,
-    isActive: p.isActive ?? true,
-  }));
-
-  try {
-    localStorage.setItem(getProductStorageKey(tenantId), JSON.stringify(initial));
-  } catch (err) {
-    console.warn(`Error al guardar productos iniciales en localStorage:`, err);
-  }
-
-  return initial;
+  return [];
 }
 
 export function saveProductsToStorage(tenantId: TenantId, products: Product[]): boolean {
@@ -51,439 +352,7 @@ export function saveProductsToStorage(tenantId: TenantId, products: Product[]): 
     localStorage.setItem(getProductStorageKey(tenantId), JSON.stringify(products));
     return true;
   } catch (err) {
-    console.error(`Error al guardar productos de ${tenantId} en localStorage:`, err);
+    console.error('Error al guardar productos locales:', err);
     return false;
   }
-}
-
-export interface ValidationResult {
-  valid: boolean;
-  skuError?: string;
-  barcodeError?: string;
-  generalError?: string;
-}
-
-export function useProducts(tenantId: TenantId) {
-  const [products, setProducts] = useState<Product[]>(() => loadProductsFromStorage(tenantId));
-
-  // Reload products strictly when company/tenant changes
-  useEffect(() => {
-    setProducts(loadProductsFromStorage(tenantId));
-  }, [tenantId]);
-
-  // Sincronización en tiempo real entre pestañas mediante storage event
-  useEffect(() => {
-    function handleStorageChange(e: StorageEvent) {
-      if (e.key === getProductStorageKey(tenantId)) {
-        setProducts(loadProductsFromStorage(tenantId));
-      }
-    }
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [tenantId]);
-
-  const syncProductsFromTransaction = useCallback((updated: Product[]) => {
-    setProducts(updated);
-  }, []);
-
-  const validateSkuAndBarcode = useCallback(
-    (sku: string, barcode: string, currentProductId?: string): ValidationResult => {
-      const cleanSku = sku.trim().toLowerCase();
-      const cleanBarcode = barcode.trim();
-
-      if (!cleanSku) {
-        return { valid: false, skuError: 'El SKU es obligatorio.' };
-      }
-
-      // Check duplicate SKU in this company
-      const skuDuplicate = products.some(
-        (p) => p.sku.toLowerCase() === cleanSku && p.id !== currentProductId
-      );
-      if (skuDuplicate) {
-        return {
-          valid: false,
-          skuError: `El SKU "${sku.trim().toUpperCase()}" ya está registrado en esta empresa.`,
-        };
-      }
-
-      // Check duplicate Barcode in this company if provided
-      if (cleanBarcode) {
-        const barcodeDuplicate = products.some(
-          (p) => p.barcode && p.barcode.trim() === cleanBarcode && p.id !== currentProductId
-        );
-        if (barcodeDuplicate) {
-          return {
-            valid: false,
-            barcodeError: `El código de barras "${cleanBarcode}" ya pertenece a otro producto en esta empresa.`,
-          };
-        }
-      }
-
-      return { valid: true };
-    },
-    [products]
-  );
-
-  const createProduct = useCallback(
-    (data: ProductFormData): { success: boolean; error?: string; product?: Product } => {
-      const validation = validateSkuAndBarcode(data.sku, data.barcode);
-      if (!validation.valid) {
-        return {
-          success: false,
-          error: validation.skuError || validation.barcodeError || 'Datos de producto inválidos.',
-        };
-      }
-
-      const cleanName = data.name.trim();
-      const cleanCategory = data.category.trim();
-
-      if (!cleanName) {
-        return { success: false, error: 'El nombre del producto es obligatorio.' };
-      }
-      if (!cleanCategory) {
-        return { success: false, error: 'La categoría es obligatoria.' };
-      }
-      if (data.salePrice < 0) {
-        return { success: false, error: 'El precio de venta no puede ser negativo.' };
-      }
-      if (data.costPrice < 0) {
-        return { success: false, error: 'El costo no puede ser negativo.' };
-      }
-      if (data.minStock < 0) {
-        return { success: false, error: 'El stock mínimo no puede ser negativo.' };
-      }
-
-      // Initial stock is 0 for new products
-      const initialStock = 0;
-      const status = computeStatus(initialStock, data.minStock);
-
-      const newProduct: Product = {
-        id: `prod-${tenantId.slice(0, 3)}-${Date.now()}`,
-        sku: data.sku.trim().toUpperCase(),
-        barcode: data.barcode.trim(),
-        name: cleanName,
-        categoryId: data.categoryId,
-        category: cleanCategory,
-        salePrice: Number(data.salePrice),
-        costPrice: Number(data.costPrice),
-        stock: initialStock,
-        minStock: Number(data.minStock),
-        unit: data.unit?.trim() || 'u.',
-        description: data.description?.trim() || undefined,
-        status,
-        isActive: true,
-      };
-
-      setProducts((prev) => {
-        const next = [newProduct, ...prev];
-        saveProductsToStorage(tenantId, next);
-        return next;
-      });
-
-      return { success: true, product: newProduct };
-    },
-    [tenantId, validateSkuAndBarcode]
-  );
-
-  const updateProduct = useCallback(
-    (id: string, data: ProductFormData): { success: boolean; error?: string; product?: Product } => {
-      const validation = validateSkuAndBarcode(data.sku, data.barcode, id);
-      if (!validation.valid) {
-        return {
-          success: false,
-          error: validation.skuError || validation.barcodeError || 'Datos de producto inválidos.',
-        };
-      }
-
-      const cleanName = data.name.trim();
-      const cleanCategory = data.category.trim();
-
-      if (!cleanName) {
-        return { success: false, error: 'El nombre del producto es obligatorio.' };
-      }
-      if (!cleanCategory) {
-        return { success: false, error: 'La categoría es obligatoria.' };
-      }
-      if (data.salePrice < 0) {
-        return { success: false, error: 'El precio de venta no puede ser negativo.' };
-      }
-      if (data.costPrice < 0) {
-        return { success: false, error: 'El costo no puede ser negativo.' };
-      }
-      if (data.minStock < 0) {
-        return { success: false, error: 'El stock mínimo no puede ser negativo.' };
-      }
-
-      let updatedProduct: Product | undefined;
-
-      setProducts((prev) => {
-        const index = prev.findIndex((p) => p.id === id);
-        if (index === -1) return prev;
-
-        const existing = prev[index];
-        const updatedStatus = computeStatus(existing.stock, Number(data.minStock));
-
-        updatedProduct = {
-          ...existing,
-          sku: data.sku.trim().toUpperCase(),
-          barcode: data.barcode.trim(),
-          name: cleanName,
-          categoryId: data.categoryId || existing.categoryId,
-          category: cleanCategory,
-          salePrice: Number(data.salePrice),
-          costPrice: Number(data.costPrice),
-          minStock: Number(data.minStock),
-          unit: data.unit?.trim() || existing.unit,
-          description: data.description?.trim() || undefined,
-          status: updatedStatus,
-        };
-
-        const next = [...prev];
-        next[index] = updatedProduct;
-        saveProductsToStorage(tenantId, next);
-        return next;
-      });
-
-      if (!updatedProduct) {
-        return { success: false, error: 'Producto no encontrado.' };
-      }
-
-      return { success: true, product: updatedProduct };
-    },
-    [tenantId, validateSkuAndBarcode]
-  );
-
-  const renameCategoryInProducts = useCallback(
-    (categoryId: string, oldName: string, newName: string) => {
-      setProducts((prev) => {
-        let changed = false;
-        const next = prev.map((p) => {
-          const matchId = p.categoryId === categoryId;
-          const matchName = p.category.trim().toLowerCase() === oldName.trim().toLowerCase();
-          if (matchId || matchName) {
-            changed = true;
-            return {
-              ...p,
-              categoryId,
-              category: newName,
-            };
-          }
-          return p;
-        });
-
-        if (changed) {
-          saveProductsToStorage(tenantId, next);
-        }
-        return next;
-      });
-    },
-    [tenantId]
-  );
-
-  const deactivateProduct = useCallback(
-    (id: string): { success: boolean; error?: string; product?: Product } => {
-      let updatedProduct: Product | undefined;
-
-      setProducts((prev) => {
-        const index = prev.findIndex((p) => p.id === id);
-        if (index === -1) return prev;
-
-        const existing = prev[index];
-        updatedProduct = {
-          ...existing,
-          isActive: false,
-        };
-
-        const next = [...prev];
-        next[index] = updatedProduct;
-        saveProductsToStorage(tenantId, next);
-        return next;
-      });
-
-      if (!updatedProduct) {
-        return { success: false, error: 'Producto no encontrado.' };
-      }
-
-      return { success: true, product: updatedProduct };
-    },
-    [tenantId]
-  );
-
-  const reactivateProduct = useCallback(
-    (id: string): { success: boolean; error?: string; product?: Product } => {
-      let updatedProduct: Product | undefined;
-
-      setProducts((prev) => {
-        const index = prev.findIndex((p) => p.id === id);
-        if (index === -1) return prev;
-
-        const existing = prev[index];
-        updatedProduct = {
-          ...existing,
-          isActive: true,
-        };
-
-        const next = [...prev];
-        next[index] = updatedProduct;
-        saveProductsToStorage(tenantId, next);
-        return next;
-      });
-
-      if (!updatedProduct) {
-        return { success: false, error: 'Producto no encontrado.' };
-      }
-
-      return { success: true, product: updatedProduct };
-    },
-    [tenantId]
-  );
-
-  const adjustStock = useCallback(
-    (data: StockAdjustmentData): { success: boolean; error?: string; movement?: StockMovement } => {
-      if (isNaN(data.quantity) || data.quantity <= 0) {
-        return { success: false, error: 'La cantidad debe ser un número positivo mayor a cero.' };
-      }
-
-      const product = products.find((p) => p.id === data.productId);
-      if (!product) {
-        return { success: false, error: 'Producto no encontrado en esta empresa.' };
-      }
-
-      const previousStock = product.stock;
-      const newStock =
-        data.direction === 'increase'
-          ? previousStock + data.quantity
-          : previousStock - data.quantity;
-
-      const newStatus = computeStatus(newStock, product.minStock);
-
-      const movement: StockMovement = {
-        id: `mov-${tenantId.slice(0, 3)}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        companyId: tenantId,
-        productId: product.id,
-        productName: product.name,
-        productSku: product.sku,
-        direction: data.direction,
-        reason: data.reason,
-        quantity: data.quantity,
-        previousStock,
-        newStock,
-        referenceDoc: data.referenceDoc?.trim() || undefined,
-        notes: data.notes?.trim() || undefined,
-        createdBy: 'Lautaro C. (Master Admin)',
-        createdAt: new Date().toISOString(),
-      };
-
-      const updatedProducts = products.map((p) =>
-        p.id === data.productId ? { ...p, stock: newStock, status: newStatus } : p
-      );
-
-      const existingMovements = loadMovementsFromStorage(tenantId);
-      const updatedMovements = [movement, ...existingMovements];
-
-      const prodSaved = saveProductsToStorage(tenantId, updatedProducts);
-      const movSaved = saveMovementsToStorage(tenantId, updatedMovements);
-
-      if (!prodSaved || !movSaved) {
-        return { success: false, error: 'Error al persistir el ajuste en el almacenamiento local.' };
-      }
-
-      setProducts(updatedProducts);
-      return { success: true, movement };
-    },
-    [tenantId, products]
-  );
-
-  const discountStockForSale = useCallback(
-    (
-      saleId: string,
-      saleNumber: string,
-      items: CartItem[]
-    ): { success: boolean; error?: string; movements?: StockMovement[] } => {
-      if (!items || items.length === 0) {
-        return { success: false, error: 'El carrito no contiene productos.' };
-      }
-
-      const timestamp = new Date().toISOString();
-      const newMovements: StockMovement[] = [];
-      const productUpdatesMap = new Map<string, { newStock: number; status: StockStatus }>();
-
-      for (const item of items) {
-        const product = products.find((p) => p.id === item.productId);
-        if (!product) {
-          return { success: false, error: `El producto ${item.sku} no existe en la empresa activa.` };
-        }
-        if (product.isActive === false) {
-          return {
-            success: false,
-            error: `El producto "${product.name}" (${product.sku}) se encuentra desactivado y no puede ser vendido.`,
-          };
-        }
-        if (item.quantity <= 0) {
-          return { success: false, error: `Cantidad no válida para el producto ${item.sku}.` };
-        }
-
-        const previousStock = productUpdatesMap.has(product.id)
-          ? productUpdatesMap.get(product.id)!.newStock
-          : product.stock;
-        const newStock = previousStock - item.quantity;
-        const status = computeStatus(newStock, product.minStock);
-
-        productUpdatesMap.set(product.id, { newStock, status });
-
-        newMovements.push({
-          id: `mov-${tenantId.slice(0, 3)}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-          companyId: tenantId,
-          productId: product.id,
-          productName: product.name,
-          productSku: product.sku,
-          direction: 'decrease',
-          reason: 'sale',
-          quantity: item.quantity,
-          previousStock,
-          newStock,
-          referenceSaleId: saleId,
-          referenceDoc: saleNumber,
-          notes: `Descuento automático por venta en mostrador #${saleNumber}`,
-          createdBy: 'Lautaro C. (Master Admin)',
-          createdAt: timestamp,
-        });
-      }
-
-      const updatedProducts = products.map((p) => {
-        const update = productUpdatesMap.get(p.id);
-        if (update) {
-          return { ...p, stock: update.newStock, status: update.status };
-        }
-        return p;
-      });
-
-      const existingMovements = loadMovementsFromStorage(tenantId);
-      const updatedMovements = [...newMovements, ...existingMovements];
-
-      const prodSaved = saveProductsToStorage(tenantId, updatedProducts);
-      const movSaved = saveMovementsToStorage(tenantId, updatedMovements);
-
-      if (!prodSaved || !movSaved) {
-        return { success: false, error: 'Error al persistir el descuento de existencias en el almacenamiento local.' };
-      }
-
-      setProducts(updatedProducts);
-      return { success: true, movements: newMovements };
-    },
-    [tenantId, products]
-  );
-
-  return {
-    products,
-    createProduct,
-    updateProduct,
-    renameCategoryInProducts,
-    deactivateProduct,
-    reactivateProduct,
-    adjustStock,
-    discountStockForSale,
-    validateSkuAndBarcode,
-    syncProductsFromTransaction,
-  };
 }

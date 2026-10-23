@@ -1,107 +1,81 @@
-import { useState, useEffect, useCallback } from 'react';
-import { TenantId } from '@/types';
-import { Category, Product } from '../types';
-
-export function getCategoryStorageKey(tenantId: TenantId): string {
-  return `stockly_categories_${tenantId}_v1`;
-}
-
-function getProductStorageKey(tenantId: TenantId): string {
-  return `stockly_products_${tenantId}_v1`;
-}
-
-export function loadCategoriesFromStorage(tenantId: TenantId): Category[] {
-  try {
-    const raw = localStorage.getItem(getCategoryStorageKey(tenantId));
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
-    }
-  } catch (err) {
-    console.warn(`Error al leer categorías de ${tenantId} desde localStorage:`, err);
-  }
-
-  // Idempotent local migration: Derive initial categories from existing products if any
-  try {
-    const productsRaw = localStorage.getItem(getProductStorageKey(tenantId));
-    if (productsRaw) {
-      const products: Product[] = JSON.parse(productsRaw);
-      if (Array.isArray(products) && products.length > 0) {
-        const uniqueMap = new Map<string, string>(); // lowerCase -> original
-        for (const p of products) {
-          const clean = p.category?.trim();
-          if (clean && !uniqueMap.has(clean.toLowerCase())) {
-            uniqueMap.set(clean.toLowerCase(), clean);
-          }
-        }
-
-        const initialCategories: Category[] = Array.from(uniqueMap.values())
-          .sort()
-          .map((name, idx) => ({
-            id: `cat-${tenantId.slice(0, 3)}-${(idx + 1).toString().padStart(3, '0')}`,
-            companyId: tenantId,
-            name,
-            createdAt: new Date().toISOString(),
-          }));
-
-        if (initialCategories.length > 0) {
-          localStorage.setItem(getCategoryStorageKey(tenantId), JSON.stringify(initialCategories));
-
-          // Also link existing products with their categoryId
-          const updatedProducts = products.map((prod) => {
-            const cat = initialCategories.find(
-              (c) => c.name.toLowerCase() === prod.category?.trim().toLowerCase()
-            );
-            return cat ? { ...prod, categoryId: cat.id } : prod;
-          });
-          localStorage.setItem(getProductStorageKey(tenantId), JSON.stringify(updatedProducts));
-
-          return initialCategories;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn(`Error al inicializar categorías desde productos para ${tenantId}:`, err);
-  }
-
-  return [];
-}
-
-export function saveCategoriesToStorage(tenantId: TenantId, categories: Category[]): boolean {
-  try {
-    localStorage.setItem(getCategoryStorageKey(tenantId), JSON.stringify(categories));
-    return true;
-  } catch (err) {
-    console.error(`Error al persistir categorías de ${tenantId} en localStorage:`, err);
-    return false;
-  }
-}
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { TenantId } from '@/types';
+import type { Category } from '../types';
+import {
+  fetchCategories,
+  upsertCategoryRpc,
+  deactivateCategoryRpc,
+} from '../api/categoriesApi';
 
 export interface CategoryValidationResult {
   valid: boolean;
   error?: string;
 }
 
+export interface CategoryOperationResult {
+  success: boolean;
+  error?: string;
+  category?: Category;
+}
+
 export function useCategories(
-  tenantId: TenantId,
+  companyId: TenantId,
   onRenameCategoryInProducts?: (categoryId: string, oldName: string, newName: string) => void
 ) {
-  const [categories, setCategories] = useState<Category[]>(() =>
-    loadCategoriesFromStorage(tenantId)
-  );
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Reload categories on company switch
+  const isMountedRef = useRef<boolean>(true);
+  const currentCompanyIdRef = useRef<string>(companyId);
+
+  currentCompanyIdRef.current = companyId;
+
+  const loadCategories = useCallback(async (targetCompanyId: string) => {
+    if (!targetCompanyId) {
+      setCategories([]);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await fetchCategories(targetCompanyId);
+      if (isMountedRef.current && currentCompanyIdRef.current === targetCompanyId) {
+        setCategories(data);
+        setIsLoading(false);
+      }
+    } catch (err) {
+      if (isMountedRef.current && currentCompanyIdRef.current === targetCompanyId) {
+        const message = err instanceof Error ? err.message : 'Error al cargar las categorías.';
+        setError(message);
+        setCategories([]);
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    setCategories(loadCategoriesFromStorage(tenantId));
-  }, [tenantId]);
+    isMountedRef.current = true;
+    setCategories([]);
+    loadCategories(companyId);
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [companyId, loadCategories]);
 
   const validateName = useCallback(
     (name: string, excludeId?: string): CategoryValidationResult => {
       const clean = name.trim();
       if (!clean) {
         return { valid: false, error: 'El nombre de la categoría es obligatorio.' };
+      }
+      if (clean.length > 100) {
+        return { valid: false, error: 'El nombre no puede superar los 100 caracteres.' };
       }
 
       const duplicate = categories.some(
@@ -121,91 +95,97 @@ export function useCategories(
   );
 
   const createCategory = useCallback(
-    (
-      name: string,
-      description?: string
-    ): { success: boolean; error?: string; category?: Category } => {
+    async (name: string, description?: string): Promise<CategoryOperationResult> => {
       const validation = validateName(name);
       if (!validation.valid) {
         return { success: false, error: validation.error };
       }
 
-      const newCategory: Category = {
-        id: `cat-${tenantId.slice(0, 3)}-${Date.now()}`,
-        companyId: tenantId,
-        name: name.trim(),
-        description: description?.trim() || undefined,
-        createdAt: new Date().toISOString(),
-      };
+      try {
+        const newId = await upsertCategoryRpc({
+          companyId,
+          name: name.trim(),
+          description: description?.trim(),
+        });
 
-      const updated = [...categories, newCategory].sort((a, b) =>
-        a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
-      );
+        // Actualización directa desde Supabase tras mutación exitosa
+        const freshData = await fetchCategories(companyId);
+        if (isMountedRef.current && currentCompanyIdRef.current === companyId) {
+          setCategories(freshData);
+        }
 
-      const saved = saveCategoriesToStorage(tenantId, updated);
-      if (!saved) {
-        return { success: false, error: 'Error al persistir la categoría en localStorage.' };
+        const created = freshData.find((c) => c.id === newId) || {
+          id: newId,
+          companyId,
+          name: name.trim(),
+          description: description?.trim() || undefined,
+          createdAt: new Date().toISOString(),
+        };
+
+        return { success: true, category: created };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Error al crear la categoría.';
+        return { success: false, error: message };
       }
-
-      setCategories(updated);
-      return { success: true, category: newCategory };
     },
-    [tenantId, categories, validateName]
+    [companyId, validateName]
   );
 
   const renameCategory = useCallback(
-    (
-      id: string,
-      newName: string,
-      description?: string
-    ): { success: boolean; error?: string; category?: Category } => {
+    async (id: string, newName: string, description?: string): Promise<CategoryOperationResult> => {
       const validation = validateName(newName, id);
       if (!validation.valid) {
         return { success: false, error: validation.error };
       }
 
-      const index = categories.findIndex((c) => c.id === id);
-      if (index === -1) {
+      const existing = categories.find((c) => c.id === id);
+      if (!existing) {
         return { success: false, error: 'Categoría no encontrada.' };
       }
 
-      const existing = categories[index];
       const oldName = existing.name;
       const cleanNewName = newName.trim();
 
-      const updatedCategory: Category = {
-        ...existing,
-        name: cleanNewName,
-        description: description !== undefined ? description.trim() || undefined : existing.description,
-      };
+      try {
+        await upsertCategoryRpc({
+          companyId,
+          categoryId: id,
+          name: cleanNewName,
+          description: description !== undefined ? description?.trim() : existing.description,
+          isActive: true,
+        });
 
-      const updated = [...categories];
-      updated[index] = updatedCategory;
-      updated.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+        // Actualización directa desde Supabase tras mutación exitosa
+        const freshData = await fetchCategories(companyId);
+        if (isMountedRef.current && currentCompanyIdRef.current === companyId) {
+          setCategories(freshData);
+        }
 
-      const saved = saveCategoriesToStorage(tenantId, updated);
-      if (!saved) {
-        return { success: false, error: 'Error al persistir la categoría renombrada.' };
+        const updated = freshData.find((c) => c.id === id) || {
+          ...existing,
+          name: cleanNewName,
+          description: description !== undefined ? description?.trim() || undefined : existing.description,
+        };
+
+        if (onRenameCategoryInProducts) {
+          onRenameCategoryInProducts(id, oldName, cleanNewName);
+        }
+
+        return { success: true, category: updated };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Error al renombrar la categoría.';
+        return { success: false, error: message };
       }
-
-      setCategories(updated);
-
-      // Cascade update to all associated products
-      if (onRenameCategoryInProducts) {
-        onRenameCategoryInProducts(id, oldName, cleanNewName);
-      }
-
-      return { success: true, category: updatedCategory };
     },
-    [tenantId, categories, validateName, onRenameCategoryInProducts]
+    [companyId, categories, validateName, onRenameCategoryInProducts]
   );
 
   const deleteCategory = useCallback(
-    (id: string, productCount: number): { success: boolean; error?: string } => {
+    async (id: string, productCount: number): Promise<CategoryOperationResult> => {
       if (productCount > 0) {
         return {
           success: false,
-          error: `No se puede eliminar la categoría porque tiene ${productCount} producto(s) asociado(s). Reasigna o elimina los productos primero.`,
+          error: `No se puede eliminar la categoría porque tiene ${productCount} producto(s) asociado(s). Reasigna los productos primero.`,
         };
       }
 
@@ -214,23 +194,32 @@ export function useCategories(
         return { success: false, error: 'Categoría no encontrada.' };
       }
 
-      const updated = categories.filter((c) => c.id !== id);
-      const saved = saveCategoriesToStorage(tenantId, updated);
-      if (!saved) {
-        return { success: false, error: 'Error al eliminar la categoría en localStorage.' };
-      }
+      try {
+        await deactivateCategoryRpc(companyId, id, target.name, target.description);
 
-      setCategories(updated);
-      return { success: true };
+        // Actualización directa desde Supabase tras mutación exitosa
+        const freshData = await fetchCategories(companyId);
+        if (isMountedRef.current && currentCompanyIdRef.current === companyId) {
+          setCategories(freshData);
+        }
+
+        return { success: true };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Error al eliminar la categoría.';
+        return { success: false, error: message };
+      }
     },
-    [tenantId, categories]
+    [companyId, categories]
   );
 
   return {
     categories,
+    isLoading,
+    error,
     createCategory,
     renameCategory,
     deleteCategory,
     validateName,
+    reloadCategories: () => loadCategories(companyId),
   };
 }
