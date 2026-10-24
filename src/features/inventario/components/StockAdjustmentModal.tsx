@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Product, StockAdjustmentData, StockMovementReason, StockMovementDirection } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import type {
+  Product,
+  StockAdjustmentData,
+  StockAdjustmentResult,
+  StockMovementReason,
+  StockMovementDirection,
+} from '../types';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { X, Layers, AlertTriangle, Check, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { X, Layers, AlertTriangle, Check, ArrowUpRight, ArrowDownLeft, Loader2, RotateCcw } from 'lucide-react';
 
 interface StockAdjustmentModalProps {
   isOpen: boolean;
   product: Product | null;
   onClose: () => void;
-  onSubmit: (data: StockAdjustmentData) => { success: boolean; error?: string };
+  onSubmit: (data: StockAdjustmentData) => Promise<StockAdjustmentResult> | StockAdjustmentResult;
 }
 
 interface ReasonOption {
@@ -18,24 +24,13 @@ interface ReasonOption {
   description: string;
 }
 
+// Motivos estrictamente autorizados por la RPC public.register_stock_adjustment
 const REASONS: ReasonOption[] = [
-  {
-    id: 'initial_load',
-    label: 'Carga inicial de stock',
-    defaultDirection: 'increase',
-    description: 'Establecer existencias físicas iniciales al dar de alta el producto',
-  },
-  {
-    id: 'purchase',
-    label: 'Entrada de mercadería',
-    defaultDirection: 'increase',
-    description: 'Recepción física de mercadería o lote de compra',
-  },
   {
     id: 'physical_count',
     label: 'Ajuste por conteo físico',
     defaultDirection: 'increase',
-    description: 'Conciliación periódica de inventario en salón o depósito',
+    description: 'Conciliación periódica de inventario real en depósito o salón (incremento o decremento)',
   },
   {
     id: 'loss_damage',
@@ -47,7 +42,7 @@ const REASONS: ReasonOption[] = [
     id: 'internal_use',
     label: 'Consumo interno',
     defaultDirection: 'decrease',
-    description: 'Material retirado para mantenimiento o uso operativo propio',
+    description: 'Material retirado para mantenimiento o uso operativo propio de la empresa',
   },
 ];
 
@@ -57,49 +52,58 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const [reason, setReason] = useState<StockMovementReason>('purchase');
+  const [reason, setReason] = useState<StockMovementReason>('physical_count');
   const [direction, setDirection] = useState<StockMovementDirection>('increase');
   const [quantityInput, setQuantityInput] = useState('1');
   const [physicalCountInput, setPhysicalCountInput] = useState('0');
   const [referenceDoc, setReferenceDoc] = useState('');
   const [notes, setNotes] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isUncertain, setIsUncertain] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sync defaults on open
+  // Clave de idempotencia única por intención de ajuste del usuario
+  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
+
+  // Sincronizar estado inicial al abrir
   useEffect(() => {
     if (isOpen && product) {
       setErrorMessage(null);
+      setIsUncertain(false);
+      setIsSubmitting(false);
       setReferenceDoc('');
       setNotes('');
-      // If product has 0 stock, suggest initial_load
-      if (product.stock === 0) {
-        setReason('initial_load');
-        setDirection('increase');
-        setQuantityInput('10');
-      } else {
-        setReason('purchase');
-        setDirection('increase');
-        setQuantityInput('1');
-      }
+      setReason('physical_count');
+      setDirection('increase');
+      setQuantityInput('1');
       setPhysicalCountInput(product.stock.toString());
+      idempotencyKeyRef.current = crypto.randomUUID();
     }
   }, [isOpen, product]);
 
-  // Handle escape key
+  // Manejar tecla escape
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && !isSubmitting) {
         onClose();
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isSubmitting]);
 
   if (!isOpen || !product) return null;
 
-  // Handle reason change
+  function resetIdempotencyIfFresh() {
+    if (isUncertain) {
+      setIsUncertain(false);
+      idempotencyKeyRef.current = crypto.randomUUID();
+    }
+  }
+
+  // Manejar cambio de motivo
   function handleSelectReason(r: StockMovementReason) {
+    resetIdempotencyIfFresh();
     setReason(r);
     const config = REASONS.find((item) => item.id === r);
     if (config) {
@@ -108,7 +112,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
     setErrorMessage(null);
   }
 
-  // Calculate new stock and delta
+  // Calcular variación (delta) y dirección efectiva
   let deltaQuantity = 0;
   let effectiveDirection = direction;
 
@@ -132,9 +136,11 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
       ? product.stock + deltaQuantity
       : product.stock - deltaQuantity;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (!product) return;
 
     if (deltaQuantity <= 0) {
       setErrorMessage(
@@ -145,32 +151,65 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
       return;
     }
 
-    // Require notes for loss, internal_use, or physical_count
-    if ((reason === 'loss_damage' || reason === 'internal_use') && !notes.trim()) {
-      setErrorMessage('Para registrar mermas o consumo interno se requiere indicar una justificación en las observaciones.');
+    // Validación defensiva de unidades indivisibles
+    const isDiscreteUnit = ['unidad', 'bulto', 'par'].includes(product.unit.toLowerCase());
+    if (isDiscreteUnit && !Number.isInteger(deltaQuantity)) {
+      setErrorMessage(
+        `La unidad "${product.unit}" es indivisible y no admite cantidades fraccionarias con decimales.`
+      );
       return;
     }
 
-    const res = onSubmit({
-      productId: product!.id,
-      reason,
-      direction: effectiveDirection,
-      quantity: deltaQuantity,
-      notes: notes.trim() || undefined,
-      referenceDoc: referenceDoc.trim() || undefined,
-    });
+    // Validación de escala decimal máxima (2 decimales)
+    if (Math.round(deltaQuantity * 100) !== deltaQuantity * 100) {
+      setErrorMessage('La cantidad no puede tener más de 2 decimales.');
+      return;
+    }
 
-    if (!res.success) {
-      setErrorMessage(res.error || 'Ocurrió un error al registrar el movimiento.');
-    } else {
-      onClose();
+    // Requerir justificación obligatoria para mermas o consumo interno
+    if ((reason === 'loss_damage' || reason === 'internal_use') && !notes.trim()) {
+      setErrorMessage(
+        'Para registrar mermas o consumo interno se requiere indicar una justificación en las observaciones.'
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await onSubmit({
+        productId: product.id,
+        reason,
+        direction: effectiveDirection,
+        quantity: deltaQuantity,
+        notes: notes.trim() || undefined,
+        referenceDoc: referenceDoc.trim() || undefined,
+        idempotencyKey: idempotencyKeyRef.current,
+      });
+
+      if (!res.success) {
+        setErrorMessage(res.error || 'Ocurrió un error al registrar el movimiento.');
+        if (res.uncertain) {
+          setIsUncertain(true);
+        }
+      } else {
+        onClose();
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Error al registrar el ajuste de existencias.');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+        onClick={() => {
+          if (!isSubmitting) onClose();
+        }}
+      />
 
       <div className="relative w-full max-w-xl bg-surface border border-border rounded-2xl shadow-2xl shadow-black/90 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
@@ -191,117 +230,112 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"
+            disabled={isSubmitting}
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 disabled:opacity-50"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Banner de error / incertidumbre */}
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-danger/10 border border-danger/30 text-danger text-xs flex items-center gap-2">
-              <AlertTriangle size={15} className="shrink-0" />
-              <span>{errorMessage}</span>
+            <div
+              className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
+                isUncertain
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                  : 'bg-danger/10 border-danger/25 text-danger'
+              }`}
+            >
+              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <span className="font-semibold block">
+                  {isUncertain ? 'Resultado Incierto por Corte de Red' : 'Error en el ajuste'}
+                </span>
+                <p className="leading-relaxed whitespace-pre-line">{errorMessage}</p>
+                {isUncertain && (
+                  <p className="text-[11px] text-amber-200/90 pt-1">
+                    El resultado en el servidor sigue sin confirmarse. No inicie un ajuste nuevo para compensar esta diferencia. Haga clic en <strong>Reintentar con la misma clave</strong> para reenviar la solicitud de forma segura sin duplicar el movimiento físico.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Current Stock Banner */}
-          <div className="bg-surface-2/70 border border-border rounded-xl p-3 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-text-muted block">Stock actual registrado:</span>
-              <span className="text-lg font-bold text-text-primary tabular-nums">
-                {product.stock} <span className="text-xs font-normal text-text-muted">{product.unit}</span>
-              </span>
-            </div>
-            <div className="text-right">
-              <span className="text-[11px] text-text-muted block">Umbral de reposición:</span>
-              <span className="text-xs font-semibold text-text-secondary tabular-nums">
-                Mínimo: {product.minStock} {product.unit}
-              </span>
-            </div>
-          </div>
-
-          {/* Reason Selector */}
+          {/* Reason Selection */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-text-secondary">
-              Motivo del Movimiento <span className="text-danger">*</span>
+              Motivo del Ajuste <span className="text-danger">*</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-1.5">
               {REASONS.map((r) => {
                 const isSelected = reason === r.id;
                 return (
                   <button
                     key={r.id}
                     type="button"
+                    disabled={isSubmitting}
                     onClick={() => handleSelectReason(r.id)}
-                    className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-0.5 ${
+                    className={`text-left p-2.5 rounded-xl border transition-all text-xs flex items-center justify-between ${
                       isSelected
-                        ? 'bg-primary/15 border-primary text-text-primary shadow-sm'
-                        : 'bg-surface-2 border-border/80 text-text-secondary hover:text-text-primary hover:bg-surface-3'
+                        ? 'border-primary bg-primary/10 text-text-primary shadow-sm'
+                        : 'border-border/60 bg-surface-2/40 text-text-muted hover:border-border hover:bg-surface-2'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold">{r.label}</span>
-                      {r.defaultDirection === 'increase' ? (
-                        <ArrowUpRight size={13} className="text-emerald-400" />
-                      ) : (
-                        <ArrowDownLeft size={13} className="text-amber-400" />
-                      )}
+                    <div>
+                      <span className="font-semibold block text-text-primary">{r.label}</span>
+                      <span className="text-[11px] text-text-muted">{r.description}</span>
                     </div>
-                    <span className="text-[10px] text-text-muted line-clamp-1">
-                      {r.description}
-                    </span>
+                    {isSelected && <Check size={14} className="text-primary shrink-0 ml-2" />}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Quantity or Physical Count Input */}
+          {/* Inputs based on reason */}
           {reason === 'physical_count' ? (
             <div className="space-y-1">
               <label className="text-xs font-semibold text-text-secondary">
-                Conteo Físico Real Comprobado ({product.unit}) <span className="text-danger">*</span>
+                Stock Físico Real Recontado ({product.unit}) <span className="text-danger">*</span>
               </label>
               <input
                 type="number"
                 min="0"
-                step="1"
+                step={['unidad', 'bulto', 'par'].includes(product.unit.toLowerCase()) ? '1' : '0.01'}
                 required
+                disabled={isSubmitting}
                 value={physicalCountInput}
-                onChange={(e) => setPhysicalCountInput(e.target.value)}
-                placeholder="Cantidad contada en depósito..."
-                className="w-full h-9 px-3 text-sm font-bold text-right bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none tabular-nums"
+                onChange={(e) => {
+                  resetIdempotencyIfFresh();
+                  setPhysicalCountInput(e.target.value);
+                }}
+                className="w-full h-9 px-3 text-sm font-bold text-right bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none tabular-nums disabled:opacity-50"
               />
+              <span className="text-[11px] text-text-muted block">
+                Ingrese el total de existencias presentes en salón o depósito. El sistema calculará la diferencia automáticamente.
+              </span>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-text-secondary">
-                  Sentido del Ajuste
+                  Sentido del Movimiento
                 </label>
-                <div className="grid grid-cols-2 gap-1.5 bg-surface-2 p-1 rounded-lg border border-border">
+                <div className="grid grid-cols-2 p-1 bg-surface-2 border border-border rounded-lg">
                   <button
                     type="button"
-                    onClick={() => setDirection('increase')}
-                    className={`py-1 text-xs font-semibold rounded flex items-center justify-center gap-1 transition-all ${
-                      direction === 'increase'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'text-text-muted hover:text-text-primary'
-                    }`}
+                    disabled={true}
+                    className="py-1 text-xs font-semibold rounded flex items-center justify-center gap-1 text-text-muted/40 cursor-not-allowed"
+                    title="Para mermas o consumo interno el sentido es estrictamente de salida"
                   >
                     <ArrowUpRight size={12} />
                     <span>Entrada (+)</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setDirection('decrease')}
-                    className={`py-1 text-xs font-semibold rounded flex items-center justify-center gap-1 transition-all ${
-                      direction === 'decrease'
-                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                        : 'text-text-muted hover:text-text-primary'
-                    }`}
+                    className="py-1 text-xs font-semibold rounded flex items-center justify-center gap-1 bg-rose-500/20 text-rose-300 border border-rose-500/30"
                   >
                     <ArrowDownLeft size={12} />
                     <span>Salida (-)</span>
@@ -315,12 +349,16 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 </label>
                 <input
                   type="number"
-                  min="1"
-                  step="1"
+                  min="0.01"
+                  step={['unidad', 'bulto', 'par'].includes(product.unit.toLowerCase()) ? '1' : '0.01'}
                   required
+                  disabled={isSubmitting}
                   value={quantityInput}
-                  onChange={(e) => setQuantityInput(e.target.value)}
-                  className="w-full h-9 px-3 text-sm font-bold text-right bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none tabular-nums"
+                  onChange={(e) => {
+                    resetIdempotencyIfFresh();
+                    setQuantityInput(e.target.value);
+                  }}
+                  className="w-full h-9 px-3 text-sm font-bold text-right bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none tabular-nums disabled:opacity-50"
                 />
               </div>
             </div>
@@ -329,7 +367,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           {/* Projected Result Box */}
           <div className="bg-surface-2/60 border border-border rounded-xl p-3.5 space-y-1.5 text-xs">
             <div className="flex items-center justify-between text-text-muted">
-              <span>Stock previo:</span>
+              <span>Stock actual en base:</span>
               <span className="font-mono tabular-nums">{product.stock} {product.unit}</span>
             </div>
             <div className="flex items-center justify-between text-text-muted">
@@ -368,10 +406,14 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             </label>
             <input
               type="text"
+              disabled={isSubmitting}
               value={referenceDoc}
-              onChange={(e) => setReferenceDoc(e.target.value)}
+              onChange={(e) => {
+                resetIdempotencyIfFresh();
+                setReferenceDoc(e.target.value);
+              }}
               placeholder="Ej. Remito R-00214, Acta de Inventario N° 05..."
-              className="w-full h-9 px-3 text-xs bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none"
+              className="w-full h-9 px-3 text-xs bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none disabled:opacity-50"
             />
           </div>
 
@@ -381,21 +423,39 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             </label>
             <textarea
               rows={2}
+              disabled={isSubmitting}
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => {
+                resetIdempotencyIfFresh();
+                setNotes(e.target.value);
+              }}
               placeholder="Detalle o justificación del ajuste físico..."
-              className="w-full p-2.5 text-xs bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none resize-none"
+              className="w-full p-2.5 text-xs bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none resize-none disabled:opacity-50"
             />
           </div>
 
           {/* Footer Actions */}
           <div className="pt-3 border-t border-border flex items-center justify-end gap-2.5">
-            <Button variant="secondary" size="md" type="button" onClick={onClose}>
+            <Button variant="secondary" size="md" type="button" onClick={onClose} disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button variant="primary" size="md" type="submit" className="gap-1.5 shadow-md">
-              <Check size={15} />
-              <span>Confirmar Ajuste de Stock</span>
+            <Button variant="primary" size="md" type="submit" disabled={isSubmitting} className="gap-1.5 shadow-md">
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  <span>Registrando en base...</span>
+                </>
+              ) : isUncertain ? (
+                <>
+                  <RotateCcw size={15} />
+                  <span>Reintentar con la misma clave</span>
+                </>
+              ) : (
+                <>
+                  <Check size={15} />
+                  <span>Confirmar Ajuste en PostgreSQL</span>
+                </>
+              )}
             </Button>
           </div>
         </form>

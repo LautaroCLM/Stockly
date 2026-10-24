@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { RouteId, Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
-import { Sale, PaymentEntry } from '@/features/inventario/types';
+import { Sale, PaymentEntry, StockAdjustmentData } from '@/features/inventario/types';
 import { MOCK_DATASETS, NAV_SECTIONS } from '@/data/mockData';
 import { useCart } from '@/features/inventario/hooks/useCart';
 import { useProducts } from '@/features/inventario/hooks/useProducts';
@@ -54,6 +54,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     products,
     isLoading: isProductsLoading,
     error: productsError,
+    syncWarning: productsSyncWarning,
     createProduct,
     updateProduct,
     renameCategoryInProducts,
@@ -61,6 +62,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     reactivateProduct,
     adjustStock,
     syncProductsFromTransaction,
+    reloadProducts,
   } = useProducts(activeCompany.id, isMasterAdmin);
 
   // Formal categories catalog per tenant with cascade renaming to products
@@ -74,7 +76,27 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   } = useCategories(activeCompany.id, renameCategoryInProducts);
 
   // Stock movements ledger per tenant
-  const { movements, syncMovementsFromTransaction } = useStockMovements(activeCompany.id);
+  const {
+    movements,
+    isLoading: isMovementsLoading,
+    error: movementsError,
+    reloadMovements,
+    syncMovementsFromTransaction,
+  } = useStockMovements(activeCompany.id);
+
+  // Manejador coordinado de ajuste manual de existencias
+  const handleAdjustStock = useCallback(
+    async (data: StockAdjustmentData) => {
+      const res = await adjustStock(data);
+      if (res.success) {
+        reloadMovements().catch((err) =>
+          console.warn('Error al recargar movimientos tras ajuste:', err)
+        );
+      }
+      return res;
+    },
+    [adjustStock, reloadMovements]
+  );
 
   // Persistent cart isolated per company
   const {
@@ -238,6 +260,8 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             categories={categories}
             isProductsLoading={isProductsLoading}
             productsError={productsError}
+            productsSyncWarning={productsSyncWarning}
+            onReloadProducts={reloadProducts}
             isCategoriesLoading={isCategoriesLoading}
             categoriesError={categoriesError}
             isMasterAdmin={isMasterAdmin}
@@ -250,7 +274,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             onUpdateProduct={updateProduct}
             onDeactivateProduct={deactivateProduct}
             onReactivateProduct={reactivateProduct}
-            onAdjustStock={adjustStock}
+            onAdjustStock={handleAdjustStock}
             onCreateCategory={createCategory}
             onRenameCategory={renameCategory}
             onDeleteCategory={deleteCategory}
@@ -273,6 +297,9 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           <HistorialStockPage
             company={activeCompany}
             movements={movements}
+            isLoading={isMovementsLoading}
+            error={movementsError}
+            onReload={reloadMovements}
             onNavigateToInventario={() => setActiveRoute('inventario')}
           />
         )}

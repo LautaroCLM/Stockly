@@ -124,4 +124,11 @@ export interface StockAdjustmentData {
   quantity: number;
   notes?: string;
   referenceDoc?: string;
+  idempotencyKey?: string;
 }
+
+export type StockAdjustmentResult =
+  | { success: true; status: 'confirmed_synced'; syncWarning?: undefined }
+  | { success: true; status: 'confirmed_reload_pending'; syncWarning: string }
+  | { success: false; status: 'uncertain'; error: string; uncertain: true }
+  | { success: false; status: 'rejected'; error: string; uncertain?: false };

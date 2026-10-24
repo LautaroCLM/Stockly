@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { TenantId } from '@/types';
-import type { Product, ProductFormData, StockMovement, StockAdjustmentData } from '../types';
+import type { Product, ProductFormData, StockAdjustmentData, StockAdjustmentResult } from '../types';
 import {
   fetchProducts,
   createProductRpc,
   updateProductRpc,
   setProductActiveRpc,
+  computeStatus,
   isNetworkOrUncertainError,
 } from '../api/productsApi';
+import { registerStockAdjustmentRpc } from '../api/stockMovementsApi';
 
 export interface ProductOperationResult {
   success: boolean;
@@ -21,6 +23,7 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [syncWarning, setSyncWarning] = useState<string | null>(null);
 
   const isMountedRef = useRef<boolean>(true);
   const currentCompanyIdRef = useRef<string>(tenantId);
@@ -33,6 +36,7 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
         setProducts([]);
         setIsLoading(false);
         setError(null);
+        setSyncWarning(null);
         return;
       }
 
@@ -43,6 +47,8 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
         const data = await fetchProducts(targetCompanyId, isMasterAdmin);
         if (isMountedRef.current && currentCompanyIdRef.current === targetCompanyId) {
           setProducts(data);
+          setError(null);
+          setSyncWarning(null);
           setIsLoading(false);
         }
       } catch (err) {
@@ -290,18 +296,124 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
   );
 
   /**
-   * Los movimientos de stock serán integrados en el Paso 25E.
-   * Para evitar inconsistencias, no se persisten saldos ficticios en localStorage.
+   * Registra un ajuste de stock invocando la RPC public.register_stock_adjustment.
+   * Tras la mutación exitosa en PostgreSQL, refresca el catálogo para mostrar el nuevo saldo real.
    */
   const adjustStock = useCallback(
-    (_data: StockAdjustmentData): { success: boolean; error?: string; movement?: StockMovement } => {
+    async (
+      data: StockAdjustmentData
+    ): Promise<StockAdjustmentResult> => {
+      if (!isMasterAdmin) {
+        return {
+          success: false,
+          status: 'rejected',
+          error: 'Acceso denegado: solo el Administrador (master_admin) puede registrar ajustes de existencias.',
+        };
+      }
+
+      const existing = products.find((p) => p.id === data.productId);
+      if (!existing) {
+        return { success: false, status: 'rejected', error: 'Producto no encontrado en el catálogo.' };
+      }
+
+      // Validar motivos autorizados para ajuste manual en register_stock_adjustment
+      if (!['physical_count', 'loss_damage', 'internal_use'].includes(data.reason)) {
+        return {
+          success: false,
+          status: 'rejected',
+          error: 'Motivo no admitido para ajuste manual. Solo se admiten: conteo físico, merma/daño o consumo interno.',
+        };
+      }
+
+      // Validar unidades indivisibles
+      if (['unidad', 'bulto', 'par'].includes(existing.unit) && !Number.isInteger(data.quantity)) {
+        return {
+          success: false,
+          status: 'rejected',
+          error: `La unidad "${existing.unit}" es indivisible y no admite cantidades fraccionarias con decimales.`,
+        };
+      }
+
+      const idempotencyKey = data.idempotencyKey || crypto.randomUUID();
+
+      const res = await registerStockAdjustmentRpc({
+        companyId: tenantId,
+        idempotencyKey,
+        productId: data.productId,
+        direction: data.direction,
+        reason: data.reason as 'physical_count' | 'loss_damage' | 'internal_use',
+        quantity: data.quantity,
+        notes: data.notes,
+        referenceDoc: data.referenceDoc,
+      });
+
+      if (res.status === 'success') {
+        // Mutación confirmada por la base de datos: intentar refrescar catálogo completo
+        try {
+          const fresh = await fetchProducts(tenantId, isMasterAdmin);
+          if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+            setProducts(fresh);
+            setError(null);
+            setSyncWarning(null);
+          }
+          return { success: true, status: 'confirmed_synced' };
+        } catch (reloadErr) {
+          console.warn('Error al refrescar productos tras ajuste de stock confirmado:', reloadErr);
+
+          // Fallback seguro: Si fetchProducts falla por corte de red posterior al éxito de la RPC,
+          // actualizar en memoria el saldo del producto afectado usando el newStock confirmado por PostgreSQL.
+          const hasValidNewStock = typeof res.newStock === 'number' && !Number.isNaN(res.newStock);
+
+          if (hasValidNewStock && isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+            setProducts((prev) =>
+              prev.map((p) => {
+                if (p.id !== data.productId) return p;
+                const updatedStock = res.newStock!;
+                return {
+                  ...p,
+                  stock: updatedStock,
+                  status: computeStatus(updatedStock, p.minStock),
+                };
+              })
+            );
+          }
+
+          const warningMessage = hasValidNewStock
+            ? `Ajuste confirmado en la base de datos (saldo provisional: ${res.newStock}), pero la recarga completa del catálogo falló por conexión. Puede reintentar la recarga para sincronizar.`
+            : 'Ajuste confirmado en la base de datos, pero la recarga completa del catálogo falló por conexión. El catálogo está pendiente de sincronización.';
+
+          if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+            setSyncWarning(warningMessage);
+          }
+
+          return {
+            success: true,
+            status: 'confirmed_reload_pending',
+            syncWarning: warningMessage,
+          };
+        }
+      }
+
+      if (res.status === 'uncertain') {
+        // Resultado incierto: NO llamar a fetchProducts silenciosamente, NO alterar el saldo local.
+        // Se preserva la misma clave UUID y payload en el cliente para reintento manual seguro.
+        return {
+          success: false,
+          status: 'uncertain',
+          uncertain: true,
+          error:
+            res.message ||
+            'Error de red durante el ajuste de existencias. El resultado en el servidor sigue sin confirmarse; no inicie un nuevo ajuste para compensar.',
+        };
+      }
+
       return {
         success: false,
-        error:
-          'Los ajustes manuales de existencias se integrarán en el Paso 25E (Módulo de Movimientos). Las existencias actuales reflejan el saldo real en PostgreSQL.',
+        status: 'rejected',
+        error: res.message || 'Error al registrar el ajuste de existencias.',
       };
     },
-    []
+    [tenantId, products, isMasterAdmin]
   );
 
   const syncProductsFromTransaction = useCallback((_updatedProducts: Product[]) => {
@@ -312,6 +424,8 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
     products,
     isLoading,
     error,
+    syncWarning,
+    clearSyncWarning: () => setSyncWarning(null),
     createProduct,
     updateProduct,
     renameCategoryInProducts,

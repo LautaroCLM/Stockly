@@ -1,5 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Product, StockStatus, ProductFormData, StockAdjustmentData, Category } from './types';
+import {
+  Product,
+  StockStatus,
+  ProductFormData,
+  StockAdjustmentData,
+  StockAdjustmentResult,
+  Category,
+} from './types';
 import { Company } from '@/types';
 import { ProductFilters } from './components/ProductFilters';
 import { ProductTableRow } from './components/ProductTableRow';
@@ -20,6 +27,7 @@ import {
   FolderTree,
   Loader2,
   AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 
 interface InventarioPageProps {
@@ -28,6 +36,8 @@ interface InventarioPageProps {
   categories: Category[];
   isProductsLoading?: boolean;
   productsError?: string | null;
+  productsSyncWarning?: string | null;
+  onReloadProducts?: () => void;
   isCategoriesLoading?: boolean;
   categoriesError?: string | null;
   isMasterAdmin?: boolean;
@@ -40,7 +50,7 @@ interface InventarioPageProps {
   onUpdateProduct: (id: string, data: ProductFormData) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   onDeactivateProduct: (id: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   onReactivateProduct: (id: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
-  onAdjustStock: (data: StockAdjustmentData) => { success: boolean; error?: string };
+  onAdjustStock: (data: StockAdjustmentData) => Promise<StockAdjustmentResult> | StockAdjustmentResult;
   onCreateCategory: (name: string, description?: string) => Promise<{ success: boolean; error?: string; category?: Category }>;
   onRenameCategory: (id: string, newName: string) => Promise<{ success: boolean; error?: string; category?: Category }>;
   onDeleteCategory: (id: string, productCount: number) => Promise<{ success: boolean; error?: string }>;
@@ -54,6 +64,8 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
   categories,
   isProductsLoading = false,
   productsError = null,
+  productsSyncWarning = null,
+  onReloadProducts,
   isCategoriesLoading = false,
   categoriesError = null,
   isMasterAdmin = true,
@@ -218,9 +230,43 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
 
       {/* Global Products Error Alert */}
       {productsError && (
-        <div className="p-3 bg-danger/10 border border-danger/30 rounded-xl text-xs text-danger flex items-center gap-2 animate-in fade-in">
-          <AlertTriangle size={15} className="shrink-0" />
-          <span>{productsError}</span>
+        <div className="p-3 bg-danger/10 border border-danger/30 rounded-xl text-xs text-danger flex items-center justify-between gap-2 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={15} className="shrink-0" />
+            <span>{productsError}</span>
+          </div>
+          {onReloadProducts && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReloadProducts}
+              className="h-7 text-xs border-danger/30 hover:bg-danger/20 text-danger shrink-0 gap-1.5"
+            >
+              <RotateCcw size={13} />
+              Reintentar
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Global Catalog Sync Warning Alert */}
+      {productsSyncWarning && (
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300 flex items-center justify-between gap-2 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={15} className="shrink-0 text-amber-400" />
+            <span>{productsSyncWarning}</span>
+          </div>
+          {onReloadProducts && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReloadProducts}
+              className="h-7 text-xs border-amber-500/30 hover:bg-amber-500/20 text-amber-300 shrink-0 gap-1.5"
+            >
+              <RotateCcw size={13} />
+              Reintentar recarga
+            </Button>
+          )}
         </div>
       )}
 
