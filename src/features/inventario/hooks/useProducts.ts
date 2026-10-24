@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { TenantId } from '@/types';
-import type { Product, ProductFormData, StockAdjustmentData, StockAdjustmentResult } from '../types';
+import type {
+  Product,
+  ProductFormData,
+  StockAdjustmentData,
+  StockAdjustmentResult,
+  InitialStockBatchData,
+  InitialStockResult,
+} from '../types';
 import {
   fetchProducts,
   createProductRpc,
@@ -10,6 +17,7 @@ import {
   isNetworkOrUncertainError,
 } from '../api/productsApi';
 import { registerStockAdjustmentRpc } from '../api/stockMovementsApi';
+import { importInitialStockRpc } from '../api/initialStockApi';
 
 export interface ProductOperationResult {
   success: boolean;
@@ -416,6 +424,150 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
     [tenantId, products, isMasterAdmin]
   );
 
+  /**
+   * Registra la carga inicial masiva de existencias mediante la RPC public.import_initial_stock.
+   * Exclusivo para usuarios con rol master_admin. Refresca el catálogo tras confirmación.
+   */
+  const importInitialStock = useCallback(
+    async (data: InitialStockBatchData): Promise<InitialStockResult> => {
+      if (!isMasterAdmin) {
+        return {
+          success: false,
+          status: 'rejected',
+          error: 'Acceso denegado: solo el Administrador (master_admin) puede registrar la carga inicial de existencias.',
+        };
+      }
+
+      if (!data.items || data.items.length === 0) {
+        return {
+          success: false,
+          status: 'rejected',
+          error: 'El lote de carga inicial no puede estar vacío.',
+        };
+      }
+
+      // Validaciones preliminares en cliente
+      for (const item of data.items) {
+        const prod = products.find((p) => p.id === item.productId);
+        if (!prod) {
+          return {
+            success: false,
+            status: 'rejected',
+            error: `Producto con identificador ${item.productId} no encontrado en el catálogo.`,
+          };
+        }
+        if (prod.stock !== 0) {
+          return {
+            success: false,
+            status: 'rejected',
+            error: `El producto "${prod.name}" ya posee existencias (${prod.stock}). La carga inicial solo admite productos con stock cero. Utilice Ajuste de Stock.`,
+          };
+        }
+        if (['unidad', 'bulto', 'par'].includes(prod.unit) && !Number.isInteger(item.quantity)) {
+          return {
+            success: false,
+            status: 'rejected',
+            error: `El producto "${prod.name}" posee unidad indivisible (${prod.unit}) y no admite cantidades fraccionarias con decimales.`,
+          };
+        }
+        if (item.quantity <= 0) {
+          return {
+            success: false,
+            status: 'rejected',
+            error: `La cantidad para "${prod.name}" debe ser mayor a cero.`,
+          };
+        }
+        if (item.unitCost < 0) {
+          return {
+            success: false,
+            status: 'rejected',
+            error: `El costo unitario inicial para "${prod.name}" no puede ser negativo.`,
+          };
+        }
+      }
+
+      const idempotencyKey = data.idempotencyKey || crypto.randomUUID();
+
+      const res = await importInitialStockRpc({
+        companyId: tenantId,
+        idempotencyKey,
+        items: data.items,
+      });
+
+      if (res.status === 'success') {
+        const confirmedMovements = res.movements || [];
+        const itemsCount = res.itemsCount || confirmedMovements.length;
+
+        try {
+          const fresh = await fetchProducts(tenantId, isMasterAdmin);
+          if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+            setProducts(fresh);
+            setError(null);
+            setSyncWarning(null);
+          }
+          return {
+            success: true,
+            status: 'confirmed_synced',
+            itemsCount,
+            movements: confirmedMovements,
+          };
+        } catch (reloadErr) {
+          console.warn('Error al refrescar productos tras carga inicial confirmada:', reloadErr);
+
+          if (confirmedMovements.length > 0 && isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+            const movementMap = new Map(confirmedMovements.map((m) => [m.productId, m]));
+            setProducts((prev) =>
+              prev.map((p) => {
+                const mov = movementMap.get(p.id);
+                if (!mov) return p;
+                const newStock = mov.quantity;
+                return {
+                  ...p,
+                  stock: newStock,
+                  costPrice: mov.unitCost,
+                  status: computeStatus(newStock, p.minStock),
+                };
+              })
+            );
+          }
+
+          const warningMessage =
+            'Carga inicial confirmada en la base de datos, pero la recarga del catálogo falló por conexión. El catálogo está pendiente de sincronización visual.';
+
+          if (isMountedRef.current && currentCompanyIdRef.current === tenantId) {
+            setSyncWarning(warningMessage);
+          }
+
+          return {
+            success: true,
+            status: 'confirmed_reload_pending',
+            itemsCount,
+            movements: confirmedMovements,
+            syncWarning: warningMessage,
+          };
+        }
+      }
+
+      if (res.status === 'uncertain') {
+        return {
+          success: false,
+          status: 'uncertain',
+          uncertain: true,
+          error:
+            res.message ||
+            'Error de red durante la carga inicial. El resultado en el servidor sigue sin confirmarse; conserve la clave y reintente.',
+        };
+      }
+
+      return {
+        success: false,
+        status: 'rejected',
+        error: res.message || 'Error al procesar la carga inicial de inventario.',
+      };
+    },
+    [tenantId, products, isMasterAdmin]
+  );
+
   const syncProductsFromTransaction = useCallback((_updatedProducts: Product[]) => {
     // No-op: el stock real es gobernado exclusivamente por el backend PostgreSQL
   }, []);
@@ -432,6 +584,7 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
     deactivateProduct,
     reactivateProduct,
     adjustStock,
+    importInitialStock,
     syncProductsFromTransaction,
     reloadProducts: () => loadProducts(tenantId),
   };

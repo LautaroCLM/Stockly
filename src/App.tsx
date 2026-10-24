@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { RouteId, Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
-import { Sale, PaymentEntry, StockAdjustmentData } from '@/features/inventario/types';
+import { Sale, PaymentEntry, StockAdjustmentData, InitialStockBatchData } from '@/features/inventario/types';
 import { MOCK_DATASETS, NAV_SECTIONS } from '@/data/mockData';
 import { useCart } from '@/features/inventario/hooks/useCart';
 import { useProducts } from '@/features/inventario/hooks/useProducts';
@@ -61,6 +61,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     deactivateProduct,
     reactivateProduct,
     adjustStock,
+    importInitialStock,
     syncProductsFromTransaction,
     reloadProducts,
   } = useProducts(activeCompany.id, isMasterAdmin);
@@ -96,6 +97,20 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
       return res;
     },
     [adjustStock, reloadMovements]
+  );
+
+  // Manejador coordinado de carga inicial masiva de existencias
+  const handleImportInitialStock = useCallback(
+    async (data: InitialStockBatchData) => {
+      const res = await importInitialStock(data);
+      if (res.success) {
+        reloadMovements().catch((err) =>
+          console.warn('Error al recargar movimientos tras carga inicial:', err)
+        );
+      }
+      return res;
+    },
+    [importInitialStock, reloadMovements]
   );
 
   // Persistent cart isolated per company
@@ -275,6 +290,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             onDeactivateProduct={deactivateProduct}
             onReactivateProduct={reactivateProduct}
             onAdjustStock={handleAdjustStock}
+            onImportInitialStock={handleImportInitialStock}
             onCreateCategory={createCategory}
             onRenameCategory={renameCategory}
             onDeleteCategory={deleteCategory}

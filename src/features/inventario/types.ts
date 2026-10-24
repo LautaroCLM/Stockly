@@ -132,3 +132,28 @@ export type StockAdjustmentResult =
   | { success: true; status: 'confirmed_reload_pending'; syncWarning: string }
   | { success: false; status: 'uncertain'; error: string; uncertain: true }
   | { success: false; status: 'rejected'; error: string; uncertain?: false };
+
+export interface InitialStockItemInput {
+  productId: string;
+  quantity: number;
+  unitCost: number;
+}
+
+export interface InitialStockBatchData {
+  items: InitialStockItemInput[];
+  idempotencyKey?: string;
+}
+
+export interface InitialStockMovementItem {
+  productId: string;
+  movementId: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+export type InitialStockResult =
+  | { success: true; status: 'confirmed_synced'; itemsCount: number; movements: InitialStockMovementItem[]; syncWarning?: undefined }
+  | { success: true; status: 'confirmed_reload_pending'; itemsCount: number; movements: InitialStockMovementItem[]; syncWarning: string }
+  | { success: false; status: 'uncertain'; error: string; uncertain: true }
+  | { success: false; status: 'rejected'; error: string; uncertain?: false };

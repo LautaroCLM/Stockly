@@ -5,6 +5,8 @@ import {
   ProductFormData,
   StockAdjustmentData,
   StockAdjustmentResult,
+  InitialStockBatchData,
+  InitialStockResult,
   Category,
 } from './types';
 import { Company } from '@/types';
@@ -12,6 +14,7 @@ import { ProductFilters } from './components/ProductFilters';
 import { ProductTableRow } from './components/ProductTableRow';
 import { ProductFormModal } from './components/ProductFormModal';
 import { StockAdjustmentModal } from './components/StockAdjustmentModal';
+import { InitialStockModal } from './components/InitialStockModal';
 import { ConfirmDeactivateModal } from './components/ConfirmDeactivateModal';
 import { CategoryManagementModal } from './components/CategoryManagementModal';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -21,6 +24,7 @@ import {
   Boxes,
   ShoppingCart,
   Plus,
+  PackagePlus,
   ChevronLeft,
   ChevronRight,
   PackageX,
@@ -51,6 +55,7 @@ interface InventarioPageProps {
   onDeactivateProduct: (id: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   onReactivateProduct: (id: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
   onAdjustStock: (data: StockAdjustmentData) => Promise<StockAdjustmentResult> | StockAdjustmentResult;
+  onImportInitialStock?: (data: InitialStockBatchData) => Promise<InitialStockResult>;
   onCreateCategory: (name: string, description?: string) => Promise<{ success: boolean; error?: string; category?: Category }>;
   onRenameCategory: (id: string, newName: string) => Promise<{ success: boolean; error?: string; category?: Category }>;
   onDeleteCategory: (id: string, productCount: number) => Promise<{ success: boolean; error?: string }>;
@@ -79,6 +84,7 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
   onDeactivateProduct,
   onReactivateProduct,
   onAdjustStock,
+  onImportInitialStock,
   onCreateCategory,
   onRenameCategory,
   onDeleteCategory,
@@ -98,6 +104,9 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
   // Stock adjustment modal states
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [productToAdjust, setProductToAdjust] = useState<Product | null>(null);
+
+  // Initial stock modal state
+  const [isInitialStockModalOpen, setIsInitialStockModalOpen] = useState(false);
 
   // Deactivate confirmation modal state
   const [productToDeactivate, setProductToDeactivate] = useState<Product | null>(null);
@@ -208,6 +217,19 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
                 <Plus size={16} className="text-primary" />
                 <span>Nuevo Producto</span>
               </Button>
+
+              {onImportInitialStock && (
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setIsInitialStockModalOpen(true)}
+                  className="gap-1.5 font-medium border-border hover:bg-surface-2"
+                  title="Cargar existencias de apertura y costos iniciales para productos sin movimientos"
+                >
+                  <PackagePlus size={16} className="text-primary" />
+                  <span>Cargar stock inicial</span>
+                </Button>
+              )}
             </>
           )}
 
@@ -449,6 +471,19 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
         }}
         onSubmit={onAdjustStock}
       />
+
+      {/* Initial Stock Modal */}
+      {onImportInitialStock && (
+        <InitialStockModal
+          isOpen={isInitialStockModalOpen}
+          onClose={() => setIsInitialStockModalOpen(false)}
+          companyId={company.id}
+          companyName={company.name}
+          products={products}
+          isMasterAdmin={isMasterAdmin}
+          onSubmit={onImportInitialStock}
+        />
+      )}
 
       {/* Confirm Deactivate Modal */}
       <ConfirmDeactivateModal
