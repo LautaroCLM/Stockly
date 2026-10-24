@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Company } from '@/types';
-import { ChevronDown, Check, Building2, Store, Plus } from 'lucide-react';
+import { ChevronDown, Check, Building2, Store, Plus, KeyRound } from 'lucide-react';
 import { OnboardingModal } from '@/features/companies/components/OnboardingModal';
 
 interface TenantSwitcherProps {
@@ -16,6 +16,7 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState<'create' | 'join'>('create');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -131,13 +132,25 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
           <div className="p-1.5 border-t border-border/70 space-y-1">
             <button
               onClick={() => {
+                setModalInitialTab('create');
                 setIsOpen(false);
                 setIsModalOpen(true);
               }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium text-accent hover:text-white bg-accent/10 hover:bg-accent/20 border border-accent/20 hover:border-accent/40 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary bg-surface-2 hover:bg-surface-3 border border-border/70 hover:border-border transition-colors"
             >
-              <Plus size={14} />
-              <span>Crear empresa o unirme</span>
+              <Plus size={13} className="text-primary" />
+              <span>Crear nueva empresa</span>
+            </button>
+            <button
+              onClick={() => {
+                setModalInitialTab('join');
+                setIsOpen(false);
+                setIsModalOpen(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-medium text-accent hover:text-white bg-accent/10 hover:bg-accent/20 border border-accent/20 hover:border-accent/40 transition-colors"
+            >
+              <KeyRound size={13} />
+              <span>Aceptar invitación</span>
             </button>
           </div>
 
@@ -153,6 +166,7 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
       <OnboardingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        initialTab={modalInitialTab}
       />
     </div>
   );

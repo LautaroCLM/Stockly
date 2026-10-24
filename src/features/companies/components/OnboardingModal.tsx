@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Building2, KeyRound, AlertCircle, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -9,6 +10,11 @@ interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: 'create' | 'join';
+}
+
+function isTokenLike(value: string): boolean {
+  const clean = value.trim();
+  return clean.length >= 32 && /^[0-9a-fA-F]+$/.test(clean);
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
@@ -30,6 +36,25 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   // Estados de mutación
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // Sincronizar tab inicial al abrir y cerrar con Escape
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+      setActionError(null);
+    }
+  }, [isOpen, initialTab]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isSubmitting) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isSubmitting, onClose]);
 
   if (!isOpen) return null;
 
@@ -54,6 +79,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     const trimmedName = companyName.trim();
     if (!trimmedName || trimmedName.length < 2) {
       setActionError('El nombre de la empresa debe tener al menos 2 caracteres.');
+      return;
+    }
+
+    if (isTokenLike(trimmedName)) {
+      setActionError(
+        'El texto ingresado coincide con un token de invitación. Por favor seleccioná la pestaña "Aceptar Invitación" para canjearlo.'
+      );
       return;
     }
 
@@ -107,11 +139,22 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-2/40">
+  const modalContent = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+      {/* Fondo interactivo para cerrar */}
+      <div
+        className="fixed inset-0 -z-10"
+        onClick={() => !isSubmitting && onClose()}
+        aria-hidden="true"
+      />
+
+      {/* Contenedor del Modal: siempre visible y con scroll interno si la pantalla es baja */}
+      <div
+        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden animate-in zoom-in-95 duration-150"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Encabezado fijo superior */}
+        <div className="shrink-0 p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-2/40">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
               <Building2 size={18} />
@@ -126,6 +169,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             disabled={isSubmitting}
             className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors disabled:opacity-50"
@@ -135,8 +179,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </button>
         </div>
 
-        {/* Tabs de navegación */}
-        <div className="flex border-b border-border bg-surface-2/20 p-1 gap-1">
+        {/* Tabs de navegación fijas */}
+        <div className="shrink-0 flex border-b border-border bg-surface-2/30 p-1.5 gap-1.5">
           <button
             type="button"
             onClick={() => {
@@ -144,10 +188,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               setActionError(null);
             }}
             disabled={isSubmitting}
-            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
               activeTab === 'create'
-                ? 'bg-surface text-text-primary shadow-sm border border-border/80'
-                : 'text-text-muted hover:text-text-secondary hover:bg-surface/50'
+                ? 'bg-surface text-text-primary shadow-sm border border-border font-bold'
+                : 'text-text-muted hover:text-text-secondary hover:bg-surface/50 border border-transparent'
             }`}
           >
             <Building2 size={14} className={activeTab === 'create' ? 'text-primary' : ''} />
@@ -160,10 +204,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               setActionError(null);
             }}
             disabled={isSubmitting}
-            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
               activeTab === 'join'
-                ? 'bg-surface text-text-primary shadow-sm border border-border/80'
-                : 'text-text-muted hover:text-text-secondary hover:bg-surface/50'
+                ? 'bg-surface text-accent shadow-sm border border-border font-bold'
+                : 'text-text-muted hover:text-text-secondary hover:bg-surface/50 border border-transparent'
             }`}
           >
             <KeyRound size={14} className={activeTab === 'join' ? 'text-accent' : ''} />
@@ -171,23 +215,31 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </button>
         </div>
 
-        {/* Mensaje de error general */}
+        {/* Mensaje de error general fijo */}
         {actionError && (
-          <div className="m-4 mb-0 p-3 rounded-xl bg-danger/10 border border-danger/20 flex items-start gap-2.5 text-danger text-xs">
+          <div className="shrink-0 mx-4 mt-3 -mb-1 p-3 rounded-xl bg-danger/10 border border-danger/20 flex items-start gap-2.5 text-danger text-xs">
             <AlertCircle size={15} className="shrink-0 mt-0.5" />
             <p className="leading-relaxed">{actionError}</p>
           </div>
         )}
 
-        {/* Contenido: Tab Crear Empresa */}
+        {/* Contenido scrolleable: Tab Crear Empresa */}
         {activeTab === 'create' && (
-          <form onSubmit={handleCreateSubmit} className="p-4 sm:p-5 space-y-4">
+          <form onSubmit={handleCreateSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
             <Input
               label="Nombre de la Empresa"
               placeholder="Ej: Ferretería Norte S.A."
               value={companyName}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCompanyName(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setCompanyName(e.target.value);
+                if (isTokenLike(e.target.value)) {
+                  setActionError('Parece que pegaste un token de invitación. Seleccioná la pestaña "Aceptar Invitación" arriba.');
+                } else if (actionError?.includes('token de invitación')) {
+                  setActionError(null);
+                }
+              }}
               disabled={isSubmitting}
+              error={isTokenLike(companyName) ? 'Parece un token de invitación. Usá la pestaña "Aceptar Invitación".' : undefined}
               required
             />
 
@@ -230,7 +282,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 type="submit"
                 variant="primary"
                 className="flex-1 text-xs h-9 justify-center"
-                disabled={isSubmitting || !!cuitError || companyName.trim().length < 2}
+                disabled={isSubmitting || !!cuitError || companyName.trim().length < 2 || isTokenLike(companyName)}
               >
                 {isSubmitting ? (
                   <>
@@ -245,20 +297,24 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </form>
         )}
 
-        {/* Contenido: Tab Aceptar Invitación */}
+        {/* Contenido scrolleable: Tab Aceptar Invitación */}
         {activeTab === 'join' && (
-          <form onSubmit={handleJoinSubmit} className="p-4 sm:p-5 space-y-4">
-            <div className="space-y-1">
-              <label className="block text-xs font-medium text-text-secondary">
-                Token Criptográfico de Invitación
+          <form onSubmit={handleJoinSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                <KeyRound size={13} className="text-accent" />
+                <span>Token Criptográfico de Invitación</span>
               </label>
               <textarea
                 value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Pega aquí el código recibido por correo..."
+                onChange={(e) => {
+                  setToken(e.target.value);
+                  if (actionError) setActionError(null);
+                }}
+                placeholder="Pegá aquí el token hexadecimal de 64 caracteres recibido..."
                 disabled={isSubmitting}
                 rows={3}
-                className="w-full text-xs font-mono bg-surface-2 border border-border/80 focus:border-primary/50 rounded-lg p-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary/40 resize-none transition-all"
+                className="w-full text-xs font-mono bg-surface-2 border border-border/80 focus:border-accent/60 rounded-lg p-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent/40 resize-none transition-all"
                 required
               />
               <p className="text-[10px] text-text-muted leading-relaxed">
@@ -279,7 +335,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <Button
                 type="submit"
                 variant="primary"
-                className="flex-1 text-xs h-9 justify-center"
+                className="flex-1 text-xs h-9 justify-center bg-accent hover:bg-accent/90 text-white"
                 disabled={isSubmitting || !token.trim()}
               >
                 {isSubmitting ? (
@@ -297,4 +353,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 };

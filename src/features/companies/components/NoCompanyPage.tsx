@@ -12,6 +12,11 @@ interface NoCompanyPageProps {
   onRefresh?: () => void;
 }
 
+function isTokenLike(value: string): boolean {
+  const clean = value.trim();
+  return clean.length >= 32 && /^[0-9a-fA-F]+$/.test(clean);
+}
+
 export const NoCompanyPage: React.FC<NoCompanyPageProps> = ({
   userEmail,
   userName,
@@ -54,6 +59,13 @@ export const NoCompanyPage: React.FC<NoCompanyPageProps> = ({
     const trimmedName = companyName.trim();
     if (!trimmedName || trimmedName.length < 2) {
       setActionError('El nombre de la empresa debe tener al menos 2 caracteres.');
+      return;
+    }
+
+    if (isTokenLike(trimmedName)) {
+      setActionError(
+        'El texto ingresado coincide con un token de invitación. Por favor seleccioná la pestaña "Aceptar Invitación" para canjearlo.'
+      );
       return;
     }
 
