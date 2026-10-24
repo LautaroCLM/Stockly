@@ -64,6 +64,19 @@ export interface InviteUserResult {
   error?: string;
 }
 
+export interface CompanySettings {
+  id: string;
+  name: string;
+  taxId: string | null;
+  currency: string;
+  timezone: string;
+  isActive: boolean;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  allowNegativeStock: boolean;
+}
+
 export interface CompanyContextValue {
   companies: Company[];
   activeCompany: Company | null;

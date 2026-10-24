@@ -11,6 +11,7 @@ import { useStockMovements } from '@/features/inventario/hooks/useStockMovements
 import { useSales } from '@/features/inventario/hooks/useSales';
 import { useSuppliers } from '@/features/proveedores/hooks/useSuppliers';
 import { useCompanyMembers } from '@/features/companies/hooks/useCompanyMembers';
+import { useCompanySettings } from '@/features/companies/hooks/useCompanySettings';
 import { executeSaleTransaction } from '@/features/inventario/api/checkoutTransaction';
 import { AppShell } from '@/components/layout/AppShell';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
@@ -19,6 +20,7 @@ import { VentasPage } from '@/features/ventas/VentasPage';
 import { HistorialStockPage } from '@/features/historial/HistorialStockPage';
 import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
 import { MembersPage } from '@/features/companies/components/MembersPage';
+import { CompanySettingsPage } from '@/features/companies/components/CompanySettingsPage';
 import { CartDrawer } from '@/features/inventario/components/CartDrawer';
 import { CheckoutModal } from '@/features/inventario/components/CheckoutModal';
 import { ReceiptModal } from '@/features/inventario/components/ReceiptModal';
@@ -160,6 +162,15 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     deactivateMember,
     reactivateMember,
   } = useCompanyMembers(activeCompany.id, isMasterAdmin);
+
+  // Configuración de la empresa activa y política de stock negativo
+  const {
+    settings: companySettings,
+    isLoading: isSettingsLoading,
+    error: settingsError,
+    reload: reloadSettings,
+    updateNegativeStockPolicy,
+  } = useCompanySettings(activeCompany.id);
 
   // Lock contra envíos concurrentes
   const isProcessingSaleRef = useRef(false);
@@ -378,12 +389,25 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           />
         )}
 
+        {activeRoute === 'config-empresa' && (
+          <CompanySettingsPage
+            company={activeCompany}
+            settings={companySettings}
+            isLoading={isSettingsLoading}
+            error={settingsError}
+            isMasterAdmin={isMasterAdmin}
+            onReload={reloadSettings}
+            onUpdateNegativeStockPolicy={updateNegativeStockPolicy}
+          />
+        )}
+
         {activeRoute !== 'dashboard' &&
           activeRoute !== 'inventario' &&
           activeRoute !== 'ventas' &&
           activeRoute !== 'historial' &&
           activeRoute !== 'proveedores' &&
-          activeRoute !== 'config-miembros' && (
+          activeRoute !== 'config-miembros' &&
+          activeRoute !== 'config-empresa' && (
             <EmptyState
               routeId={activeRoute}
               onNavigateHome={() => setActiveRoute('dashboard')}
