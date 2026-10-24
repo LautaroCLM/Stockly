@@ -30,6 +30,40 @@ export interface CompanyActionResult {
   error?: string;
 }
 
+export interface CompanyMember {
+  id: string;
+  companyId: string;
+  userId: string;
+  role: CompanyRole;
+  isActive: boolean;
+  joinedAt: string;
+  fullName?: string | null;
+  email?: string | null;
+}
+
+export interface CompanyInvitation {
+  id: string;
+  companyId: string;
+  email: string;
+  role: CompanyRole;
+  status: 'pending' | 'accepted' | 'revoked' | 'expired';
+  expiresAt: string;
+  createdAt: string;
+  acceptedAt?: string | null;
+}
+
+export interface InviteUserInput {
+  companyId: string;
+  email: string;
+  role: CompanyRole;
+}
+
+export interface InviteUserResult {
+  success: boolean;
+  token?: string;
+  error?: string;
+}
+
 export interface CompanyContextValue {
   companies: Company[];
   activeCompany: Company | null;
