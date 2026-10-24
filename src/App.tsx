@@ -9,12 +9,14 @@ import { useProducts } from '@/features/inventario/hooks/useProducts';
 import { useCategories } from '@/features/inventario/hooks/useCategories';
 import { useStockMovements } from '@/features/inventario/hooks/useStockMovements';
 import { useSales } from '@/features/inventario/hooks/useSales';
+import { useSuppliers } from '@/features/proveedores/hooks/useSuppliers';
 import { executeSaleTransaction } from '@/features/inventario/api/checkoutTransaction';
 import { AppShell } from '@/components/layout/AppShell';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { InventarioPage } from '@/features/inventario/InventarioPage';
 import { VentasPage } from '@/features/ventas/VentasPage';
 import { HistorialStockPage } from '@/features/historial/HistorialStockPage';
+import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
 import { CartDrawer } from '@/features/inventario/components/CartDrawer';
 import { CheckoutModal } from '@/features/inventario/components/CheckoutModal';
 import { ReceiptModal } from '@/features/inventario/components/ReceiptModal';
@@ -133,6 +135,16 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     sales,
     syncSaleFromTransaction,
   } = useSales(activeCompany.id);
+
+  // Persistent suppliers state per tenant
+  const {
+    suppliers,
+    isLoading: isSuppliersLoading,
+    error: suppliersError,
+    reloadSuppliers,
+    saveSupplier,
+    toggleStatus: toggleSupplierStatus,
+  } = useSuppliers(activeCompany.id);
 
   // Lock contra envíos concurrentes
   const isProcessingSaleRef = useRef(false);
@@ -320,10 +332,24 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           />
         )}
 
+        {activeRoute === 'proveedores' && (
+          <ProveedoresPage
+            company={activeCompany}
+            suppliers={suppliers}
+            isLoading={isSuppliersLoading}
+            error={suppliersError}
+            isMasterAdmin={isMasterAdmin}
+            onReload={reloadSuppliers}
+            onSaveSupplier={saveSupplier}
+            onToggleStatus={toggleSupplierStatus}
+          />
+        )}
+
         {activeRoute !== 'dashboard' &&
           activeRoute !== 'inventario' &&
           activeRoute !== 'ventas' &&
-          activeRoute !== 'historial' && (
+          activeRoute !== 'historial' &&
+          activeRoute !== 'proveedores' && (
             <EmptyState
               routeId={activeRoute}
               onNavigateHome={() => setActiveRoute('dashboard')}
