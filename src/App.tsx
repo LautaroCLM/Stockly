@@ -195,16 +195,16 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           return { success: false, error: result.error || 'No se pudo completar la venta.' };
         }
 
-        // Éxito atómico comprobado: Sincronizar estados locales de React
-        if (result.updatedProducts) {
-          syncProductsFromTransaction(result.updatedProducts);
-        }
+        // Éxito atómico comprobado en PostgreSQL
         if (result.sale) {
           syncSaleFromTransaction(result.sale);
         }
-        if (result.movements) {
-          syncMovementsFromTransaction(result.movements);
-        }
+
+        // Recargar inventario y movimientos desde Supabase de forma coordinada
+        Promise.all([
+          reloadProducts().catch((err) => console.warn('Error al recargar productos:', err)),
+          reloadMovements().catch((err) => console.warn('Error al recargar movimientos:', err)),
+        ]);
 
         clearCart();
         setIsCheckoutOpen(false);
