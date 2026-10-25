@@ -10,6 +10,7 @@ import { useCategories } from '@/features/inventario/hooks/useCategories';
 import { useStockMovements } from '@/features/inventario/hooks/useStockMovements';
 import { useSales } from '@/features/inventario/hooks/useSales';
 import { useSuppliers } from '@/features/proveedores/hooks/useSuppliers';
+import { useCustomers } from '@/features/clientes/hooks/useCustomers';
 import { useCompanyMembers } from '@/features/companies/hooks/useCompanyMembers';
 import { useCompanySettings } from '@/features/companies/hooks/useCompanySettings';
 import { executeSaleTransaction } from '@/features/inventario/api/checkoutTransaction';
@@ -19,6 +20,7 @@ import { InventarioPage } from '@/features/inventario/InventarioPage';
 import { VentasPage } from '@/features/ventas/VentasPage';
 import { HistorialStockPage } from '@/features/historial/HistorialStockPage';
 import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
+import { ClientesPage } from '@/features/clientes/components/ClientesPage';
 import { MembersPage } from '@/features/companies/components/MembersPage';
 import { CompanySettingsPage } from '@/features/companies/components/CompanySettingsPage';
 import { CartDrawer } from '@/features/inventario/components/CartDrawer';
@@ -149,6 +151,16 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     saveSupplier,
     toggleStatus: toggleSupplierStatus,
   } = useSuppliers(activeCompany.id);
+
+  // Persistent customers state per tenant
+  const {
+    customers,
+    isLoading: isCustomersLoading,
+    error: customersError,
+    reloadCustomers,
+    saveCustomer,
+    toggleStatus: toggleCustomerStatus,
+  } = useCustomers(activeCompany.id);
 
   // Miembros e invitaciones de la empresa activa
   const {
@@ -371,6 +383,19 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           />
         )}
 
+        {activeRoute === 'clientes' && (
+          <ClientesPage
+            company={activeCompany}
+            customers={customers}
+            isLoading={isCustomersLoading}
+            error={customersError}
+            isMasterAdmin={isMasterAdmin}
+            onReload={reloadCustomers}
+            onSaveCustomer={saveCustomer}
+            onToggleStatus={toggleCustomerStatus}
+          />
+        )}
+
         {activeRoute === 'config-miembros' && (
           <MembersPage
             company={activeCompany}
@@ -406,6 +431,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           activeRoute !== 'ventas' &&
           activeRoute !== 'historial' &&
           activeRoute !== 'proveedores' &&
+          activeRoute !== 'clientes' &&
           activeRoute !== 'config-miembros' &&
           activeRoute !== 'config-empresa' && (
             <EmptyState
