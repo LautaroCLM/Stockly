@@ -5,6 +5,8 @@ import { processSaleRpc, ProcessSaleParams } from './salesApi';
 export interface ExecuteSaleParams {
   tenantId: TenantId;
   clientName: string;
+  customerId?: string | null;
+  customerDoc?: string | null;
   payments: PaymentEntry[];
   cartItems: CartItem[];
   cartSubtotal: number;
@@ -65,6 +67,7 @@ export async function executeSaleTransaction(
     discount: discountAmount > 0 ? discountAmount : 0,
     payments: rpcPayments,
     notes: notes || (clientName ? `Cliente: ${clientName}` : undefined),
+    customerId: params.customerId || null,
   };
 
   try {
@@ -77,6 +80,8 @@ export async function executeSaleTransaction(
       saleNumber: rpcResponse.sale_number,
       createdAt: rpcResponse.created_at,
       clientName: clientName || 'Consumidor Final',
+      customerId: params.customerId || null,
+      customerDoc: params.customerDoc || null,
       items: cartItems.map((ci) => ({
         ...ci,
       })),

@@ -99,6 +99,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                 <span>CLIENTE:</span>
                 <span className="font-medium truncate max-w-[170px]">{sale.clientName}</span>
               </div>
+              {sale.customerDoc && (
+                <div className="flex justify-between text-[9px] text-zinc-600">
+                  <span>IDENTIFICACIÓN:</span>
+                  <span className="font-medium">{sale.customerDoc}</span>
+                </div>
+              )}
             </div>
 
             {/* Items Table */}

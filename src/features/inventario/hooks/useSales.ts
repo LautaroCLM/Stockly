@@ -21,7 +21,13 @@ function mapRowToSale(row: SaleRow, tenantId: TenantId): Sale {
   }));
 
   let clientName = 'Consumidor Final';
-  if (row.notes && row.notes.startsWith('Cliente: ')) {
+  let customerDoc: string | null = null;
+  if (row.customer && row.customer.name) {
+    clientName = row.customer.name;
+    if (row.customer.tax_id) {
+      customerDoc = `${row.customer.identification_type} ${row.customer.tax_id}`;
+    }
+  } else if (row.notes && row.notes.startsWith('Cliente: ')) {
     clientName = row.notes.replace('Cliente: ', '');
   }
 
@@ -31,6 +37,8 @@ function mapRowToSale(row: SaleRow, tenantId: TenantId): Sale {
     saleNumber: row.sale_number,
     createdAt: row.created_at,
     clientName,
+    customerId: row.customer_id,
+    customerDoc,
     items,
     subtotal: Number(row.subtotal),
     discountPercent: 0,

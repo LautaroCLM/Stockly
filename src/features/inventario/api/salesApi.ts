@@ -17,6 +17,7 @@ export interface ProcessSaleParams {
   discount?: number;
   payments?: ProcessSalePaymentPayload[];
   notes?: string;
+  customerId?: string | null;
 }
 
 export interface ProcessSaleRpcResponse {
@@ -24,6 +25,7 @@ export interface ProcessSaleRpcResponse {
   sale_id: string;
   sale_number: string;
   company_id: string;
+  customer_id: string | null;
   subtotal: number;
   discount: number;
   total_amount: number;
@@ -60,6 +62,12 @@ export interface SaleRow {
   created_by: string;
   created_at: string;
   sale_items?: SaleItemRow[];
+  customer?: {
+    id: string;
+    name: string;
+    identification_type: string;
+    tax_id: string | null;
+  } | null;
 }
 
 /**
@@ -78,6 +86,7 @@ export async function processSaleRpc(params: ProcessSaleParams): Promise<Process
       p_discount: params.discount ?? 0,
       p_payments: params.payments ?? [],
       p_notes: params.notes ?? null,
+      p_customer_id: params.customerId || null,
     }
   );
 
@@ -117,6 +126,12 @@ export async function fetchSales(companyId: string): Promise<SaleRow[]> {
       notes,
       created_by,
       created_at,
+      customer:customers (
+        id,
+        name,
+        identification_type,
+        tax_id
+      ),
       sale_items (
         id,
         company_id,
@@ -173,6 +188,12 @@ export async function fetchSaleById(companyId: string, saleId: string): Promise<
       notes,
       created_by,
       created_at,
+      customer:customers (
+        id,
+        name,
+        identification_type,
+        tax_id
+      ),
       sale_items (
         id,
         company_id,

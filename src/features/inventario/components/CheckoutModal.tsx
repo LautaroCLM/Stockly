@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PaymentEntry, PaymentMethod } from '../types';
+import type { Customer } from '@/features/clientes/types';
 import { formatCurrency } from '@/lib/formatters';
 import { Button } from '@/components/ui/Button';
+import { CustomerSelector } from './CustomerSelector';
 import {
   LucideIcon,
   X,
@@ -18,10 +20,12 @@ import {
 interface CheckoutModalProps {
   isOpen: boolean;
   total: number;
+  customers?: Customer[];
   onClose: () => void;
   onConfirmSale: (
     clientName: string,
-    payments: PaymentEntry[]
+    payments: PaymentEntry[],
+    customerId?: string | null
   ) => { success: boolean; error?: string } | Promise<{ success: boolean; error?: string }> | void;
 }
 
@@ -36,9 +40,11 @@ const PAYMENT_OPTIONS: { id: PaymentMethod; label: string; icon: LucideIcon }[] 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
   total,
+  customers = [],
   onClose,
   onConfirmSale,
 }) => {
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [clientName, setClientName] = useState('Consumidor Final');
   const [paymentMode, setPaymentMode] = useState<'single' | 'split'>('single');
 
@@ -61,6 +67,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setSplits([{ id: 'split-1', method: 'efectivo', amount: total }]);
     setErrorMessage(null);
     setIsSubmitting(false);
+    setSelectedCustomer(null);
+    setClientName('Consumidor Final');
   }, [total, isOpen]);
 
   // Handle escape key
@@ -151,7 +159,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     // Atomic lock
     setIsSubmitting(true);
     try {
-      const result = onConfirmSale(clientName.trim() || 'Consumidor Final', finalPayments);
+      const finalClientName = selectedCustomer ? selectedCustomer.name : (clientName.trim() || 'Consumidor Final');
+      const finalCustomerId = selectedCustomer ? selectedCustomer.id : null;
+      const result = onConfirmSale(finalClientName, finalPayments, finalCustomerId);
 
       if (result && typeof (result as Promise<unknown>).then === 'function') {
         (result as Promise<{ success: boolean; error?: string }>)
@@ -211,19 +221,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-          {/* Client Input */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-text-secondary">
-              Nombre o Razón Social del Cliente:
-            </label>
-            <input
-              type="text"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="Ej. Consumidor Final, Constructora San Martín..."
-              className="w-full h-9 px-3 text-xs bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none"
-            />
-          </div>
+          {/* Customer Selector */}
+          <CustomerSelector
+            customers={customers}
+            selectedCustomerId={selectedCustomer ? selectedCustomer.id : null}
+            onSelectCustomer={(c) => {
+              setSelectedCustomer(c);
+              setClientName(c ? c.name : 'Consumidor Final');
+            }}
+            disabled={isSubmitting}
+          />
 
           {/* Payment Mode Selector */}
           <div className="space-y-2">

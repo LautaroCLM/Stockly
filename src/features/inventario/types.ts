@@ -80,6 +80,8 @@ export interface Sale {
   saleNumber: string;
   createdAt: string;
   clientName: string;
+  customerId?: string | null;
+  customerDoc?: string | null;
   items: CartItem[];
   subtotal: number;
   discountPercent: number;

@@ -204,7 +204,11 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
 
   // Confirm sale handler (atomic coordination of stock discount and sale recording)
   const handleConfirmSale = useCallback(
-    async (clientName: string, payments: PaymentEntry[]) => {
+    async (
+      clientName: string,
+      payments: PaymentEntry[],
+      customerId?: string | null
+    ) => {
       if (cartItems.length === 0) {
         return { success: false, error: 'El carrito está vacío.' };
       }
@@ -230,8 +234,18 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
       isProcessingSaleRef.current = true;
 
       try {
+        let customerDoc: string | null = null;
+        if (customerId) {
+          const found = customers.find((c) => c.id === customerId);
+          if (found && found.taxId) {
+            customerDoc = `${found.identificationType} ${found.taxId}`;
+          }
+        }
+
         const result = await executeSaleTransaction({
           tenantId: activeCompany.id,
+          customerId,
+          customerDoc,
           clientName,
           payments,
           cartItems,
@@ -273,6 +287,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     },
     [
       activeCompany.id,
+      customers,
       cartItems,
       products,
       cartSubtotal,
@@ -465,6 +480,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
       <CheckoutModal
         isOpen={isCheckoutOpen}
         total={cartTotal}
+        customers={customers}
         onClose={() => setIsCheckoutOpen(false)}
         onConfirmSale={handleConfirmSale}
       />
