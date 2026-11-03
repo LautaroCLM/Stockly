@@ -1,0 +1,4 @@
+# Las migraciones y tests SQL se aplican tal cual a la base: siempre con finales de línea LF,
+# para que el código de las funciones quede idéntico sin importar el sistema operativo
+# desde el que se apliquen (core.autocrlf los convertiría a CRLF en Windows).
+*.sql text eol=lf

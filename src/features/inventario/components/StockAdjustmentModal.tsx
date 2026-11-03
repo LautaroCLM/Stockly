@@ -345,7 +345,8 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 </label>
                 <input
                   type="number"
-                  min="0.01"
+                  // El mínimo debe ser múltiplo del paso: con min 0.01 y step 1 el navegador solo aceptaba 0,01; 1,01...
+                  min={['unidad', 'bulto', 'par'].includes(product.unit.toLowerCase()) ? '1' : '0.01'}
                   step={['unidad', 'bulto', 'par'].includes(product.unit.toLowerCase()) ? '1' : '0.01'}
                   required
                   disabled={isSubmitting}

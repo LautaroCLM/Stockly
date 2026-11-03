@@ -312,6 +312,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <input
                 type="number"
                 min="0"
+                step="0.01"
                 value={minStock}
                 onChange={(e) => setMinStock(e.target.value)}
                 className="w-full h-9 px-3 text-xs font-semibold text-right bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none tabular-nums"
