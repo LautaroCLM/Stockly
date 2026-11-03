@@ -10,6 +10,7 @@ import { useProducts } from '@/features/inventario/hooks/useProducts';
 import { useCategories } from '@/features/inventario/hooks/useCategories';
 import { useSuppliers } from '@/features/proveedores/hooks/useSuppliers';
 import { useCustomers } from '@/features/clientes/hooks/useCustomers';
+import { usePurchases } from '@/features/compras/hooks/usePurchases';
 import { useCompanyMembers } from '@/features/companies/hooks/useCompanyMembers';
 import { useCompanySettings } from '@/features/companies/hooks/useCompanySettings';
 import { buildSaleRequest, executeSaleTransaction } from '@/features/inventario/api/checkoutTransaction';
@@ -21,6 +22,7 @@ import { VentasPage } from '@/features/ventas/VentasPage';
 import { HistorialStockPage } from '@/features/historial/HistorialStockPage';
 import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
 import { ClientesPage } from '@/features/clientes/components/ClientesPage';
+import { ComprasPage } from '@/features/compras/components/ComprasPage';
 import { MembersPage } from '@/features/companies/components/MembersPage';
 import { CompanySettingsPage } from '@/features/companies/components/CompanySettingsPage';
 import { CartDrawer } from '@/features/inventario/components/CartDrawer';
@@ -123,6 +125,16 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     saveCustomer,
     toggleStatus: toggleCustomerStatus,
   } = useCustomers(activeCompany.id);
+
+  // Persistent purchases state per tenant (exclusivo master_admin)
+  const {
+    purchases,
+    isLoading: isPurchasesLoading,
+    error: purchasesError,
+    syncWarning: purchasesSyncWarning,
+    reloadPurchases,
+    createPurchase,
+  } = usePurchases(activeCompany.id, isMasterAdmin);
 
   // Miembros e invitaciones de la empresa activa
   const {
@@ -278,10 +290,19 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   // Alerta del header: productos activos en o bajo su stock mínimo
   const restockCount = React.useMemo(() => productsToRestock(products).length, [products]);
 
+  // Filtrar secciones del menú: compras exclusivo para master_admin
+  const accessibleNavSections = React.useMemo(() => {
+    if (isMasterAdmin) return NAV_SECTIONS;
+    return NAV_SECTIONS.map((section) => ({
+      ...section,
+      items: section.items.filter((item) => item.id !== 'compras'),
+    })).filter((section) => section.items.length > 0);
+  }, [isMasterAdmin]);
+
   return (
     <>
       <AppShell
-        sections={NAV_SECTIONS}
+        sections={accessibleNavSections}
         activeRoute={activeRoute}
         onNavigate={setActiveRoute}
         companies={companies}
@@ -374,6 +395,27 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           />
         )}
 
+        {activeRoute === 'compras' && (
+          <ComprasPage
+            company={activeCompany}
+            purchases={purchases}
+            suppliers={suppliers}
+            products={products}
+            isLoading={isPurchasesLoading}
+            error={purchasesError}
+            syncWarning={purchasesSyncWarning}
+            isMasterAdmin={isMasterAdmin}
+            onReload={reloadPurchases}
+            onSavePurchase={createPurchase}
+            onPurchaseSuccess={() => {
+              reloadProducts().catch((err) =>
+                console.warn('Error al recargar productos tras compra:', err)
+              );
+            }}
+            onNavigateHome={() => setActiveRoute('dashboard')}
+          />
+        )}
+
         {activeRoute === 'clientes' && (
           <ClientesPage
             company={activeCompany}
@@ -422,6 +464,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           activeRoute !== 'ventas' &&
           activeRoute !== 'historial' &&
           activeRoute !== 'proveedores' &&
+          activeRoute !== 'compras' &&
           activeRoute !== 'clientes' &&
           activeRoute !== 'config-miembros' &&
           activeRoute !== 'config-empresa' && (
