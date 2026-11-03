@@ -1,0 +1,14 @@
+# Archivos locales que nunca deben subirse en un despliegue por CLI.
+# Las variables de entorno se configuran en Vercel; un .env local subido por error
+# haría que Vite compile contra la base local si faltara alguna variable.
+.env*
+!.env.example
+
+# Carpetas locales de trabajo y artefactos
+node_modules
+dist
+backups
+scratch
+.claude
+supabase/.temp
+supabase/.branches
