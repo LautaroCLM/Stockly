@@ -83,6 +83,14 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
               <div className="pt-1 text-[9px] uppercase font-bold text-rose-700 bg-rose-50 border border-rose-200 py-0.5 px-2 rounded">
                 COMPROBANTE NO FISCAL - USO INTERNO
               </div>
+              {sale.status === 'anulada' && (
+                <div className="mt-1.5 py-1 border-2 border-red-700 text-red-700 font-extrabold text-[11px] tracking-widest">
+                  VENTA ANULADA
+                  {sale.cancelReason && (
+                    <span className="block text-[9px] font-medium tracking-normal">Motivo: {sale.cancelReason}</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Sale Meta */}

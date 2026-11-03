@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/Badge';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { fromHundredths, toHundredths } from '@/lib/decimal';
 import { useSalesHistory } from './hooks/useSalesHistory';
+import { cancelSaleRpc } from './api/saleCancellationApi';
+import { CancelSaleModal } from './components/CancelSaleModal';
 import {
   Receipt,
   Search,
@@ -15,14 +17,18 @@ import {
   Info,
   Loader2,
   AlertTriangle,
+  Ban,
 } from 'lucide-react';
 
 interface VentasPageProps {
   company: Company;
   /** Catálogo completo de clientes: la búsqueda por nombre o documento se resuelve contra él. */
   customers: Customer[];
+  isMasterAdmin: boolean;
   onViewReceipt: (sale: Sale) => void;
   onNavigateToInventario: () => void;
+  /** Se invoca tras anular una venta (el stock cambió). */
+  onSaleCancelled: () => void;
 }
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -30,9 +36,12 @@ const SEARCH_DEBOUNCE_MS = 300;
 export const VentasPage: React.FC<VentasPageProps> = ({
   company,
   customers,
+  isMasterAdmin,
   onViewReceipt,
   onNavigateToInventario,
+  onSaleCancelled,
 }) => {
+  const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   // Paginación y búsqueda se resuelven en el servidor (ver useSalesHistory)
   const { sales, total, hasMore, isLoading, isLoadingMore, error, setSearch, loadMore, reload } =
     useSalesHistory(company.id, customers);
@@ -44,11 +53,21 @@ export const VentasPage: React.FC<VentasPageProps> = ({
     return () => window.clearTimeout(timer);
   }, [searchQuery, setSearch]);
 
-  // Suma exacta en centavos de las ventas cargadas en pantalla
+  // Suma exacta en centavos de las ventas completadas cargadas en pantalla (sin anuladas)
+  const completedShown = useMemo(() => sales.filter((sale) => sale.status === 'completada'), [sales]);
   const totalShown = useMemo(
-    () => fromHundredths(sales.reduce((acc, sale) => acc + toHundredths(sale.total), 0)),
-    [sales]
+    () => fromHundredths(completedShown.reduce((acc, sale) => acc + toHundredths(sale.total), 0)),
+    [completedShown]
   );
+
+  const handleConfirmCancel = async (sale: Sale, reason: string) => {
+    const result = await cancelSaleRpc(company.id, sale.id, reason);
+    if (result.status === 'cancelled') {
+      reload();
+      onSaleCancelled();
+    }
+    return result;
+  };
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-12">
@@ -88,11 +107,11 @@ export const VentasPage: React.FC<VentasPageProps> = ({
         <div className="flex items-center gap-2 text-text-secondary">
           <Info size={15} className="text-primary shrink-0" />
           <span>
-            <strong>Control Inmutable:</strong> La anulación de comprobantes, notas de crédito y reversión automática en stock_movements se incorporarán en la Fase 5.
+            <strong>Control Inmutable:</strong> Las ventas no se editan. Un administrador puede anularlas indicando el motivo: el stock se repone y la venta queda en el historial como anulada.
           </span>
         </div>
         <span className="text-[11px] text-text-muted font-mono shrink-0">
-          Total de las {sales.length} ventas mostradas: {formatCurrency(totalShown)}
+          Total de las {completedShown.length} ventas completadas mostradas: {formatCurrency(totalShown)}
         </span>
       </div>
 
@@ -170,9 +189,16 @@ export const VentasPage: React.FC<VentasPageProps> = ({
                       className="hover:bg-surface-2/50 transition-colors group"
                     >
                       <td className="py-3 px-4">
-                        <span className="font-mono font-bold text-text-primary text-xs">
-                          {sale.saleNumber}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-text-primary text-xs">
+                            {sale.saleNumber}
+                          </span>
+                          {sale.status === 'anulada' && (
+                            <Badge variant="danger" size="sm" title={sale.cancelReason ?? undefined}>
+                              Anulada
+                            </Badge>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-3 px-3 text-text-secondary">
@@ -206,21 +232,39 @@ export const VentasPage: React.FC<VentasPageProps> = ({
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 text-right font-bold text-text-primary tabular-nums">
+                      <td
+                        className={`py-3 px-4 text-right font-bold tabular-nums ${
+                          sale.status === 'anulada' ? 'text-text-muted line-through' : 'text-text-primary'
+                        }`}
+                      >
                         {formatCurrency(sale.total)}
                       </td>
 
-                      <td className="py-3 px-4 text-center">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => onViewReceipt(sale)}
-                          className="h-7 px-2.5 text-xs gap-1"
-                          title="Ver ticket de venta"
-                        >
-                          <Eye size={13} />
-                          <span>Ticket</span>
-                        </Button>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => onViewReceipt(sale)}
+                            className="h-7 px-2.5 text-xs gap-1"
+                            title="Ver ticket de venta"
+                          >
+                            <Eye size={13} />
+                            <span>Ticket</span>
+                          </Button>
+                          {isMasterAdmin && sale.status === 'completada' && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setSaleToCancel(sale)}
+                              className="h-7 px-2.5 text-xs gap-1 hover:text-danger"
+                              title="Anular venta"
+                            >
+                              <Ban size={13} />
+                              <span>Anular</span>
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -242,6 +286,12 @@ export const VentasPage: React.FC<VentasPageProps> = ({
           )}
         </CardContent>
       </Card>
+
+      <CancelSaleModal
+        sale={saleToCancel}
+        onClose={() => setSaleToCancel(null)}
+        onConfirm={handleConfirmCancel}
+      />
     </div>
   );
 };

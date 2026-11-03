@@ -19,7 +19,7 @@ export interface SalesPage {
 
 const SALE_COLUMNS = `
   id, company_id, sale_number, customer_id, status, subtotal, discount, total_amount,
-  payments, notes, created_at,
+  payments, notes, created_at, cancelled_at, cancel_reason,
   customer:customers ( name, identification_type, tax_id ),
   sale_items ( product_id, quantity, unit_price, subtotal, product:products ( name, sku ) )
 `;
@@ -108,7 +108,9 @@ export async function fetchSalesPage(
         discountAmount: Number(row.discount),
         total: Number(row.total_amount),
         payments: parsePayments(row.payments),
-        status: 'completada' as const,
+        status: row.status === 'cancelled' ? ('anulada' as const) : ('completada' as const),
+        cancelledAt: row.cancelled_at,
+        cancelReason: row.cancel_reason,
       };
     }),
   };

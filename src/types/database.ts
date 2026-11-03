@@ -631,6 +631,12 @@ isOneToOne: false
 "bulk_update_prices":
 { Args: { "p_category_id"?: string,"p_company_id": string,"p_fixed_delta"?: number,"p_percentage"?: number,"p_product_ids"?: (string)[] }; Returns: number
                            },
+"cancel_purchase":
+{ Args: { "p_company_id": string,"p_purchase_id": string,"p_reason": string }; Returns: Json
+                           },
+"cancel_sale":
+{ Args: { "p_company_id": string,"p_reason": string,"p_sale_id": string }; Returns: Json
+                           },
 "create_company":
 { Args: { "p_currency"?: string,"p_name": string,"p_tax_id": string,"p_timezone"?: string }; Returns: string
                            },

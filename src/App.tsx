@@ -339,11 +339,15 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           <VentasPage
             company={activeCompany}
             customers={customers}
+            isMasterAdmin={isMasterAdmin}
             onViewReceipt={(sale) => {
               setSelectedReceiptSale(sale);
               setIsReceiptOpen(true);
             }}
             onNavigateToInventario={() => setActiveRoute('inventario')}
+            onSaleCancelled={() => {
+              reloadProducts().catch((err) => console.warn('Error al recargar productos tras anulación:', err));
+            }}
           />
         )}
 

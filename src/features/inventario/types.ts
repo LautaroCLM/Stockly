@@ -88,7 +88,9 @@ export interface Sale {
   discountAmount: number;
   total: number;
   payments: PaymentEntry[];
-  status: 'completada';
+  status: 'completada' | 'anulada';
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
 }
 
 export type StockMovementDirection = 'increase' | 'decrease';
