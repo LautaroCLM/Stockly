@@ -13,7 +13,8 @@ import { useSuppliers } from '@/features/proveedores/hooks/useSuppliers';
 import { useCustomers } from '@/features/clientes/hooks/useCustomers';
 import { useCompanyMembers } from '@/features/companies/hooks/useCompanyMembers';
 import { useCompanySettings } from '@/features/companies/hooks/useCompanySettings';
-import { executeSaleTransaction } from '@/features/inventario/api/checkoutTransaction';
+import { buildSaleRequest, executeSaleTransaction } from '@/features/inventario/api/checkoutTransaction';
+import { useSaleIntent } from '@/features/inventario/hooks/useSaleIntent';
 import { AppShell } from '@/components/layout/AppShell';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { InventarioPage } from '@/features/inventario/InventarioPage';
@@ -186,6 +187,11 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
 
   // Lock contra envíos concurrentes
   const isProcessingSaleRef = useRef(false);
+  const {
+    acquireKey: acquireSaleKey,
+    markUncertain: markSaleUncertain,
+    reset: resetSaleIntent,
+  } = useSaleIntent();
 
   // Modal states
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -242,7 +248,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           }
         }
 
-        const result = await executeSaleTransaction({
+        const saleParams = {
           tenantId: activeCompany.id,
           customerId,
           customerDoc,
@@ -253,13 +259,24 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           discountPercent,
           discountAmount,
           cartTotal,
-        });
+        };
+        const saleRequest = buildSaleRequest(saleParams);
+
+        // Misma clave en los reintentos del mismo cobro: el servidor no duplica la venta
+        const idempotencyKey = acquireSaleKey(activeCompany.id, JSON.stringify(saleRequest));
+        const result = await executeSaleTransaction(saleParams, saleRequest, idempotencyKey);
 
         if (!result.success) {
+          if (result.isNetworkError) {
+            markSaleUncertain();
+          } else if (result.isIdempotencyConflict) {
+            resetSaleIntent();
+          }
           return { success: false, error: result.error || 'No se pudo completar la venta.' };
         }
 
         // Éxito atómico comprobado en PostgreSQL
+        resetSaleIntent();
         if (result.sale) {
           syncSaleFromTransaction(result.sale);
         }
@@ -298,6 +315,9 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
       syncProductsFromTransaction,
       syncSaleFromTransaction,
       syncMovementsFromTransaction,
+      acquireSaleKey,
+      markSaleUncertain,
+      resetSaleIntent,
     ]
   );
 

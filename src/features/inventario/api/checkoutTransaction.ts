@@ -1,6 +1,8 @@
 import { TenantId } from '@/types';
 import { CartItem, PaymentEntry, Sale } from '../types';
+import { isIdempotencyMismatchError } from '../saleIntent';
 import { processSaleRpc, ProcessSaleParams } from './salesApi';
+import { isNetworkOrUncertainError } from './productsApi';
 
 export interface ExecuteSaleParams {
   tenantId: TenantId;
@@ -13,65 +15,62 @@ export interface ExecuteSaleParams {
   discountPercent: number;
   discountAmount: number;
   cartTotal: number;
-  idempotencyKey?: string;
   notes?: string;
 }
+
+/** Parámetros de process_sale sin la clave: define la "huella" del pedido. */
+export type SaleRequest = Omit<ProcessSaleParams, 'idempotencyKey'>;
 
 export interface CheckoutTransactionResult {
   success: boolean;
   error?: string;
+  /** No se sabe si la venta quedó registrada: reintentar con la misma clave. */
   isNetworkError?: boolean;
+  /** La clave ya se usó con otros datos: un intento anterior quedó registrado. */
+  isIdempotencyConflict?: boolean;
   sale?: Sale;
+}
+
+/**
+ * Traduce el carrito al payload exacto que recibe process_sale.
+ */
+export function buildSaleRequest(params: ExecuteSaleParams): SaleRequest {
+  const { tenantId, clientName, payments, cartItems, discountAmount, notes } = params;
+
+  return {
+    companyId: tenantId,
+    items: cartItems.map((item) => ({
+      product_id: item.productId,
+      quantity: item.quantity,
+    })),
+    discount: discountAmount > 0 ? discountAmount : 0,
+    payments: payments.map((p) => ({
+      method: p.method,
+      amount: p.amount,
+    })),
+    notes: notes || (clientName ? `Cliente: ${clientName}` : undefined),
+    customerId: params.customerId || null,
+  };
 }
 
 /**
  * Ejecuta la venta transaccional contra Supabase mediante la RPC autoritativa public.process_sale.
  * El backend es la única fuente de verdad para existencias, precios históricos y correlatividad.
+ * La clave de idempotencia la provee quien llama, para poder reutilizarla en los reintentos.
  */
 export async function executeSaleTransaction(
-  params: ExecuteSaleParams
+  params: ExecuteSaleParams,
+  request: SaleRequest,
+  idempotencyKey: string
 ): Promise<CheckoutTransactionResult> {
-  const {
-    tenantId,
-    clientName,
-    payments,
-    cartItems,
-    discountAmount,
-    idempotencyKey,
-    notes,
-  } = params;
+  const { tenantId, clientName, payments, cartItems } = params;
 
   if (!cartItems || cartItems.length === 0) {
     return { success: false, error: 'El carrito no contiene productos.' };
   }
 
-  // Generar o reusar la clave de intención de venta
-  const effectiveIdempotencyKey = idempotencyKey || crypto.randomUUID();
-
-  // Mapear items a payload esperado por process_sale
-  const rpcItems = cartItems.map((item) => ({
-    product_id: item.productId,
-    quantity: item.quantity,
-  }));
-
-  // Mapear medios de pago
-  const rpcPayments = payments.map((p) => ({
-    method: p.method,
-    amount: p.amount,
-  }));
-
-  const rpcParams: ProcessSaleParams = {
-    companyId: tenantId,
-    idempotencyKey: effectiveIdempotencyKey,
-    items: rpcItems,
-    discount: discountAmount > 0 ? discountAmount : 0,
-    payments: rpcPayments,
-    notes: notes || (clientName ? `Cliente: ${clientName}` : undefined),
-    customerId: params.customerId || null,
-  };
-
   try {
-    const rpcResponse = await processSaleRpc(rpcParams);
+    const rpcResponse = await processSaleRpc({ ...request, idempotencyKey });
 
     // Mapear la respuesta de PostgreSQL al objeto Sale consumido por la UI y el comprobante
     const mappedSale: Sale = {
@@ -100,16 +99,27 @@ export async function executeSaleTransaction(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error desconocido al registrar la venta.';
 
-    // Detectar si el fallo puede ser de red/transporte
-    const isNetworkError =
-      message.toLowerCase().includes('failed to fetch') ||
-      message.toLowerCase().includes('network') ||
-      message.toLowerCase().includes('timeout');
+    if (isIdempotencyMismatchError(message)) {
+      return {
+        success: false,
+        isIdempotencyConflict: true,
+        error:
+          'Un intento anterior de esta venta ya quedó registrado con otros datos. Revisá el historial de Ventas antes de volver a cobrar.',
+      };
+    }
+
+    if (isNetworkOrUncertainError(err)) {
+      return {
+        success: false,
+        isNetworkError: true,
+        error:
+          'No pudimos confirmar si la venta se registró por un problema de conexión. Reintentá: si ya se registró, no se va a duplicar.',
+      };
+    }
 
     return {
       success: false,
       error: message,
-      isNetworkError,
     };
   }
 }
