@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShoppingCart,
   Search,
@@ -10,67 +10,79 @@ import {
   Loader2,
   DollarSign,
   Package,
+  Ban,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { CancelDocumentModal } from '@/components/shared/CancelDocumentModal';
 import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import type { Company } from '@/types';
 import type { Supplier } from '@/features/proveedores/types';
 import type { Product } from '@/features/inventario/types';
-import type { Purchase, CreatePurchaseInput, PurchaseActionResult } from '../types';
+import type { Purchase } from '../types';
+import { usePurchases } from '../hooks/usePurchases';
+import { cancelPurchaseRpc } from '../api/purchaseCancellationApi';
 import { PurchaseDetailModal } from './PurchaseDetailModal';
 import { PurchaseFormModal } from './PurchaseFormModal';
 
 interface ComprasPageProps {
   company: Company;
-  purchases: Purchase[];
+  /** Catálogo completo de proveedores: la búsqueda por nombre o CUIT se resuelve contra él. */
   suppliers: Supplier[];
   products: Product[];
-  isLoading: boolean;
-  error: string | null;
-  syncWarning: string | null;
   isMasterAdmin: boolean;
-  onReload: () => Promise<void>;
-  onSavePurchase: (input: CreatePurchaseInput) => Promise<PurchaseActionResult>;
-  onPurchaseSuccess?: () => void;
+  /** Se invoca al registrar o anular una compra (el stock cambió). */
+  onStockChanged: () => void;
   onNavigateHome: () => void;
 }
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 export const ComprasPage: React.FC<ComprasPageProps> = ({
   company,
-  purchases,
   suppliers,
   products,
-  isLoading,
-  error,
-  syncWarning,
   isMasterAdmin,
-  onReload,
-  onSavePurchase,
-  onPurchaseSuccess,
+  onStockChanged,
   onNavigateHome,
 }) => {
+  // Paginación, búsqueda y resumen se resuelven en el servidor (ver usePurchases)
+  const {
+    purchases,
+    total,
+    summary,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    error,
+    setSearch,
+    loadMore,
+    reloadPurchases,
+    createPurchase,
+  } = usePurchases(company.id, isMasterAdmin, suppliers);
+  const onReload = reloadPurchases;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [purchaseToCancel, setPurchaseToCancel] = useState<Purchase | null>(null);
 
-  const filteredPurchases = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return purchases;
-    return purchases.filter((p) => {
-      const matchNumber = p.purchaseNumber.toLowerCase().includes(q);
-      const matchSupplier = p.supplier?.name.toLowerCase().includes(q);
-      const matchInvoice = p.invoiceNumber?.toLowerCase().includes(q);
-      return matchNumber || matchSupplier || matchInvoice;
-    });
-  }, [purchases, searchQuery]);
+  // El texto se envía al servidor recién cuando el usuario deja de escribir
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearch(searchQuery), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, setSearch]);
 
-  const totalSpent = useMemo(
-    () => purchases.reduce((acc, p) => acc + (p.status === 'completed' ? p.totalAmount : 0), 0),
-    [purchases]
-  );
+  const handleConfirmCancel = async (purchase: Purchase, reason: string) => {
+    const result = await cancelPurchaseRpc(company.id, purchase.id, reason);
+    if (result.status === 'cancelled') {
+      reloadPurchases();
+      onStockChanged();
+    }
+    return result;
+  };
 
   if (!isMasterAdmin) {
     return (
@@ -92,7 +104,7 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
   }
 
   return (
-    <div className="flex-1 p-4 sm:p-6 space-y-5 overflow-y-auto">
+    <div className="space-y-5 max-w-7xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -115,12 +127,6 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
         </div>
       </div>
 
-      {syncWarning && (
-        <div className="p-3 bg-warning/10 border border-warning/20 rounded-xl text-warning text-xs">
-          {syncWarning}
-        </div>
-      )}
-
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <Card className="border-border bg-surface">
@@ -130,7 +136,7 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
             </div>
             <div>
               <p className="text-[11px] text-text-muted">Compras Realizadas</p>
-              <p className="text-lg font-bold text-text-primary">{purchases.length}</p>
+              <p className="text-lg font-bold text-text-primary">{summary ? summary.count : '...'}</p>
             </div>
           </CardContent>
         </Card>
@@ -142,7 +148,9 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
             </div>
             <div>
               <p className="text-[11px] text-text-muted">Total Invertido en Stock</p>
-              <p className="text-lg font-bold text-text-primary font-mono">{formatCurrency(totalSpent)}</p>
+              <p className="text-lg font-bold text-text-primary font-mono">
+                {summary ? formatCurrency(summary.total) : '...'}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -195,7 +203,7 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
             Reintentar
           </Button>
         </div>
-      ) : filteredPurchases.length === 0 ? (
+      ) : purchases.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-border rounded-2xl bg-surface/40 space-y-3">
           <ShoppingCart size={32} className="mx-auto text-text-muted opacity-50" />
           <div className="space-y-1">
@@ -230,10 +238,17 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {filteredPurchases.map((p) => (
+                {purchases.map((p) => (
                   <tr key={p.id} className="hover:bg-surface-2/40 transition-colors">
-                    <td className="py-3 px-4 font-mono font-semibold text-text-primary">
-                      {p.purchaseNumber}
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-semibold text-text-primary">{p.purchaseNumber}</span>
+                        {p.status === 'cancelled' && (
+                          <Badge variant="danger" size="sm" title={p.cancelReason ?? undefined}>
+                            Anulada
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-text-secondary whitespace-nowrap">
                       {formatDateShort(p.purchaseDate || p.createdAt)}
@@ -252,29 +267,77 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
                         {p.items?.length || 0}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-text-primary font-mono whitespace-nowrap">
+                    <td
+                      className={`py-3 px-4 text-right font-bold font-mono whitespace-nowrap ${
+                        p.status === 'cancelled' ? 'text-text-muted line-through' : 'text-text-primary'
+                      }`}
+                    >
                       {formatCurrency(p.totalAmount)}
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedPurchase(p);
-                          setIsDetailOpen(true);
-                        }}
-                        className="h-7 px-2.5 text-[11px]"
-                      >
-                        <Eye size={13} className="mr-1" /> Detalle
-                      </Button>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedPurchase(p);
+                            setIsDetailOpen(true);
+                          }}
+                          className="h-7 px-2.5 text-[11px]"
+                        >
+                          <Eye size={13} className="mr-1" /> Detalle
+                        </Button>
+                        {p.status === 'completed' && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setPurchaseToCancel(p)}
+                            className="h-7 px-2.5 text-[11px] hover:text-danger"
+                            title="Anular compra"
+                          >
+                            <Ban size={13} className="mr-1" /> Anular
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          <div className="p-3 border-t border-border/60 flex items-center justify-between gap-3 text-[11px] text-text-muted">
+            <span>
+              Mostrando <strong className="text-text-primary tabular-nums">{purchases.length}</strong> de{' '}
+              <strong className="text-text-primary tabular-nums">{total}</strong> compras
+            </span>
+            {hasMore && (
+              <Button variant="secondary" size="sm" onClick={loadMore} disabled={isLoadingMore}>
+                {isLoadingMore ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <span>Cargar más ({total - purchases.length} restantes)</span>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       )}
+
+      <CancelDocumentModal
+        isOpen={purchaseToCancel !== null}
+        title="Anular compra"
+        documentNumber={purchaseToCancel?.purchaseNumber ?? ''}
+        details={[
+          { label: 'Proveedor', value: purchaseToCancel?.supplier?.name ?? '-' },
+          { label: 'Total', value: formatCurrency(purchaseToCancel?.totalAmount ?? 0) },
+        ]}
+        impactText={`Se van a descontar del stock ${
+          purchaseToCancel?.items?.reduce((acc, item) => acc + item.quantity, 0) ?? 0
+        } unidades ingresadas por esta compra. Si ya se vendieron y la empresa no admite stock negativo, la anulación se rechaza.`}
+        onClose={() => setPurchaseToCancel(null)}
+        onConfirm={(reason) => handleConfirmCancel(purchaseToCancel as Purchase, reason)}
+      />
 
       {/* Modals */}
       <PurchaseDetailModal
@@ -291,8 +354,8 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
         onClose={() => setIsFormOpen(false)}
         suppliers={suppliers}
         products={products}
-        onSavePurchase={onSavePurchase}
-        onSuccess={onPurchaseSuccess}
+        onSavePurchase={createPurchase}
+        onSuccess={onStockChanged}
       />
     </div>
   );

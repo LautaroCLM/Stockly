@@ -1,19 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import type { Sale } from '@/features/inventario/types';
 import { Button } from '@/components/ui/Button';
-import { formatCurrency } from '@/lib/formatters';
 import { AlertTriangle, Ban, Loader2, X } from 'lucide-react';
-import type { CancelSaleResult } from '../api/saleCancellationApi';
+import type { CancelDocumentResult } from '@/lib/documentCancellation';
 
 const MAX_REASON_LENGTH = 500;
 
-interface CancelSaleModalProps {
-  sale: Sale | null;
+interface CancelDocumentModalProps {
+  isOpen: boolean;
+  /** Ej. "Anular venta" */
+  title: string;
+  documentNumber: string;
+  details: { label: string; value: string }[];
+  /** Qué pasa con el stock al anular. */
+  impactText: string;
   onClose: () => void;
-  onConfirm: (sale: Sale, reason: string) => Promise<CancelSaleResult>;
+  onConfirm: (reason: string) => Promise<CancelDocumentResult>;
 }
 
-export const CancelSaleModal: React.FC<CancelSaleModalProps> = ({ sale, onClose, onConfirm }) => {
+/** Confirmación de anulación de un documento (venta o compra) con motivo obligatorio. */
+export const CancelDocumentModal: React.FC<CancelDocumentModalProps> = ({
+  isOpen,
+  title,
+  documentNumber,
+  details,
+  impactText,
+  onClose,
+  onConfirm,
+}) => {
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isUncertain, setIsUncertain] = useState(false);
@@ -24,24 +37,23 @@ export const CancelSaleModal: React.FC<CancelSaleModalProps> = ({ sale, onClose,
     setError(null);
     setIsUncertain(false);
     setIsSubmitting(false);
-  }, [sale]);
+  }, [isOpen, documentNumber]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && sale && !isSubmitting) onClose();
+      if (e.key === 'Escape' && isOpen && !isSubmitting) onClose();
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sale, isSubmitting, onClose]);
+  }, [isOpen, isSubmitting, onClose]);
 
-  if (!sale) return null;
+  if (!isOpen) return null;
 
   const trimmedReason = reason.trim();
-  const itemCount = sale.items.reduce((acc, item) => acc + item.quantity, 0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!sale || isSubmitting) return;
+    if (isSubmitting) return;
     if (!trimmedReason) {
       setError('Indicá el motivo de la anulación.');
       return;
@@ -49,7 +61,7 @@ export const CancelSaleModal: React.FC<CancelSaleModalProps> = ({ sale, onClose,
 
     setIsSubmitting(true);
     setError(null);
-    const result = await onConfirm(sale, trimmedReason);
+    const result = await onConfirm(trimmedReason);
     setIsSubmitting(false);
 
     if (result.status === 'cancelled') {
@@ -71,8 +83,8 @@ export const CancelSaleModal: React.FC<CancelSaleModalProps> = ({ sale, onClose,
               <Ban size={18} />
             </div>
             <div>
-              <h2 className="text-base font-bold text-text-primary">Anular venta</h2>
-              <span className="text-xs text-text-muted font-mono">{sale.saleNumber}</span>
+              <h2 className="text-base font-bold text-text-primary">{title}</h2>
+              <span className="text-xs text-text-muted font-mono">{documentNumber}</span>
             </div>
           </div>
           <button
@@ -87,16 +99,14 @@ export const CancelSaleModal: React.FC<CancelSaleModalProps> = ({ sale, onClose,
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
           <div className="bg-surface-2/60 border border-border rounded-xl p-3.5 space-y-1.5">
-            <div className="flex justify-between text-text-muted">
-              <span>Cliente:</span>
-              <span className="text-text-primary font-medium">{sale.clientName}</span>
-            </div>
-            <div className="flex justify-between text-text-muted">
-              <span>Total:</span>
-              <span className="text-text-primary font-bold tabular-nums">{formatCurrency(sale.total)}</span>
-            </div>
+            {details.map((detail) => (
+              <div key={detail.label} className="flex justify-between gap-3 text-text-muted">
+                <span>{detail.label}:</span>
+                <span className="text-text-primary font-medium text-right">{detail.value}</span>
+              </div>
+            ))}
             <p className="pt-1.5 border-t border-border/50 text-text-secondary leading-relaxed">
-              Se van a reponer {itemCount} unidades al stock. La venta queda en el historial marcada como anulada; esta acción no se puede deshacer.
+              {impactText} El documento queda en el historial marcado como anulado; esta acción no se puede deshacer.
             </p>
           </div>
 
@@ -122,7 +132,7 @@ export const CancelSaleModal: React.FC<CancelSaleModalProps> = ({ sale, onClose,
               disabled={isSubmitting}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Ej. Error en el cobro, devolución del cliente..."
+              placeholder="Ej. Error de carga, devolución, factura duplicada..."
               className="w-full p-2.5 bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none resize-none disabled:opacity-50"
             />
           </div>
@@ -133,7 +143,7 @@ export const CancelSaleModal: React.FC<CancelSaleModalProps> = ({ sale, onClose,
             </Button>
             <Button variant="danger" size="md" type="submit" disabled={isSubmitting || !trimmedReason} className="gap-1.5">
               {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <Ban size={15} />}
-              <span>{isUncertain ? 'Reintentar anulación' : 'Anular venta'}</span>
+              <span>{isUncertain ? 'Reintentar anulación' : title}</span>
             </Button>
           </div>
         </form>

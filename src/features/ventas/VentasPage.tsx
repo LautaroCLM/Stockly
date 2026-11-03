@@ -9,7 +9,7 @@ import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { fromHundredths, toHundredths } from '@/lib/decimal';
 import { useSalesHistory } from './hooks/useSalesHistory';
 import { cancelSaleRpc } from './api/saleCancellationApi';
-import { CancelSaleModal } from './components/CancelSaleModal';
+import { CancelDocumentModal } from '@/components/shared/CancelDocumentModal';
 import {
   Receipt,
   Search,
@@ -287,10 +287,17 @@ export const VentasPage: React.FC<VentasPageProps> = ({
         </CardContent>
       </Card>
 
-      <CancelSaleModal
-        sale={saleToCancel}
+      <CancelDocumentModal
+        isOpen={saleToCancel !== null}
+        title="Anular venta"
+        documentNumber={saleToCancel?.saleNumber ?? ''}
+        details={[
+          { label: 'Cliente', value: saleToCancel?.clientName ?? '' },
+          { label: 'Total', value: formatCurrency(saleToCancel?.total ?? 0) },
+        ]}
+        impactText={`Se van a reponer ${saleToCancel?.items.reduce((acc, item) => acc + item.quantity, 0) ?? 0} unidades al stock.`}
         onClose={() => setSaleToCancel(null)}
-        onConfirm={handleConfirmCancel}
+        onConfirm={(reason) => handleConfirmCancel(saleToCancel as Sale, reason)}
       />
     </div>
   );

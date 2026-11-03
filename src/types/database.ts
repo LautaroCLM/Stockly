@@ -409,7 +409,7 @@ isOneToOne: false
                   }
                   ComputedFields: never
                   Insert: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"id"?: string,"invoice_number"?: string | null,"notes"?: string | null,"purchase_date"?: string,"purchase_number": string,"status"?: string,"subtotal": number,"supplier_id": string,"total_amount": number
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"id"?: string,"invoice_number"?: string | null,"notes"?: string | null,"purchase_date": string,"purchase_number": string,"status"?: string,"subtotal": number,"supplier_id": string,"total_amount": number
                   }
                   Update: {
                     "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"id"?: string,"invoice_number"?: string | null,"notes"?: string | null,"purchase_date"?: string,"purchase_number"?: string,"status"?: string,"subtotal"?: number,"supplier_id"?: string,"total_amount"?: number
@@ -675,6 +675,11 @@ isOneToOne: false
 "products_with_movements":
 { Args: { "p_company_id": string,"p_product_ids": (string)[] }; Returns: {
               "product_id": string
+            }[]
+                           },
+"purchases_summary":
+{ Args: { "p_company_id": string }; Returns: {
+              "completed_count": number,"completed_total": number
             }[]
                            },
 "reactivate_member":

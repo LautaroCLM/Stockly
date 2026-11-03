@@ -35,6 +35,8 @@ export interface Purchase {
   notes: string | null;
   createdBy: string;
   createdAt: string;
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
   supplier?: PurchaseSupplier;
   items?: PurchaseItem[];
 }
