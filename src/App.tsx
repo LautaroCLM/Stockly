@@ -3,7 +3,8 @@ import type { User } from '@supabase/supabase-js';
 import { RouteId, Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
 import { Sale, PaymentEntry } from '@/features/inventario/types';
-import { MOCK_DATASETS, NAV_SECTIONS } from '@/data/mockData';
+import { NAV_SECTIONS } from '@/components/layout/navSections';
+import { productsToRestock } from '@/features/dashboard/dashboardMetrics';
 import { useCart } from '@/features/inventario/hooks/useCart';
 import { useProducts } from '@/features/inventario/hooks/useProducts';
 import { useCategories } from '@/features/inventario/hooks/useCategories';
@@ -274,8 +275,8 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     ]
   );
 
-  const isMockCompany = Boolean(MOCK_DATASETS[activeCompany.id]);
-  const currentDataset = isMockCompany ? MOCK_DATASETS[activeCompany.id] : null;
+  // Alerta del header: productos activos en o bajo su stock mínimo
+  const restockCount = React.useMemo(() => productsToRestock(products).length, [products]);
 
   return (
     <>
@@ -295,14 +296,15 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         userName={profile?.full_name || undefined}
         userEmail={user.email || undefined}
         onSignOut={onSignOut}
+        restockCount={restockCount}
       >
         {activeRoute === 'dashboard' && (
           <DashboardPage
             company={activeCompany}
-            data={currentDataset}
-            isMock={isMockCompany}
+            products={products}
+            isMasterAdmin={isMasterAdmin}
             onNavigateToInventario={() => setActiveRoute('inventario')}
-            onNavigateToVentas={() => setActiveRoute('ventas')}
+            onNavigateToHistorial={() => setActiveRoute('historial')}
           />
         )}
 

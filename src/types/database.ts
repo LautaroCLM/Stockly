@@ -643,6 +643,11 @@ isOneToOne: false
 "create_product":
 { Args: { "p_barcode"?: string,"p_category_id"?: string,"p_company_id": string,"p_cost_price"?: number,"p_description"?: string,"p_min_stock"?: number,"p_name": string,"p_selling_price"?: number,"p_sku": string,"p_supplier_id"?: string,"p_unit"?: string }; Returns: string
                            },
+"dashboard_daily_sales":
+{ Args: { "p_company_id": string,"p_days": number }; Returns: {
+              "cost_total": number,"day": string,"sales_count": number,"sales_total": number
+            }[]
+                           },
 "deactivate_company":
 { Args: { "p_company_id": string }; Returns: undefined
                            },

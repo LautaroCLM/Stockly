@@ -20,6 +20,9 @@ interface HeaderProps {
   onOpenMobileSidebar: () => void;
   onQuickSaleClick: () => void;
   onOpenCart?: () => void;
+  /** Productos activos en o bajo su stock mínimo. */
+  restockCount?: number;
+  onRestockAlertClick?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -31,6 +34,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMobileSidebar,
   onQuickSaleClick,
   onOpenCart,
+  restockCount = 0,
+  onRestockAlertClick,
 }) => {
   return (
     <header className="h-16 bg-surface/90 backdrop-blur-md border-b border-border sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between gap-4">
@@ -122,11 +127,20 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors"
-          title="Notificaciones de stock y arqueos"
-          onClick={() => alert('Centro de alertas: 3 productos con quiebre de stock.')}
+          title={
+            restockCount > 0
+              ? `${restockCount} ${restockCount === 1 ? 'producto' : 'productos'} a reponer`
+              : 'Sin productos a reponer'
+          }
+          aria-label={`Productos a reponer: ${restockCount}`}
+          onClick={onRestockAlertClick}
         >
           <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-accent animate-pulse" />
+          {restockCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold leading-4 text-center tabular-nums">
+              {restockCount > 99 ? '99+' : restockCount}
+            </span>
+          )}
         </button>
 
         <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-full bg-surface-2/60 border border-border/60 text-[11px] text-text-muted">

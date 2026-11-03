@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { RevenuePoint } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/formatters';
+import { fromHundredths, toHundredths } from '@/lib/decimal';
 import {
   AreaChart,
   Area,
@@ -18,13 +19,18 @@ interface RevenueAreaChartProps {
     '14D': RevenuePoint[];
     '30D': RevenuePoint[];
   };
+  /** Muestra la serie de costo de lo vendido (solo master_admin la recibe con datos). */
+  showCost?: boolean;
 }
 
-export const RevenueAreaChart: React.FC<RevenueAreaChartProps> = ({ data }) => {
+const formatAxisAmount = (value: number) =>
+  Math.abs(value) >= 1000 ? `$${(value / 1000).toFixed(0)}k` : `$${value.toFixed(0)}`;
+
+export const RevenueAreaChart: React.FC<RevenueAreaChartProps> = ({ data, showCost = false }) => {
   const [period, setPeriod] = useState<'7D' | '14D' | '30D'>('14D');
   const chartData = data[period];
 
-  const totalPeriod = chartData.reduce((acc, curr) => acc + curr.ventas, 0);
+  const totalPeriod = fromHundredths(chartData.reduce((acc, curr) => acc + toHundredths(curr.ventas), 0));
 
   return (
     <Card className="flex flex-col">
@@ -91,7 +97,7 @@ export const RevenueAreaChart: React.FC<RevenueAreaChartProps> = ({ data }) => {
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                tickFormatter={formatAxisAmount}
               />
 
               <Tooltip
@@ -114,11 +120,11 @@ export const RevenueAreaChart: React.FC<RevenueAreaChartProps> = ({ data }) => {
                               {formatCurrency(venta)}
                             </span>
                           </div>
-                          {costo !== undefined && (
+                          {showCost && costo !== undefined && (
                             <div className="flex items-center justify-between gap-4">
                               <span className="flex items-center gap-1.5 text-text-muted">
                                 <span className="w-2 h-2 rounded-full bg-accent" />
-                                Costo Reposición:
+                                Costo de lo vendido:
                               </span>
                               <span className="font-semibold text-text-muted tabular-nums">
                                 {formatCurrency(costo)}
@@ -142,16 +148,18 @@ export const RevenueAreaChart: React.FC<RevenueAreaChartProps> = ({ data }) => {
                 fill="url(#ventasGradient)"
                 name="Ventas"
               />
-              <Area
-                type="monotone"
-                dataKey="costo"
-                stroke="#27D3F5"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                fillOpacity={1}
-                fill="url(#costoGradient)"
-                name="Costo Reposición"
-              />
+              {showCost && (
+                <Area
+                  type="monotone"
+                  dataKey="costo"
+                  stroke="#27D3F5"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  fillOpacity={1}
+                  fill="url(#costoGradient)"
+                  name="Costo de lo vendido"
+                />
+              )}
             </AreaChart>
           </ResponsiveContainer>
         </div>

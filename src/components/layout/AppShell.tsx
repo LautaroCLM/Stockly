@@ -16,6 +16,8 @@ interface AppShellProps {
   userName?: string;
   userEmail?: string;
   onSignOut?: () => void;
+  /** Productos activos en o bajo su stock mínimo (alerta del header). */
+  restockCount?: number;
   children: React.ReactNode;
 }
 
@@ -32,6 +34,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   userName,
   userEmail,
   onSignOut,
+  restockCount = 0,
   children,
 }) => {
   const [isOpenMobile, setIsOpenMobile] = useState(false);
@@ -61,6 +64,8 @@ export const AppShell: React.FC<AppShellProps> = ({
           cartItemsCount={cartItemsCount}
           cartTotal={cartTotal}
           onOpenCart={onOpenCart}
+          restockCount={restockCount}
+          onRestockAlertClick={() => onNavigate('inventario')}
         />
 
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto">

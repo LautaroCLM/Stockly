@@ -79,21 +79,4 @@ export interface ActivityEvent {
   timestamp: string;
 }
 
-export interface DashboardDataset {
-  company: Company;
-  kpis: {
-    todaySales: KpiCardData;
-    cashBalance: KpiCardData;
-    itemsToRestock: KpiCardData;
-    monthRevenue: KpiCardData;
-  };
-  revenueHistory: {
-    '7D': RevenuePoint[];
-    '14D': RevenuePoint[];
-    '30D': RevenuePoint[];
-  };
-  criticalStock: CriticalProduct[];
-  recentActivity: ActivityEvent[];
-}
-
 export * from '@/features/inventario/types';
