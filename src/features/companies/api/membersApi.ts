@@ -15,6 +15,8 @@ export function sanitizeGovernanceError(err: unknown, defaultMessage: string): s
 /**
  * Consulta los miembros registrados para la empresa activa.
  * El aislamiento se rige por la política RLS 'company_members_select_colleagues'.
+ * Los nombres salen de profiles_public (visibles para cualquier compañero); el email
+ * solo llega cuando la base lo permite (master_admin de la empresa o el propio usuario).
  */
 export async function fetchCompanyMembers(companyId: string): Promise<CompanyMember[]> {
   const { data, error } = await fetchAllRows((from, to) =>
@@ -43,6 +45,8 @@ export async function fetchCompanyMembers(companyId: string): Promise<CompanyMem
     throw new Error(sanitizeGovernanceError(error, 'Error al consultar miembros de la empresa.'));
   }
 
+  const names = await fetchMemberNames(data.map((row) => row.user_id));
+
   return data.map((row) => {
     const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
     return {
@@ -52,10 +56,22 @@ export async function fetchCompanyMembers(companyId: string): Promise<CompanyMem
       role: row.role as CompanyRole,
       isActive: row.is_active,
       joinedAt: row.joined_at,
-      fullName: prof?.full_name || null,
+      fullName: names.get(row.user_id) || prof?.full_name || null,
       email: prof?.email || null,
     };
   });
+}
+
+async function fetchMemberNames(userIds: string[]): Promise<Map<string, string>> {
+  const uniqueIds = [...new Set(userIds)];
+  if (uniqueIds.length === 0) return new Map();
+
+  const { data } = await supabase.from('profiles_public').select('id, full_name').in('id', uniqueIds);
+  return new Map(
+    (data ?? [])
+      .filter((profile) => profile.id && profile.full_name)
+      .map((profile) => [profile.id as string, profile.full_name as string])
+  );
 }
 
 /**

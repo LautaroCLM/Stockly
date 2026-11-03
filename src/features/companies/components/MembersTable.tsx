@@ -77,7 +77,7 @@ export const MembersTable: React.FC<MembersTableProps> = ({
                             )}
                           </div>
                           <span className="text-[11px] text-text-muted font-mono block">
-                            UUID: {m.userId.substring(0, 18)}...
+                            {m.email ?? `UUID: ${m.userId.substring(0, 18)}...`}
                           </span>
                         </td>
 
