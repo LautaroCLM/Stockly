@@ -6,6 +6,7 @@ import type {
   StockMovementReason,
   StockMovementDirection,
 } from '../types';
+import { fromHundredths, parseHundredths, toHundredths } from '@/lib/decimal';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { X, Layers, AlertTriangle, Check, ArrowUpRight, ArrowDownLeft, Loader2, RotateCcw } from 'lucide-react';
@@ -24,7 +25,7 @@ interface ReasonOption {
   description: string;
 }
 
-// Motivos estrictamente autorizados por la RPC public.register_stock_adjustment
+// Motivos de ajuste manual: el conteo físico usa public.register_physical_count y el resto public.register_stock_adjustment
 const REASONS: ReasonOption[] = [
   {
     id: 'physical_count',
@@ -112,29 +113,28 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
     setErrorMessage(null);
   }
 
-  // Calcular variación (delta) y dirección efectiva
-  let deltaQuantity = 0;
+  // Calcular variación (delta) y dirección efectiva en centésimas exactas
+  const isPhysicalCount = reason === 'physical_count';
+  const inputHundredths = parseHundredths(isPhysicalCount ? physicalCountInput : quantityInput);
+  const currentHundredths = toHundredths(product.stock);
+
+  let deltaHundredths = 0;
   let effectiveDirection = direction;
 
-  if (reason === 'physical_count') {
-    const targetCount = parseFloat(physicalCountInput) || 0;
-    const diff = targetCount - product.stock;
-    if (diff >= 0) {
-      effectiveDirection = 'increase';
-      deltaQuantity = diff;
-    } else {
-      effectiveDirection = 'decrease';
-      deltaQuantity = Math.abs(diff);
-    }
+  if (isPhysicalCount) {
+    const diff = (inputHundredths ?? currentHundredths) - currentHundredths;
+    effectiveDirection = diff >= 0 ? 'increase' : 'decrease';
+    deltaHundredths = Math.abs(diff);
   } else {
-    deltaQuantity = parseFloat(quantityInput) || 0;
-    effectiveDirection = direction;
+    deltaHundredths = inputHundredths ?? 0;
   }
 
-  const projectedStock =
+  const deltaQuantity = fromHundredths(deltaHundredths);
+  const projectedStock = fromHundredths(
     effectiveDirection === 'increase'
-      ? product.stock + deltaQuantity
-      : product.stock - deltaQuantity;
+      ? currentHundredths + deltaHundredths
+      : currentHundredths - deltaHundredths
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -142,27 +142,22 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
     if (!product) return;
 
-    if (deltaQuantity <= 0) {
-      setErrorMessage(
-        reason === 'physical_count'
-          ? 'El conteo físico ingresado es idéntico al stock actual. No hay variación.'
-          : 'La cantidad debe ser un número positivo mayor a cero.'
-      );
+    if (inputHundredths === null) {
+      setErrorMessage('Ingrese un número válido, mayor o igual a cero y con como máximo 2 decimales.');
+      return;
+    }
+
+    if (!isPhysicalCount && inputHundredths <= 0) {
+      setErrorMessage('La cantidad debe ser un número positivo mayor a cero.');
       return;
     }
 
     // Validación defensiva de unidades indivisibles
     const isDiscreteUnit = ['unidad', 'bulto', 'par'].includes(product.unit.toLowerCase());
-    if (isDiscreteUnit && !Number.isInteger(deltaQuantity)) {
+    if (isDiscreteUnit && inputHundredths % 100 !== 0) {
       setErrorMessage(
         `La unidad "${product.unit}" es indivisible y no admite cantidades fraccionarias con decimales.`
       );
-      return;
-    }
-
-    // Validación de escala decimal máxima (2 decimales)
-    if (Math.round(deltaQuantity * 100) !== deltaQuantity * 100) {
-      setErrorMessage('La cantidad no puede tener más de 2 decimales.');
       return;
     }
 
@@ -181,6 +176,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
         reason,
         direction: effectiveDirection,
         quantity: deltaQuantity,
+        countedQuantity: isPhysicalCount ? fromHundredths(inputHundredths) : undefined,
         notes: notes.trim() || undefined,
         referenceDoc: referenceDoc.trim() || undefined,
         idempotencyKey: idempotencyKeyRef.current,
@@ -314,7 +310,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 className="w-full h-9 px-3 text-sm font-bold text-right bg-surface-2 border border-border focus:border-primary rounded-lg text-text-primary focus:outline-none tabular-nums disabled:opacity-50"
               />
               <span className="text-[11px] text-text-muted block">
-                Ingrese el total de existencias presentes en salón o depósito. El sistema calculará la diferencia automáticamente.
+                Ingrese el total de existencias presentes en salón o depósito. Al confirmar, el stock queda en este valor: la diferencia se calcula contra el stock vigente en ese momento, aunque haya ventas mientras cuenta.
               </span>
             </div>
           ) : (
@@ -371,7 +367,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               <span className="font-mono tabular-nums">{product.stock} {product.unit}</span>
             </div>
             <div className="flex items-center justify-between text-text-muted">
-              <span>Variación calculada:</span>
+              <span>{isPhysicalCount ? 'Variación estimada:' : 'Variación calculada:'}</span>
               <span
                 className={`font-mono font-bold tabular-nums ${
                   effectiveDirection === 'increase' ? 'text-emerald-400' : 'text-danger'

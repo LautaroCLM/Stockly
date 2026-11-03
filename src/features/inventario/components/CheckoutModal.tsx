@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PaymentEntry, PaymentMethod } from '../types';
 import type { Customer } from '@/features/clientes/types';
 import { formatCurrency } from '@/lib/formatters';
+import { fromHundredths, toHundredths } from '@/lib/decimal';
 import { Button } from '@/components/ui/Button';
 import { CustomerSelector } from './CustomerSelector';
 import {
@@ -84,18 +85,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Cálculos en centavos: el servidor exige que la suma de pagos sea exactamente el total
+  const totalCents = toHundredths(total);
+
   // Single mode cash calculations
-  const parsedCashReceived = parseFloat(cashReceived) || 0;
-  const cashChange = singleMethod === 'efectivo' ? Math.max(0, parsedCashReceived - total) : 0;
-  const cashInsufficient = singleMethod === 'efectivo' && parsedCashReceived < total;
+  const cashReceivedCents = toHundredths(parseFloat(cashReceived) || 0);
+  const parsedCashReceived = fromHundredths(cashReceivedCents);
+  const cashChange =
+    singleMethod === 'efectivo' ? fromHundredths(Math.max(0, cashReceivedCents - totalCents)) : 0;
+  const cashInsufficient = singleMethod === 'efectivo' && cashReceivedCents < totalCents;
 
   // Split mode calculations
-  const totalAssignedSplits = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
-  const splitDifference = total - totalAssignedSplits;
-  const isSplitExact = Math.abs(splitDifference) < 0.01;
+  const assignedCents = splits.reduce((sum, s) => sum + toHundredths(Number(s.amount) || 0), 0);
+  const splitDifference = fromHundredths(totalCents - assignedCents);
+  const isSplitExact = assignedCents === totalCents;
 
   function handleAddSplit() {
-    const nextAmount = Math.max(0, splitDifference);
+    const nextAmount = fromHundredths(Math.max(0, totalCents - assignedCents));
     const newEntry: PaymentEntry = {
       id: `split-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
       method: 'transferencia',
@@ -122,7 +128,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     let finalPayments: PaymentEntry[] = [];
 
     if (paymentMode === 'single') {
-      if (singleMethod === 'efectivo' && parsedCashReceived < total) {
+      if (cashInsufficient) {
         setErrorMessage('El efectivo entregado es menor al total a pagar.');
         return;
       }
@@ -153,7 +159,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         return;
       }
 
-      finalPayments = splits;
+      // Normalizar cada importe a 2 decimales exactos antes de enviarlo
+      finalPayments = splits.map((s) => ({ ...s, amount: fromHundredths(toHundredths(s.amount)) }));
     }
 
     // Atomic lock
@@ -410,7 +417,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <div className="flex items-center justify-between text-text-secondary">
                   <span>Asignado en medios de pago:</span>
                   <span className="font-semibold tabular-nums">
-                    {formatCurrency(totalAssignedSplits)}
+                    {formatCurrency(fromHundredths(assignedCents))}
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-1 border-t border-border/60">

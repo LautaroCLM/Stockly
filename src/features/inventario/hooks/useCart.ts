@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TenantId } from '@/types';
 import { CartItem, Product, CartState } from '../types';
+import { calculateCartTotals } from '../cartTotals';
 
 const USER_ID = 'admin';
 
@@ -9,17 +10,15 @@ function getStorageKey(tenantId: TenantId): string {
 }
 
 function calculateTotals(items: CartItem[], discountPercent: number): CartState {
-  const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const clampedDiscount = Math.max(0, Math.min(100, discountPercent));
-  const discountAmount = Math.round((subtotal * clampedDiscount) / 100);
-  const total = Math.max(0, subtotal - discountAmount);
+  const totals = calculateCartTotals(items, clampedDiscount);
 
   return {
-    items,
+    items: items.map((item, index) => ({ ...item, subtotal: totals.lineAmounts[index] })),
     discountPercent: clampedDiscount,
-    subtotal,
-    discountAmount,
-    total,
+    subtotal: totals.subtotal,
+    discountAmount: totals.discountAmount,
+    total: totals.total,
   };
 }
 

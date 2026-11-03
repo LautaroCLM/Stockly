@@ -17,6 +17,7 @@ import {
   isNetworkOrUncertainError,
 } from '../api/productsApi';
 import { registerStockAdjustmentRpc } from '../api/stockMovementsApi';
+import { registerPhysicalCountRpc } from '../api/physicalCountApi';
 import { importInitialStockRpc } from '../api/initialStockApi';
 
 export interface ProductOperationResult {
@@ -333,8 +334,14 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
         };
       }
 
+      const isPhysicalCount = data.reason === 'physical_count';
+      if (isPhysicalCount && data.countedQuantity === undefined) {
+        return { success: false, status: 'rejected', error: 'Falta la cantidad contada.' };
+      }
+
       // Validar unidades indivisibles
-      if (['unidad', 'bulto', 'par'].includes(existing.unit) && !Number.isInteger(data.quantity)) {
+      const checkedQuantity = isPhysicalCount ? data.countedQuantity ?? 0 : data.quantity;
+      if (['unidad', 'bulto', 'par'].includes(existing.unit) && !Number.isInteger(checkedQuantity)) {
         return {
           success: false,
           status: 'rejected',
@@ -344,16 +351,26 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
 
       const idempotencyKey = data.idempotencyKey || crypto.randomUUID();
 
-      const res = await registerStockAdjustmentRpc({
-        companyId: tenantId,
-        idempotencyKey,
-        productId: data.productId,
-        direction: data.direction,
-        reason: data.reason as 'physical_count' | 'loss_damage' | 'internal_use',
-        quantity: data.quantity,
-        notes: data.notes,
-        referenceDoc: data.referenceDoc,
-      });
+      // El conteo físico envía el valor absoluto: el servidor calcula la diferencia bajo bloqueo
+      const res = isPhysicalCount
+        ? await registerPhysicalCountRpc({
+            companyId: tenantId,
+            idempotencyKey,
+            productId: data.productId,
+            countedQuantity: data.countedQuantity ?? 0,
+            notes: data.notes,
+            referenceDoc: data.referenceDoc,
+          })
+        : await registerStockAdjustmentRpc({
+            companyId: tenantId,
+            idempotencyKey,
+            productId: data.productId,
+            direction: data.direction,
+            reason: data.reason as 'loss_damage' | 'internal_use',
+            quantity: data.quantity,
+            notes: data.notes,
+            referenceDoc: data.referenceDoc,
+          });
 
       if (res.status === 'success') {
         // Mutación confirmada por la base de datos: intentar refrescar catálogo completo

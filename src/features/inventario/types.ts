@@ -124,6 +124,8 @@ export interface StockAdjustmentData {
   reason: StockMovementReason;
   direction: StockMovementDirection;
   quantity: number;
+  /** Solo en conteo físico: cantidad contada; el servidor calcula la diferencia. */
+  countedQuantity?: number;
   notes?: string;
   referenceDoc?: string;
   idempotencyKey?: string;

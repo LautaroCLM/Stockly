@@ -157,6 +157,14 @@ export async function registerStockAdjustmentRpc(
     });
 
     if (error) {
+      // supabase-js devuelve los cortes de red como error (no lanza): el resultado es incierto
+      if (isNetworkOrUncertainError(error.message)) {
+        return {
+          status: 'uncertain',
+          message:
+            'Error de red durante el ajuste de existencias. El resultado en la base de datos es incierto; si reintenta la operación, se reutilizará la misma clave de idempotencia para no duplicar el movimiento.',
+        };
+      }
       return {
         status: 'failed',
         message: sanitizeStockMovementError(error, 'Error al registrar el ajuste de existencias.'),
