@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import type { Category } from '../types';
 
 /**
@@ -27,18 +28,22 @@ export interface UpsertCategoryParams {
  * La autorización se valida a nivel de fila (RLS) en PostgreSQL contra la membresía del usuario.
  */
 export async function fetchCategories(companyId: string): Promise<Category[]> {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('id, company_id, name, description, is_active, created_at')
-    .eq('company_id', companyId)
-    .eq('is_active', true)
-    .order('name', { ascending: true });
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from('categories')
+      .select('id, company_id, name, description, is_active, created_at')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, to)
+  );
 
   if (error) {
     throw new Error(sanitizeCategoryError(error, 'Error al consultar las categorías de la empresa.'));
   }
 
-  return (data || []).map((row) => ({
+  return data.map((row) => ({
     id: row.id,
     companyId: row.company_id,
     name: row.name,

@@ -64,29 +64,39 @@ export interface ImportInitialStockExecutionResult {
   createdAt?: string;
 }
 
+// Tope de ids por llamada: la respuesta nunca supera el max_rows de PostgREST
+const MOVEMENT_CHECK_BATCH = 1000;
+
 /**
- * Consulta de forma segura la lista de identificadores de producto que ya tienen
- * movimientos históricos registrados en la empresa activa.
+ * De los productos indicados, devuelve los que ya tienen movimientos históricos en la empresa.
  * Permite al frontend distinguir entre productos con saldo 0 sin abrir y productos con rotación previa.
+ * Consulta solo los candidatos (no todo el libro de movimientos) mediante public.products_with_movements.
  */
-export async function fetchProductsWithMovements(companyId: string): Promise<Set<string>> {
-  if (!companyId) return new Set();
+export async function fetchProductsWithMovements(
+  companyId: string,
+  productIds: string[]
+): Promise<Set<string>> {
+  const result = new Set<string>();
+  if (!companyId || productIds.length === 0) return result;
 
   try {
-    const { data, error } = await supabase
-      .from('stock_movements')
-      .select('product_id')
-      .eq('company_id', companyId);
+    for (let i = 0; i < productIds.length; i += MOVEMENT_CHECK_BATCH) {
+      const { data, error } = await supabase.rpc('products_with_movements', {
+        p_company_id: companyId,
+        p_product_ids: productIds.slice(i, i + MOVEMENT_CHECK_BATCH),
+      });
 
-    if (error) {
-      console.warn('Error al verificar movimientos previos:', error);
-      return new Set();
+      if (error) {
+        console.warn('Error al verificar movimientos previos:', error);
+        return result;
+      }
+
+      (data || []).forEach((row) => result.add(row.product_id));
     }
-
-    return new Set((data || []).map((row) => row.product_id));
+    return result;
   } catch (err) {
     console.warn('Fallo de red al consultar movimientos previos:', err);
-    return new Set();
+    return result;
   }
 }
 

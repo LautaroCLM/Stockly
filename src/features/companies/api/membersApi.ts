@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import type { CompanyMember, CompanyInvitation, InviteUserInput, CompanyRole } from '../types';
 
 export function sanitizeGovernanceError(err: unknown, defaultMessage: string): string {
@@ -16,29 +17,33 @@ export function sanitizeGovernanceError(err: unknown, defaultMessage: string): s
  * El aislamiento se rige por la política RLS 'company_members_select_colleagues'.
  */
 export async function fetchCompanyMembers(companyId: string): Promise<CompanyMember[]> {
-  const { data, error } = await supabase
-    .from('company_members')
-    .select(`
-      id,
-      company_id,
-      user_id,
-      role,
-      is_active,
-      joined_at,
-      profiles:user_id (
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from('company_members')
+      .select(`
         id,
-        email,
-        full_name
-      )
-    `)
-    .eq('company_id', companyId)
-    .order('joined_at', { ascending: true });
+        company_id,
+        user_id,
+        role,
+        is_active,
+        joined_at,
+        profiles:user_id (
+          id,
+          email,
+          full_name
+        )
+      `)
+      .eq('company_id', companyId)
+      .order('joined_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, to)
+  );
 
   if (error) {
     throw new Error(sanitizeGovernanceError(error, 'Error al consultar miembros de la empresa.'));
   }
 
-  return (data || []).map((row) => {
+  return data.map((row) => {
     const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
     return {
       id: row.id,
@@ -58,17 +63,21 @@ export async function fetchCompanyMembers(companyId: string): Promise<CompanyMem
  * RLS restringe esta vista a master_admin activos de la empresa.
  */
 export async function fetchCompanyInvitations(companyId: string): Promise<CompanyInvitation[]> {
-  const { data, error } = await supabase
-    .from('company_invitations')
-    .select('id, company_id, email, role, status, expires_at, created_at, accepted_at')
-    .eq('company_id', companyId)
-    .order('created_at', { ascending: false });
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from('company_invitations')
+      .select('id, company_id, email, role, status, expires_at, created_at, accepted_at')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .range(from, to)
+  );
 
   if (error) {
     throw new Error(sanitizeGovernanceError(error, 'Error al consultar invitaciones de la empresa.'));
   }
 
-  return (data || []).map((row) => ({
+  return data.map((row) => ({
     id: row.id,
     companyId: row.company_id,
     email: row.email,

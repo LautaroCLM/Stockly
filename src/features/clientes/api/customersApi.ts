@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import type { Customer, UpsertCustomerInput } from '../types';
 
 export interface CustomerDbRow {
@@ -35,27 +36,21 @@ export function sanitizeCustomerError(err: unknown, defaultMessage: string): str
  * El aislamiento multiempresa es garantizado a nivel de fila (RLS) en PostgreSQL.
  */
 export async function fetchCustomers(companyId: string): Promise<Customer[]> {
-  const { data, error } = await (supabase.from as unknown as (
-    table: string
-  ) => {
-    select: (cols: string) => {
-      eq: (col: string, val: string) => {
-        order: (col: string, opts: { ascending: boolean }) => Promise<{
-          data: CustomerDbRow[] | null;
-          error: { message: string } | null;
-        }>;
-      };
-    };
-  })('customers')
-    .select('id, company_id, name, identification_type, tax_id, email, phone, address, notes, is_active, created_by, created_at, updated_at')
-    .eq('company_id', companyId)
-    .order('name', { ascending: true });
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from('customers')
+      .select('id, company_id, name, identification_type, tax_id, email, phone, address, notes, is_active, created_by, created_at, updated_at')
+      .eq('company_id', companyId)
+      .order('name', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, to)
+  );
 
   if (error) {
     throw new Error(sanitizeCustomerError(error, 'Error al consultar clientes de la empresa.'));
   }
 
-  return (data || []).map((row) => ({
+  return data.map((row) => ({
     id: row.id,
     companyId: row.company_id,
     name: row.name,

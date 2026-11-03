@@ -1,7 +1,8 @@
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-
+  
   "graphql_public": {
           Tables: {
             [_ in never]: never
@@ -196,6 +197,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"customers": {
+                  Row: {
+                    "address": string | null,"company_id": string,"created_at": string,"created_by": string | null,"email": string | null,"id": string,"identification_type": string,"is_active": boolean,"name": string,"notes": string | null,"phone": string | null,"tax_id": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "address"?: string | null,"company_id": string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name": string,"notes"?: string | null,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "address"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name"?: string,"notes"?: string | null,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "customers_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "customers_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "customers_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"movement_costs": {
                   Row: {
                     "company_id": string,"movement_id": string,"total_cost": number,"unit_cost": number
@@ -336,7 +369,171 @@ isOneToOne: false
                     "created_at"?: string,"email"?: string,"full_name"?: string,"id"?: string,"updated_at"?: string
                   }
                   Relationships: [
-
+                    
+                  ]
+                },"purchase_items": {
+                  Row: {
+                    "company_id": string,"created_at": string,"id": string,"product_id": string,"purchase_id": string,"quantity": number,"subtotal": number,"unit_cost": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"id"?: string,"product_id": string,"purchase_id": string,"quantity": number,"subtotal": number,"unit_cost": number
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"id"?: string,"product_id"?: string,"purchase_id"?: string,"quantity"?: number,"subtotal"?: number,"unit_cost"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_purchase_items_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_purchase_items_purchase"
+      columns: ["company_id","purchase_id"]
+isOneToOne: false
+      referencedRelation: "purchases"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "purchase_items_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"purchases": {
+                  Row: {
+                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"company_id": string,"created_at": string,"created_by": string,"id": string,"invoice_number": string | null,"notes": string | null,"purchase_date": string,"purchase_number": string,"status": string,"subtotal": number,"supplier_id": string,"total_amount": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"id"?: string,"invoice_number"?: string | null,"notes"?: string | null,"purchase_date"?: string,"purchase_number": string,"status"?: string,"subtotal": number,"supplier_id": string,"total_amount": number
+                  }
+                  Update: {
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"id"?: string,"invoice_number"?: string | null,"notes"?: string | null,"purchase_date"?: string,"purchase_number"?: string,"status"?: string,"subtotal"?: number,"supplier_id"?: string,"total_amount"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_purchases_supplier"
+      columns: ["company_id","supplier_id"]
+isOneToOne: false
+      referencedRelation: "suppliers"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "purchases_cancelled_by_fkey"
+      columns: ["cancelled_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchases_cancelled_by_fkey"
+      columns: ["cancelled_by"]
+isOneToOne: false
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchases_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchases_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchases_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"sale_items": {
+                  Row: {
+                    "company_id": string,"created_at": string,"id": string,"product_id": string,"quantity": number,"sale_id": string,"subtotal": number,"unit_price": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"id"?: string,"product_id": string,"quantity": number,"sale_id": string,"subtotal": number,"unit_price": number
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"id"?: string,"product_id"?: string,"quantity"?: number,"sale_id"?: string,"subtotal"?: number,"unit_price"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_sale_items_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_sale_items_sale"
+      columns: ["company_id","sale_id"]
+isOneToOne: false
+      referencedRelation: "sales"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "sale_items_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"sales": {
+                  Row: {
+                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"company_id": string,"created_at": string,"created_by": string,"customer_id": string | null,"discount": number,"id": string,"notes": string | null,"payments": NonNullable<Json>,"sale_number": string,"status": string,"subtotal": number,"total_amount": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"sale_number": string,"status"?: string,"subtotal": number,"total_amount": number
+                  }
+                  Update: {
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"sale_number"?: string,"status"?: string,"subtotal"?: number,"total_amount"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_sales_customer"
+      columns: ["company_id","customer_id"]
+isOneToOne: false
+      referencedRelation: "customers"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "sales_cancelled_by_fkey"
+      columns: ["cancelled_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "sales_cancelled_by_fkey"
+      columns: ["cancelled_by"]
+isOneToOne: false
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "sales_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "sales_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "sales_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"stock_movements": {
                   Row: {
@@ -355,6 +552,18 @@ isOneToOne: false
       columns: ["company_id","product_id"]
 isOneToOne: false
       referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_stock_movements_purchase"
+      columns: ["company_id","reference_purchase_id"]
+isOneToOne: false
+      referencedRelation: "purchases"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_stock_movements_sale"
+      columns: ["company_id","reference_sale_id"]
+isOneToOne: false
+      referencedRelation: "sales"
       referencedColumns: ["company_id","id"]
     },{
       foreignKeyName: "stock_movements_company_id_fkey"
@@ -401,7 +610,7 @@ isOneToOne: false
           Views: {
             "profiles_public": {
                   Row: {
-                    "full_name": string | null,"id": string | null
+                    "full_name": string,"id": string
                   }
                   ComputedFields: never
                   Insert: {
@@ -411,7 +620,7 @@ isOneToOne: false
                            "full_name"?: string | null,"id"?: string | null
                          }
                         Relationships: [
-
+                    
                   ]
                 }
           }
@@ -446,8 +655,22 @@ isOneToOne: false
 "local_today":
 { Args: { "p_company_id": string }; Returns: string
                            },
+"process_purchase":
+{ Args: { "p_company_id": string,"p_idempotency_key": string,"p_invoice_number"?: string,"p_items": Json,"p_notes"?: string,"p_purchase_date"?: string,"p_supplier_id": string }; Returns: Json
+                           },
+"process_sale":
+{ Args: { "p_company_id": string,"p_customer_id"?: string,"p_discount"?: number,"p_idempotency_key": string,"p_items": Json,"p_notes"?: string,"p_payments"?: Json }; Returns: Json
+                           },
+"products_with_movements":
+{ Args: { "p_company_id": string,"p_product_ids": (string)[] }; Returns: {
+              "product_id": string
+            }[]
+                           },
 "reactivate_member":
 { Args: { "p_company_id": string,"p_new_role": string,"p_reason": string,"p_user_id": string }; Returns: undefined
+                           },
+"register_physical_count":
+{ Args: { "p_company_id": string,"p_counted_quantity": number,"p_idempotency_key": string,"p_notes"?: string,"p_product_id": string,"p_reference_doc"?: string }; Returns: Json
                            },
 "register_stock_adjustment":
 { Args: { "p_company_id": string,"p_direction": string,"p_idempotency_key": string,"p_notes"?: string,"p_product_id": string,"p_quantity": number,"p_reason": string,"p_reference_doc"?: string }; Returns: Json
@@ -469,6 +692,9 @@ isOneToOne: false
                            },
 "upsert_category":
 { Args: { "p_category_id"?: string,"p_company_id": string,"p_description"?: string,"p_is_active"?: boolean,"p_name": string }; Returns: string
+                           },
+"upsert_customer":
+{ Args: { "p_address"?: string,"p_company_id": string,"p_customer_id"?: string,"p_email"?: string,"p_identification_type"?: string,"p_is_active"?: boolean,"p_name": string,"p_notes"?: string,"p_phone"?: string,"p_tax_id"?: string }; Returns: string
                            },
 "upsert_supplier":
 { Args: { "p_address"?: string,"p_company_id": string,"p_contact_name"?: string,"p_email"?: string,"p_is_active"?: boolean,"p_name": string,"p_phone"?: string,"p_supplier_id"?: string,"p_tax_id"?: string }; Returns: string
@@ -594,11 +820,11 @@ export type CompositeTypes<
 export const Constants = {
   "graphql_public": {
           Enums: {
-
+            
           }
         },"public": {
           Enums: {
-
+            
           }
         }
 } as const

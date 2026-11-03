@@ -47,7 +47,9 @@ export const InitialStockModal: React.FC<InitialStockModalProps> = ({
   useEffect(() => {
     if (isOpen && companyId) {
       setIsCheckingEligibility(true);
-      fetchProductsWithMovements(companyId)
+      // Solo los productos en cero pueden recibir carga inicial: son los únicos a verificar
+      const zeroStockIds = products.filter((p) => p.stock === 0).map((p) => p.id);
+      fetchProductsWithMovements(companyId, zeroStockIds)
         .then((set) => {
           setProductsWithMovements(set);
         })

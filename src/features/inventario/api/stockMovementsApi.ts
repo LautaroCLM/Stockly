@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import type { StockMovement, StockMovementDirection, StockMovementReason } from '../types';
 
 /**
  * Normaliza y traduce errores emitidos por PostgreSQL y las RPC de stock.
@@ -72,69 +71,6 @@ export interface RegisterAdjustmentExecutionResult {
   message?: string;
   newStock?: number;
   previousStock?: number;
-}
-
-/**
- * Consulta los movimientos de stock reales de la empresa activa desde public.stock_movements.
- * Resuelve de forma segura el nombre y SKU del producto, y el nombre del autor desde profiles_public.
- */
-export async function fetchStockMovements(companyId: string): Promise<StockMovement[]> {
-  // 1. Consultar movimientos ordenados cronológicamente descendente
-  const { data: movRows, error: movErr } = await supabase
-    .from('stock_movements')
-    .select('id, company_id, product_id, direction, reason, quantity, previous_stock, new_stock, reference_sale_id, reference_purchase_id, reference_doc, notes, created_by, created_at')
-    .eq('company_id', companyId)
-    .order('created_at', { ascending: false });
-
-  if (movErr) {
-    throw new Error(sanitizeStockMovementError(movErr, 'Error al consultar el historial de movimientos de stock.'));
-  }
-
-  if (!movRows || movRows.length === 0) {
-    return [];
-  }
-
-  // 2. Resolver datos del producto (nombre y SKU) dentro de la misma empresa
-  const { data: prodRows } = await supabase
-    .from('products')
-    .select('id, name, sku')
-    .eq('company_id', companyId);
-
-  const prodMap = new Map(
-    (prodRows || []).map((p) => [p.id, { name: p.name, sku: p.sku }])
-  );
-
-  // 3. Resolver nombres de autores desde profiles_public (vista segura sin datos privados)
-  const { data: profileRows } = await supabase
-    .from('profiles_public')
-    .select('id, full_name');
-
-  const profileMap = new Map(
-    (profileRows || []).filter((pr) => pr.id).map((pr) => [pr.id!, pr.full_name || 'Usuario'])
-  );
-
-  return movRows.map((row) => {
-    const prodInfo = prodMap.get(row.product_id);
-    const authorName = profileMap.get(row.created_by) || 'Personal autorizado';
-
-    return {
-      id: row.id,
-      companyId: row.company_id,
-      productId: row.product_id,
-      productName: prodInfo ? prodInfo.name : 'Producto no identificado',
-      productSku: prodInfo ? prodInfo.sku : '---',
-      direction: row.direction as StockMovementDirection,
-      reason: row.reason as StockMovementReason,
-      quantity: Number(row.quantity),
-      previousStock: Number(row.previous_stock),
-      newStock: Number(row.new_stock),
-      referenceSaleId: row.reference_sale_id || undefined,
-      referenceDoc: row.reference_doc || undefined,
-      notes: row.notes || undefined,
-      createdBy: authorName,
-      createdAt: row.created_at,
-    };
-  });
 }
 
 /**

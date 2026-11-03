@@ -1,51 +1,54 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Sale } from '../inventario/types';
 import { Company } from '@/types';
+import type { Customer } from '@/features/clientes/types';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
+import { fromHundredths, toHundredths } from '@/lib/decimal';
+import { useSalesHistory } from './hooks/useSalesHistory';
 import {
   Receipt,
   Search,
   Eye,
   Info,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface VentasPageProps {
   company: Company;
-  sales: Sale[];
+  /** Catálogo completo de clientes: la búsqueda por nombre o documento se resuelve contra él. */
+  customers: Customer[];
   onViewReceipt: (sale: Sale) => void;
   onNavigateToInventario: () => void;
 }
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 export const VentasPage: React.FC<VentasPageProps> = ({
   company,
-  sales,
+  customers,
   onViewReceipt,
   onNavigateToInventario,
 }) => {
+  // Paginación y búsqueda se resuelven en el servidor (ver useSalesHistory)
+  const { sales, total, hasMore, isLoading, isLoadingMore, error, setSearch, loadMore, reload } =
+    useSalesHistory(company.id, customers);
+
+  // El texto se envía al servidor recién cuando el usuario deja de escribir
   const [searchQuery, setSearchQuery] = useState('');
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearch(searchQuery), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, setSearch]);
 
-  // Filter sales for this company
-  const companySales = useMemo(() => {
-    return sales.filter((s) => s.tenantId === company.id);
-  }, [sales, company.id]);
-
-  // Filter by search query
-  const filteredSales = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return companySales;
-    return companySales.filter(
-      (s) =>
-        s.saleNumber.toLowerCase().includes(q) ||
-        s.clientName.toLowerCase().includes(q)
-    );
-  }, [companySales, searchQuery]);
-
-  const totalBilled = useMemo(() => {
-    return filteredSales.reduce((acc, curr) => acc + curr.total, 0);
-  }, [filteredSales]);
+  // Suma exacta en centavos de las ventas cargadas en pantalla
+  const totalShown = useMemo(
+    () => fromHundredths(sales.reduce((acc, sale) => acc + toHundredths(sale.total), 0)),
+    [sales]
+  );
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-12">
@@ -89,9 +92,21 @@ export const VentasPage: React.FC<VentasPageProps> = ({
           </span>
         </div>
         <span className="text-[11px] text-text-muted font-mono shrink-0">
-          Total listado: {formatCurrency(totalBilled)}
+          Total de las {sales.length} ventas mostradas: {formatCurrency(totalShown)}
         </span>
       </div>
+
+      {error && (
+        <div className="p-3.5 bg-danger/10 border border-danger/30 rounded-xl flex items-center justify-between text-xs text-danger">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={16} className="shrink-0" />
+            <span>{error}</span>
+          </div>
+          <Button variant="secondary" size="sm" onClick={reload} className="h-7 px-2.5 text-xs">
+            Reintentar
+          </Button>
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="bg-surface border border-border rounded-xl p-3 flex items-center justify-between gap-3">
@@ -110,7 +125,8 @@ export const VentasPage: React.FC<VentasPageProps> = ({
         </div>
 
         <div className="text-xs text-text-muted">
-          <strong className="text-text-primary tabular-nums">{filteredSales.length}</strong> ventas registradas
+          Mostrando <strong className="text-text-primary tabular-nums">{sales.length}</strong> de{' '}
+          <strong className="text-text-primary tabular-nums">{total}</strong> ventas
         </div>
       </div>
 
@@ -132,14 +148,23 @@ export const VentasPage: React.FC<VentasPageProps> = ({
               </thead>
 
               <tbody className="divide-y divide-border/60 text-xs">
-                {filteredSales.length === 0 ? (
+                {isLoading && sales.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-text-muted">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 size={16} className="animate-spin text-primary" />
+                        <span>Cargando ventas...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : sales.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-text-muted">
                       No se registraron ventas coincidentes para esta empresa.
                     </td>
                   </tr>
                 ) : (
-                  filteredSales.map((sale) => (
+                  sales.map((sale) => (
                     <tr
                       key={sale.id}
                       className="hover:bg-surface-2/50 transition-colors group"
@@ -203,6 +228,18 @@ export const VentasPage: React.FC<VentasPageProps> = ({
               </tbody>
             </table>
           </div>
+
+          {hasMore && !isLoading && (
+            <div className="p-3 border-t border-border/60 flex items-center justify-center">
+              <Button variant="secondary" size="sm" onClick={loadMore} disabled={isLoadingMore}>
+                {isLoadingMore ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <span>Cargar más ({total - sales.length} restantes)</span>
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

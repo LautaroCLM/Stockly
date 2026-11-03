@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import type { Product, StockStatus } from '../types';
 
 export function computeStatus(stock: number, minStock: number): StockStatus {
@@ -95,38 +96,51 @@ export async function fetchProducts(
   companyId: string,
   isMasterAdmin: boolean
 ): Promise<Product[]> {
-  const { data: prodRows, error: prodErr } = await supabase
-    .from('products')
-    .select('id, company_id, sku, barcode, name, description, category_id, supplier_id, unit, selling_price, min_stock, current_stock, is_active, created_at, updated_at')
-    .eq('company_id', companyId)
-    .order('name', { ascending: true });
+  // Lectura completa por páginas: el catálogo entero se usa en la venta y en los filtros locales
+  const { data: prodRows, error: prodErr } = await fetchAllRows((from, to) =>
+    supabase
+      .from('products')
+      .select('id, company_id, sku, barcode, name, description, category_id, supplier_id, unit, selling_price, min_stock, current_stock, is_active, created_at, updated_at')
+      .eq('company_id', companyId)
+      .order('name', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, to)
+  );
 
   if (prodErr) {
     throw new Error(sanitizeProductError(prodErr, 'Error al consultar el catálogo de productos.'));
   }
 
   // Resolver nombres de categorías asociadas
-  const { data: catRows } = await supabase
-    .from('categories')
-    .select('id, name')
-    .eq('company_id', companyId);
+  const { data: catRows } = await fetchAllRows((from, to) =>
+    supabase
+      .from('categories')
+      .select('id, name')
+      .eq('company_id', companyId)
+      .order('id', { ascending: true })
+      .range(from, to)
+  );
 
-  const catMap = new Map((catRows || []).map((c) => [c.id, c.name]));
+  const catMap = new Map(catRows.map((c) => [c.id, c.name]));
 
   // Resolver costos confidenciales exclusivamente para master_admin
   let costMap = new Map<string, number>();
   if (isMasterAdmin) {
-    const { data: costRows, error: costErr } = await supabase
-      .from('product_costs')
-      .select('product_id, cost_price')
-      .eq('company_id', companyId);
+    const { data: costRows, error: costErr } = await fetchAllRows((from, to) =>
+      supabase
+        .from('product_costs')
+        .select('product_id, cost_price')
+        .eq('company_id', companyId)
+        .order('product_id', { ascending: true })
+        .range(from, to)
+    );
 
     if (!costErr && costRows) {
       costMap = new Map(costRows.map((c) => [c.product_id, Number(c.cost_price)]));
     }
   }
 
-  return (prodRows || []).map((row) => {
+  return prodRows.map((row) => {
     const stock = Number(row.current_stock);
     const minStock = Number(row.min_stock);
     const categoryName = row.category_id ? catMap.get(row.category_id) || 'General' : 'General';

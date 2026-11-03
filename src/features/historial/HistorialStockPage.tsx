@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import type { StockMovement, StockMovementReason, StockMovementDirection } from '../inventario/types';
+import React, { useEffect, useState } from 'react';
+import type { Product, StockMovementReason } from '../inventario/types';
+import { useMovementsHistory } from './hooks/useMovementsHistory';
 import type { Company } from '@/types';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -20,12 +21,12 @@ import {
 
 interface HistorialStockPageProps {
   company: Company;
-  movements: StockMovement[];
-  isLoading?: boolean;
-  error?: string | null;
+  /** Catálogo completo: la búsqueda por nombre o SKU se resuelve contra él. */
+  products: Product[];
   onNavigateToInventario: () => void;
-  onReload?: () => void;
 }
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 const REASON_LABELS: Record<string, { label: string; badge: 'success' | 'danger' | 'warning' | 'primary' | 'neutral' }> = {
   initial_load: { label: 'Carga Inicial', badge: 'primary' },
@@ -40,55 +41,37 @@ const REASON_LABELS: Record<string, { label: string; badge: 'success' | 'danger'
 
 export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
   company,
-  movements,
-  isLoading = false,
-  error = null,
+  products,
   onNavigateToInventario,
-  onReload,
 }) => {
+  // Paginación y filtros se resuelven en el servidor (ver useMovementsHistory)
+  const {
+    movements,
+    total,
+    counts,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    error,
+    filters,
+    setFilters,
+    loadMore,
+    reload,
+  } = useMovementsHistory(company.id, products);
+  const onReload = reload;
+
+  // El texto se envía al servidor recién cuando el usuario deja de escribir
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDirection, setSelectedDirection] = useState<'all' | StockMovementDirection>('all');
-  const [selectedReason, setSelectedReason] = useState<'all' | StockMovementReason>('all');
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setFilters((prev) => (prev.search === searchQuery ? prev : { ...prev, search: searchQuery }));
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, setFilters]);
 
-  // Filter movements for this company
-  const companyMovements = useMemo(() => {
-    return movements.filter((m) => m.companyId === company.id);
-  }, [movements, company.id]);
-
-  // Filter by query, direction, reason
-  const filteredMovements = useMemo(() => {
-    return companyMovements.filter((m) => {
-      const q = searchQuery.toLowerCase().trim();
-      const matchesQuery =
-        !q ||
-        m.productName.toLowerCase().includes(q) ||
-        m.productSku.toLowerCase().includes(q) ||
-        (m.referenceDoc && m.referenceDoc.toLowerCase().includes(q)) ||
-        (m.referenceSaleId && m.referenceSaleId.toLowerCase().includes(q)) ||
-        (m.createdBy && m.createdBy.toLowerCase().includes(q));
-
-      const matchesDirection =
-        selectedDirection === 'all' || m.direction === selectedDirection;
-
-      const matchesReason =
-        selectedReason === 'all' || m.reason === selectedReason;
-
-      return matchesQuery && matchesDirection && matchesReason;
-    });
-  }, [companyMovements, searchQuery, selectedDirection, selectedReason]);
-
-  // Summary statistics
-  const totalEntries = useMemo(() => {
-    return companyMovements
-      .filter((m) => m.direction === 'increase')
-      .reduce((sum, m) => sum + m.quantity, 0);
-  }, [companyMovements]);
-
-  const totalExits = useMemo(() => {
-    return companyMovements
-      .filter((m) => m.direction === 'decrease')
-      .reduce((sum, m) => sum + m.quantity, 0);
-  }, [companyMovements]);
+  const selectedDirection = filters.direction;
+  const selectedReason = filters.reason;
+  const showCount = (value: number | undefined) => (isLoading || value === undefined ? '...' : value);
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-12">
@@ -158,9 +141,9 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-surface border border-border rounded-xl p-3.5 flex items-center justify-between">
           <div>
-            <span className="text-xs text-text-muted block">Movimientos registrados</span>
+            <span className="text-xs text-text-muted block">Movimientos (según filtros)</span>
             <span className="text-xl font-bold text-text-primary tabular-nums">
-              {isLoading && companyMovements.length === 0 ? '...' : companyMovements.length}
+              {showCount(total)}
             </span>
           </div>
           <History size={20} className="text-text-muted/60" />
@@ -168,9 +151,9 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
 
         <div className="bg-surface border border-border rounded-xl p-3.5 flex items-center justify-between">
           <div>
-            <span className="text-xs text-text-muted block">Total unidades ingresadas</span>
+            <span className="text-xs text-text-muted block">Movimientos de entrada</span>
             <span className="text-xl font-bold text-emerald-400 tabular-nums">
-              +{totalEntries} u.
+              {showCount(counts?.entries)}
             </span>
           </div>
           <ArrowUpRight size={20} className="text-emerald-400/70" />
@@ -178,9 +161,9 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
 
         <div className="bg-surface border border-border rounded-xl p-3.5 flex items-center justify-between">
           <div>
-            <span className="text-xs text-text-muted block">Total unidades egresadas</span>
+            <span className="text-xs text-text-muted block">Movimientos de salida</span>
             <span className="text-xl font-bold text-rose-400 tabular-nums">
-              -{totalExits} u.
+              {showCount(counts?.exits)}
             </span>
           </div>
           <ArrowDownLeft size={20} className="text-rose-400/70" />
@@ -200,7 +183,7 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por producto, SKU, comprobante, observaciones o autor..."
+              placeholder="Buscar por producto, SKU, comprobante u observaciones..."
               className="w-full h-8 pl-8 pr-3 text-xs bg-surface-2 border border-border rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary"
             />
           </div>
@@ -209,7 +192,9 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
           <div className="flex items-center gap-2">
             <select
               value={selectedReason}
-              onChange={(e) => setSelectedReason(e.target.value as 'all' | StockMovementReason)}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, reason: e.target.value as 'all' | StockMovementReason }))
+              }
               className="h-8 px-2.5 text-xs bg-surface-2 border border-border rounded-lg text-text-primary focus:outline-none cursor-pointer"
             >
               <option value="all">Todos los motivos</option>
@@ -230,7 +215,7 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
             {(['all', 'increase', 'decrease'] as const).map((dir) => (
               <button
                 key={dir}
-                onClick={() => setSelectedDirection(dir)}
+                onClick={() => setFilters((prev) => ({ ...prev, direction: dir }))}
                 className={`text-[11px] px-2.5 py-0.5 rounded-md transition-colors font-medium ${
                   selectedDirection === dir
                     ? 'bg-primary text-white shadow-sm'
@@ -243,7 +228,8 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
           </div>
 
           <span className="text-[11px] text-text-muted">
-            Mostrando <strong className="text-text-primary tabular-nums">{filteredMovements.length}</strong> movimientos
+            Mostrando <strong className="text-text-primary tabular-nums">{movements.length}</strong> de{' '}
+            <strong className="text-text-primary tabular-nums">{total}</strong> movimientos
           </span>
         </div>
       </div>
@@ -276,14 +262,14 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
                       </div>
                     </td>
                   </tr>
-                ) : filteredMovements.length === 0 ? (
+                ) : movements.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-text-muted">
                       No se encontraron movimientos registrados con los filtros seleccionados.
                     </td>
                   </tr>
                 ) : (
-                  filteredMovements.map((mov) => {
+                  movements.map((mov) => {
                     const reasonConfig = REASON_LABELS[mov.reason] || {
                       label: mov.reason,
                       badge: 'neutral',
@@ -355,6 +341,18 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
               </tbody>
             </table>
           </div>
+
+          {hasMore && !isLoading && (
+            <div className="p-3 border-t border-border/60 flex items-center justify-center">
+              <Button variant="secondary" size="sm" onClick={loadMore} disabled={isLoadingMore}>
+                {isLoadingMore ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <span>Cargar más ({total - movements.length} restantes)</span>
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

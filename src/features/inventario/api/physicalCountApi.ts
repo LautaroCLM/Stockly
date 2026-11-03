@@ -25,17 +25,13 @@ export async function registerPhysicalCountRpc(
   params: RegisterPhysicalCountParams
 ): Promise<RegisterAdjustmentExecutionResult> {
   try {
-    // La RPC aún no figura en src/types/database.ts (tipos desactualizados, hallazgo H-09)
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>
-    ) => Promise<{ data: unknown; error: { message: string } | null }>)('register_physical_count', {
+    const { data, error } = await supabase.rpc('register_physical_count', {
       p_company_id: params.companyId,
       p_idempotency_key: params.idempotencyKey,
       p_product_id: params.productId,
       p_counted_quantity: params.countedQuantity,
-      p_notes: params.notes?.trim() || null,
-      p_reference_doc: params.referenceDoc?.trim() || null,
+      p_notes: params.notes?.trim() || undefined,
+      p_reference_doc: params.referenceDoc?.trim() || undefined,
     });
 
     if (error) {

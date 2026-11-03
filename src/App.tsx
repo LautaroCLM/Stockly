@@ -2,13 +2,11 @@ import React, { useState, useCallback, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { RouteId, Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
-import { Sale, PaymentEntry, StockAdjustmentData, InitialStockBatchData } from '@/features/inventario/types';
+import { Sale, PaymentEntry } from '@/features/inventario/types';
 import { MOCK_DATASETS, NAV_SECTIONS } from '@/data/mockData';
 import { useCart } from '@/features/inventario/hooks/useCart';
 import { useProducts } from '@/features/inventario/hooks/useProducts';
 import { useCategories } from '@/features/inventario/hooks/useCategories';
-import { useStockMovements } from '@/features/inventario/hooks/useStockMovements';
-import { useSales } from '@/features/inventario/hooks/useSales';
 import { useSuppliers } from '@/features/proveedores/hooks/useSuppliers';
 import { useCustomers } from '@/features/clientes/hooks/useCustomers';
 import { useCompanyMembers } from '@/features/companies/hooks/useCompanyMembers';
@@ -85,42 +83,10 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     deleteCategory,
   } = useCategories(activeCompany.id, renameCategoryInProducts);
 
-  // Stock movements ledger per tenant
-  const {
-    movements,
-    isLoading: isMovementsLoading,
-    error: movementsError,
-    reloadMovements,
-    syncMovementsFromTransaction,
-  } = useStockMovements(activeCompany.id);
-
-  // Manejador coordinado de ajuste manual de existencias
-  const handleAdjustStock = useCallback(
-    async (data: StockAdjustmentData) => {
-      const res = await adjustStock(data);
-      if (res.success) {
-        reloadMovements().catch((err) =>
-          console.warn('Error al recargar movimientos tras ajuste:', err)
-        );
-      }
-      return res;
-    },
-    [adjustStock, reloadMovements]
-  );
-
-  // Manejador coordinado de carga inicial masiva de existencias
-  const handleImportInitialStock = useCallback(
-    async (data: InitialStockBatchData) => {
-      const res = await importInitialStock(data);
-      if (res.success) {
-        reloadMovements().catch((err) =>
-          console.warn('Error al recargar movimientos tras carga inicial:', err)
-        );
-      }
-      return res;
-    },
-    [importInitialStock, reloadMovements]
-  );
+  // El Historial consulta sus movimientos (paginados) cada vez que se abre:
+  // los ajustes y la carga inicial no necesitan recargarlo desde aquí
+  const handleAdjustStock = adjustStock;
+  const handleImportInitialStock = importInitialStock;
 
   // Persistent cart isolated per company
   const {
@@ -136,12 +102,6 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     setDiscount,
     clearCart,
   } = useCart(activeCompany.id);
-
-  // Persistent sales state per tenant
-  const {
-    sales,
-    syncSaleFromTransaction,
-  } = useSales(activeCompany.id);
 
   // Persistent suppliers state per tenant
   const {
@@ -277,15 +237,9 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
 
         // Éxito atómico comprobado en PostgreSQL
         resetSaleIntent();
-        if (result.sale) {
-          syncSaleFromTransaction(result.sale);
-        }
 
-        // Recargar inventario y movimientos desde Supabase de forma coordinada
-        Promise.all([
-          reloadProducts().catch((err) => console.warn('Error al recargar productos:', err)),
-          reloadMovements().catch((err) => console.warn('Error al recargar movimientos:', err)),
-        ]);
+        // Recargar el inventario desde Supabase (Ventas e Historial se consultan al abrirlos)
+        reloadProducts().catch((err) => console.warn('Error al recargar productos:', err));
 
         clearCart();
         setIsCheckoutOpen(false);
@@ -313,8 +267,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
       cartTotal,
       clearCart,
       syncProductsFromTransaction,
-      syncSaleFromTransaction,
-      syncMovementsFromTransaction,
+      reloadProducts,
       acquireSaleKey,
       markSaleUncertain,
       resetSaleIntent,
@@ -385,7 +338,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         {activeRoute === 'ventas' && (
           <VentasPage
             company={activeCompany}
-            sales={sales}
+            customers={customers}
             onViewReceipt={(sale) => {
               setSelectedReceiptSale(sale);
               setIsReceiptOpen(true);
@@ -397,10 +350,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         {activeRoute === 'historial' && (
           <HistorialStockPage
             company={activeCompany}
-            movements={movements}
-            isLoading={isMovementsLoading}
-            error={movementsError}
-            onReload={reloadMovements}
+            products={products}
             onNavigateToInventario={() => setActiveRoute('inventario')}
           />
         )}

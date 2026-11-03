@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import type { Supplier, UpsertSupplierInput } from '../types';
 
 /**
@@ -19,17 +20,21 @@ export function sanitizeSupplierError(err: unknown, defaultMessage: string): str
  * El aislamiento multiempresa es garantizado a nivel de fila (RLS) en la base de datos.
  */
 export async function fetchSuppliers(companyId: string): Promise<Supplier[]> {
-  const { data, error } = await supabase
-    .from('suppliers')
-    .select('id, company_id, name, contact_name, email, phone, address, tax_id, is_active, created_at, updated_at')
-    .eq('company_id', companyId)
-    .order('name', { ascending: true });
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from('suppliers')
+      .select('id, company_id, name, contact_name, email, phone, address, tax_id, is_active, created_at, updated_at')
+      .eq('company_id', companyId)
+      .order('name', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, to)
+  );
 
   if (error) {
     throw new Error(sanitizeSupplierError(error, 'Error al consultar proveedores de la empresa.'));
   }
 
-  return (data || []).map((row) => ({
+  return data.map((row) => ({
     id: row.id,
     companyId: row.company_id,
     name: row.name,
