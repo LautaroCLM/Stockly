@@ -20,8 +20,23 @@ export function formatPercent(value: number): string {
   return `${sign}${value.toFixed(1)}%`;
 }
 
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Convierte el texto en Date. Una fecha sin hora (YYYY-MM-DD, columnas `date`)
+ * se interpreta en la zona local: `new Date('2026-11-03')` sería medianoche UTC,
+ * que en Argentina (UTC-3) se muestra como el día anterior.
+ */
+function parseDate(dateString: string): Date {
+  const match = DATE_ONLY.exec(dateString);
+  if (match) {
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  }
+  return new Date(dateString);
+}
+
 export function formatDateShort(dateString: string): string {
-  const date = new Date(dateString);
+  const date = parseDate(dateString);
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
     month: '2-digit',
