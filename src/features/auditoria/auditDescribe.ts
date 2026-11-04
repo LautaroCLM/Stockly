@@ -12,6 +12,8 @@ export const AUDIT_TABLE_LABELS: Record<string, string> = {
   customers: 'Cliente',
   sales: 'Venta',
   purchases: 'Compra',
+  cash_sessions: 'Caja',
+  cash_movements: 'Movimiento de caja',
 };
 
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
@@ -40,6 +42,13 @@ const FIELD_LABELS: Record<string, string> = {
   category_id: 'categoría',
   cancel_reason: 'motivo de anulación',
   reason: 'motivo',
+  opening_amount: 'fondo inicial',
+  expected_amount: 'efectivo esperado',
+  counted_amount: 'efectivo contado',
+  difference_amount: 'diferencia',
+  closing_notes: 'observación de cierre',
+  amount: 'importe',
+  movement_type: 'tipo',
   allow_negative_stock: 'permite stock negativo',
   document_number: 'documento',
 };

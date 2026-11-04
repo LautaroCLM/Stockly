@@ -55,6 +55,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"cash_movements": {
+                  Row: {
+                    "amount": number,"company_id": string,"created_at": string,"created_by": string,"id": string,"movement_type": string,"reason": string,"session_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"company_id": string,"created_at"?: string,"created_by": string,"id"?: string,"movement_type": string,"reason": string,"session_id": string
+                  }
+                  Update: {
+                    "amount"?: number,"company_id"?: string,"created_at"?: string,"created_by"?: string,"id"?: string,"movement_type"?: string,"reason"?: string,"session_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cash_movements_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cash_movements_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "cash_sessions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"cash_sessions": {
+                  Row: {
+                    "cash_in_amount": number | null,"cash_out_amount": number | null,"cash_refunds_amount": number | null,"cash_sales_amount": number | null,"closed_at": string | null,"closed_by": string | null,"closing_notes": string | null,"company_id": string,"counted_amount": number | null,"difference_amount": number | null,"expected_amount": number | null,"id": string,"opened_at": string,"opened_by": string,"opening_amount": number,"opening_notes": string | null,"other_payments": Json | null,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cash_in_amount"?: number | null,"cash_out_amount"?: number | null,"cash_refunds_amount"?: number | null,"cash_sales_amount"?: number | null,"closed_at"?: string | null,"closed_by"?: string | null,"closing_notes"?: string | null,"company_id": string,"counted_amount"?: number | null,"difference_amount"?: number | null,"expected_amount"?: number | null,"id"?: string,"opened_at"?: string,"opened_by": string,"opening_amount": number,"opening_notes"?: string | null,"other_payments"?: Json | null,"status"?: string
+                  }
+                  Update: {
+                    "cash_in_amount"?: number | null,"cash_out_amount"?: number | null,"cash_refunds_amount"?: number | null,"cash_sales_amount"?: number | null,"closed_at"?: string | null,"closed_by"?: string | null,"closing_notes"?: string | null,"company_id"?: string,"counted_amount"?: number | null,"difference_amount"?: number | null,"expected_amount"?: number | null,"id"?: string,"opened_at"?: string,"opened_by"?: string,"opening_amount"?: number,"opening_notes"?: string | null,"other_payments"?: Json | null,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cash_sessions_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"categories": {
                   Row: {
                     "company_id": string,"created_at": string,"description": string | null,"id": string,"is_active": boolean,"name": string,"updated_at": string
@@ -637,6 +683,12 @@ isOneToOne: false
 "cancel_sale":
 { Args: { "p_company_id": string,"p_reason": string,"p_sale_id": string }; Returns: Json
                            },
+"cash_session_summary":
+{ Args: { "p_company_id": string,"p_session_id": string }; Returns: Json
+                           },
+"close_cash_session":
+{ Args: { "p_company_id": string,"p_counted_amount": number,"p_notes"?: string,"p_session_id": string }; Returns: Json
+                           },
 "create_company":
 { Args: { "p_currency"?: string,"p_name": string,"p_tax_id": string,"p_timezone"?: string }; Returns: string
                            },
@@ -666,6 +718,9 @@ isOneToOne: false
 "local_today":
 { Args: { "p_company_id": string }; Returns: string
                            },
+"open_cash_session":
+{ Args: { "p_company_id": string,"p_notes"?: string,"p_opening_amount": number }; Returns: Json
+                           },
 "process_purchase":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_invoice_number"?: string,"p_items": Json,"p_notes"?: string,"p_purchase_date"?: string,"p_supplier_id": string }; Returns: Json
                            },
@@ -684,6 +739,9 @@ isOneToOne: false
                            },
 "reactivate_member":
 { Args: { "p_company_id": string,"p_new_role": string,"p_reason": string,"p_user_id": string }; Returns: undefined
+                           },
+"register_cash_movement":
+{ Args: { "p_amount": number,"p_company_id": string,"p_movement_type": string,"p_reason": string,"p_session_id": string }; Returns: Json
                            },
 "register_physical_count":
 { Args: { "p_company_id": string,"p_counted_quantity": number,"p_idempotency_key": string,"p_notes"?: string,"p_product_id": string,"p_reference_doc"?: string }; Returns: Json

@@ -20,6 +20,7 @@ import { InventarioPage } from '@/features/inventario/InventarioPage';
 import { VentasPage } from '@/features/ventas/VentasPage';
 import { HistorialStockPage } from '@/features/historial/HistorialStockPage';
 import { AuditLogPage } from '@/features/auditoria/AuditLogPage';
+import { CajaPage } from '@/features/caja/CajaPage';
 import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
 import { ClientesPage } from '@/features/clientes/components/ClientesPage';
 import { ComprasPage } from '@/features/compras/components/ComprasPage';
@@ -386,6 +387,8 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           />
         )}
 
+        {activeRoute === 'caja' && <CajaPage company={activeCompany} />}
+
         {activeRoute === 'auditoria' && (
           <AuditLogPage company={activeCompany} isMasterAdmin={isMasterAdmin} />
         )}
@@ -466,6 +469,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           activeRoute !== 'ventas' &&
           activeRoute !== 'historial' &&
           activeRoute !== 'auditoria' &&
+          activeRoute !== 'caja' &&
           activeRoute !== 'proveedores' &&
           activeRoute !== 'compras' &&
           activeRoute !== 'clientes' &&

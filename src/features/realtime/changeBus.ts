@@ -15,7 +15,9 @@ export type DataTable =
   | 'purchases'
   | 'suppliers'
   | 'customers'
-  | 'audit_log';
+  | 'audit_log'
+  | 'cash_sessions'
+  | 'cash_movements';
 
 /** 'all' = recargar todo (al volver a la pestaña o recuperar la conexión). */
 export type DataChange = DataTable | 'all';
