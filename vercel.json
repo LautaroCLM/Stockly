@@ -3,5 +3,6 @@
   "framework": "vite",
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "ignoreCommand": "if [ \"$VERCEL_ENV\" = \"production\" ]; then echo \"Build de produccion bloqueado: Stockly todavia no se publica a produccion\"; exit 0; fi; exit 1"
 }
