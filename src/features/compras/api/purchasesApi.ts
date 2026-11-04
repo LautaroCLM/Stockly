@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { buildSearchOrFilter } from '@/lib/postgrestSearch';
-import { isNetworkOrUncertainError } from '@/features/inventario/api/stockMovementsApi';
+import { isNetworkOrUncertainError } from '@/lib/errorMessages';
 import type { Purchase, CreatePurchaseInput } from '../types';
 
 export const PURCHASES_PAGE_SIZE = 50;

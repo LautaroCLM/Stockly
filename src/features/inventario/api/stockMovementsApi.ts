@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { isNetworkOrUncertainError } from '@/lib/errorMessages';
 
 /**
  * Normaliza y traduce errores emitidos por PostgreSQL y las RPC de stock.
@@ -36,23 +37,6 @@ export function sanitizeStockMovementError(err: unknown, defaultMessage: string)
     return err.message.replace(/^(P0001|error):\s*/i, '').trim();
   }
   return defaultMessage;
-}
-
-/**
- * Determina si una falla se debe a pérdida de conectividad o error de transporte,
- * dejando en incertidumbre si PostgreSQL ejecutó o no la mutación.
- */
-export function isNetworkOrUncertainError(err: unknown): boolean {
-  if (!err) return false;
-  const str = (err instanceof Error ? err.message : String(err)).toLowerCase();
-  return (
-    str.includes('failed to fetch') ||
-    str.includes('networkerror') ||
-    str.includes('network') ||
-    str.includes('timeout') ||
-    str.includes('connection refused') ||
-    str.includes('abort')
-  );
 }
 
 export interface RegisterAdjustmentParams {

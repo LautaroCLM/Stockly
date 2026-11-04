@@ -16,9 +16,10 @@
 -- ============================================================================
 
 BEGIN;
-SELECT plan(28);
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
+
+SELECT plan(28);
 
 -- ============================================================================
 -- 0. CONFIGURACIÓN DEL ENTORNO DE PRUEBAS (FIXTURE AISLADO)

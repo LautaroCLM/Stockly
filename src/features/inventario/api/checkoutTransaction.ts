@@ -2,7 +2,8 @@ import { TenantId } from '@/types';
 import { CartItem, PaymentEntry, Sale } from '../types';
 import { isIdempotencyMismatchError } from '../saleIntent';
 import { processSaleRpc, ProcessSaleParams } from './salesApi';
-import { isNetworkOrUncertainError } from './productsApi';
+import { isNetworkOrUncertainError } from '@/lib/errorMessages';
+import { toUserMessage } from '@/lib/errorMessages';
 
 export interface ExecuteSaleParams {
   tenantId: TenantId;
@@ -97,7 +98,7 @@ export async function executeSaleTransaction(
       sale: mappedSale,
     };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error desconocido al registrar la venta.';
+    const message = toUserMessage(err, 'Error desconocido al registrar la venta.');
 
     if (isIdempotencyMismatchError(message)) {
       return {

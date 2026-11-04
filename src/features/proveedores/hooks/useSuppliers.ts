@@ -3,6 +3,7 @@ import type { Supplier, UpsertSupplierInput, SupplierActionResult } from '../typ
 import { fetchSuppliers, upsertSupplierRpc, toggleSupplierStatusRpc } from '../api/suppliersApi';
 import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
 import type { DataTable } from '@/features/realtime/changeBus';
+import { toUserMessage } from '@/lib/errorMessages';
 
 /** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
 const REALTIME_TABLES: readonly DataTable[] = ['suppliers'];
@@ -35,7 +36,7 @@ export function useSuppliers(companyId: string) {
       }
     } catch (err) {
       if (isMountedRef.current && currentCompanyIdRef.current === targetCompanyId) {
-        const message = err instanceof Error ? err.message : 'Error al cargar proveedores.';
+        const message = toUserMessage(err, 'Error al cargar proveedores.');
         setError(message);
       }
     } finally {
@@ -47,6 +48,8 @@ export function useSuppliers(companyId: string) {
 
   useEffect(() => {
     isMountedRef.current = true;
+    // Al cambiar de empresa no deben quedar a la vista los datos de la anterior
+    setSuppliers([]);
     loadSuppliers(companyId);
     return () => {
       isMountedRef.current = false;
@@ -70,7 +73,7 @@ export function useSuppliers(companyId: string) {
 
         return { success: true, supplierId };
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'No se pudo guardar el proveedor.';
+        const message = toUserMessage(err, 'No se pudo guardar el proveedor.');
         return { success: false, error: message };
       }
     },
@@ -84,7 +87,7 @@ export function useSuppliers(companyId: string) {
         await loadSuppliers(companyId);
         return { success: true, supplierId };
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'No se pudo actualizar el estado del proveedor.';
+        const message = toUserMessage(err, 'No se pudo actualizar el estado del proveedor.');
         return { success: false, error: message };
       }
     },

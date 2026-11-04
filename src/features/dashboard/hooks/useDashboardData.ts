@@ -11,6 +11,7 @@ import {
 } from '../dashboardMetrics';
 import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
 import type { DataTable } from '@/features/realtime/changeBus';
+import { toUserMessage } from '@/lib/errorMessages';
 
 /** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
 const REALTIME_TABLES: readonly DataTable[] = ['sales', 'stock_movements', 'products', 'product_costs'];
@@ -44,13 +45,17 @@ export function useDashboardData(companyId: string, products: Product[]) {
       setMovements(page.rows);
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
-      setError(err instanceof Error ? err.message : 'Error al cargar el resumen operativo.');
+      // Se conservan las métricas visibles de esta empresa: un corte breve no las borra
+      setError(toUserMessage(err, 'No se pudo cargar el resumen operativo.'));
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
   }, [companyId]);
 
   useEffect(() => {
+    // Al cambiar de empresa no deben quedar a la vista los datos de la anterior
+    setDailySales([]);
+    setMovements([]);
     reload();
     return () => {
       requestIdRef.current += 1;

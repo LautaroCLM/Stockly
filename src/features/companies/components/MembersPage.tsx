@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
 import { Company } from '@/types';
 import { Button } from '@/components/ui/Button';
-import {
-  Users,
-  UserPlus,
-  RefreshCw,
-  ShieldAlert,
-  CheckCircle2,
-} from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import type { CompanyMember, CompanyInvitation, CompanyRole, InviteUserResult } from '../types';
 import { InviteUserModal } from './InviteUserModal';
 import { MemberActionModal } from './MemberActionModal';
 import { MembersTable } from './MembersTable';
 import { InvitationsTable } from './InvitationsTable';
+import { MembersHeader, type MembersNotice } from './MembersHeader';
 
 export interface MembersPageProps {
   company: Company;
@@ -55,11 +50,11 @@ export const MembersPage: React.FC<MembersPageProps> = ({
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<MembersNotice>(null);
 
-  const showNotification = (msg: string) => {
-    setNotice(msg);
-    setTimeout(() => setNotice(null), 4000);
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotice({ type, message });
+    setTimeout(() => setNotice(null), type === 'error' ? 8000 : 4000);
   };
 
   const handleManualReload = async () => {
@@ -95,7 +90,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({
       if (res.success) {
         showNotification('Invitación revocada correctamente.');
       } else {
-        alert(res.error || 'Error al revocar la invitación.');
+        showNotification(res.error || 'Error al revocar la invitación.', 'error');
       }
     } finally {
       setRevokingId(null);
@@ -104,60 +99,8 @@ export const MembersPage: React.FC<MembersPageProps> = ({
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
-        <div>
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            <h1 className="text-xl font-bold text-text-primary tracking-tight">
-              Gestión de Miembros e Invitaciones
-            </h1>
-          </div>
-          <p className="text-xs text-text-secondary mt-1">
-            Empresa activa: <span className="font-semibold text-text-primary">{company.name}</span>
-            {company.cuit ? ` (${company.cuit})` : ''} — Gobierno de accesos corporativos.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleManualReload}
-            disabled={isLoading || isRefreshing}
-            className="text-xs h-9"
-          >
-            <RefreshCw
-              size={14}
-              className={`mr-1.5 ${isLoading || isRefreshing ? 'animate-spin' : ''}`}
-            />
-            <span>Actualizar</span>
-          </Button>
-
-          {isMasterAdmin ? (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsInviteOpen(true)}
-              className="text-xs h-9 shadow-md shadow-primary/20"
-            >
-              <UserPlus size={14} className="mr-1.5" />
-              <span>Invitar Colaborador</span>
-            </Button>
-          ) : (
-            <span className="text-[11px] text-text-muted bg-surface-2 px-2.5 py-1.5 rounded-lg border border-border">
-              Solo lectura (Rol Empleado)
-            </span>
-          )}
-        </div>
-      </div>
-
-      {notice && (
-        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 size={15} />
-          <span>{notice}</span>
-        </div>
-      )}
+      <MembersHeader company={company} isMasterAdmin={isMasterAdmin} isBusy={isLoading || isRefreshing} notice={notice}
+        onReload={() => void handleManualReload()} onInvite={() => setIsInviteOpen(true)} />
 
       {error && (
         <div className="p-4 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs flex items-center justify-between gap-3">

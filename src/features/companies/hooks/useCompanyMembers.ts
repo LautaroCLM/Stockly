@@ -10,6 +10,7 @@ import {
 } from '../api/membersApi';
 import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
 import type { DataTable } from '@/features/realtime/changeBus';
+import { toUserMessage } from '@/lib/errorMessages';
 
 /** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
 const REALTIME_TABLES: readonly DataTable[] = ['company_members', 'company_invitations'];
@@ -58,7 +59,7 @@ export function useCompanyMembers(companyId: string, isMasterAdmin: boolean) {
         }
       } catch (err) {
         if (isMountedRef.current && currentCompanyIdRef.current === targetCompanyId) {
-          const message = err instanceof Error ? err.message : 'Error al cargar miembros de la empresa.';
+          const message = toUserMessage(err, 'Error al cargar miembros de la empresa.');
           setError(message);
         }
       } finally {
@@ -72,6 +73,9 @@ export function useCompanyMembers(companyId: string, isMasterAdmin: boolean) {
 
   useEffect(() => {
     isMountedRef.current = true;
+    // Al cambiar de empresa no deben quedar a la vista los datos de la anterior
+    setMembers([]);
+    setInvitations([]);
     loadData(companyId);
     return () => {
       isMountedRef.current = false;
@@ -94,7 +98,7 @@ export function useCompanyMembers(companyId: string, isMasterAdmin: boolean) {
         await loadData(companyId);
         return { success: true, token };
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Error al generar la invitación.';
+        const message = toUserMessage(err, 'Error al generar la invitación.');
         return { success: false, error: message };
       }
     },
@@ -108,7 +112,7 @@ export function useCompanyMembers(companyId: string, isMasterAdmin: boolean) {
         await loadData(companyId);
         return { success: true };
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'No se pudo revocar la invitación.';
+        const message = toUserMessage(err, 'No se pudo revocar la invitación.');
         return { success: false, error: message };
       }
     },
@@ -122,7 +126,7 @@ export function useCompanyMembers(companyId: string, isMasterAdmin: boolean) {
         await loadData(companyId);
         return { success: true };
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'No se pudo desactivar al colaborador.';
+        const message = toUserMessage(err, 'No se pudo desactivar al colaborador.');
         return { success: false, error: message };
       }
     },
@@ -140,7 +144,7 @@ export function useCompanyMembers(companyId: string, isMasterAdmin: boolean) {
         await loadData(companyId);
         return { success: true };
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'No se pudo reactivar al colaborador.';
+        const message = toUserMessage(err, 'No se pudo reactivar al colaborador.');
         return { success: false, error: message };
       }
     },

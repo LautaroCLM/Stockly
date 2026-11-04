@@ -2,8 +2,7 @@ import React from 'react';
 import { Product } from '../types';
 import { StockBadge } from './StockBadge';
 import { formatCurrency } from '@/lib/formatters';
-import { Button } from '@/components/ui/Button';
-import { Plus, ShoppingCart, Check, Pencil, Layers, RotateCcw, Ban, AlertTriangle } from 'lucide-react';
+import { CartIndicator, ProductRowActions } from './ProductRowActions';
 
 interface ProductTableRowProps {
   product: Product;
@@ -104,114 +103,13 @@ export const ProductTableRow: React.FC<ProductTableRowProps> = ({
 
       {/* Cart Indicator */}
       <td className="py-2.5 px-3 text-center">
-        {isInCart ? (
-          isInactive ? (
-            <span
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-danger px-2 py-0.5 rounded-full bg-danger/10 border border-danger/30"
-              title="Producto desactivado en carrito"
-            >
-              <AlertTriangle size={11} />
-              {quantityInCart} (bloqueado)
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent px-2 py-0.5 rounded-full bg-accent/10 border border-accent/25">
-              <Check size={11} />
-              {quantityInCart} en carrito
-            </span>
-          )
-        ) : (
-          <span className="text-[11px] text-text-muted">—</span>
-        )}
+        <CartIndicator quantity={quantityInCart} isInactive={isInactive} />
       </td>
 
       {/* Action Buttons */}
       <td className="py-2.5 px-4 text-right">
-        <div className="flex items-center justify-end gap-1.5">
-          {onAdjustStock && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAdjustStock(product);
-              }}
-              className="p-1.5 rounded-lg text-text-muted hover:text-accent hover:bg-surface-2 transition-colors"
-              title={`Ajustar existencias de ${product.name}`}
-            >
-              <Layers size={13} />
-            </button>
-          )}
-
-          {onEdit && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(product);
-              }}
-              className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
-              title={`Editar datos de ${product.name}`}
-            >
-              <Pencil size={13} />
-            </button>
-          )}
-
-          {isInactive ? (
-            onReactivate && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReactivate(product);
-                }}
-                className="h-7 px-2.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 border-emerald-800/50"
-                title={`Reactivar ${product.name}`}
-              >
-                <RotateCcw size={12} className="mr-1" />
-                <span>Reactivar</span>
-              </Button>
-            )
-          ) : (
-            <>
-              {onDeactivate && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeactivate(product);
-                  }}
-                  className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
-                  title={`Desactivar ${product.name}`}
-                >
-                  <Ban size={13} />
-                </button>
-              )}
-
-              <Button
-                variant={isInCart ? 'secondary' : 'primary'}
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddToCart(product);
-                }}
-                className="h-7 px-2.5 text-xs font-medium"
-                title={`Agregar ${product.name} al carrito (o presiona Enter)`}
-              >
-                {isInCart ? (
-                  <>
-                    <Plus size={13} />
-                    <span>Sumar</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart size={13} />
-                    <span>Agregar</span>
-                  </>
-                )}
-              </Button>
-            </>
-          )}
-        </div>
+        <ProductRowActions product={product} isInCart={isInCart} onAddToCart={onAddToCart} onEdit={onEdit}
+          onAdjustStock={onAdjustStock} onDeactivate={onDeactivate} onReactivate={onReactivate} />
       </td>
     </tr>
   );

@@ -1,23 +1,38 @@
 import React from 'react';
-import { PackageX, PackagePlus, Plus } from 'lucide-react';
+import { PackageX, PackagePlus, Plus, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface ProductsEmptyStateProps {
   /** true si la empresa todavía no tiene ningún producto cargado. */
   isCatalogEmpty: boolean;
+  /** Error de carga: si la lista está vacía por un error, no se invita a crear productos. */
+  loadError?: string | null;
   onClearFilters: () => void;
   onCreateProduct: () => void;
 }
 
 /**
  * Estado vacío de la tabla de inventario.
- * Distingue un catálogo sin productos de una búsqueda o filtro sin resultados.
+ * Distingue un catálogo sin productos, una búsqueda sin resultados y una carga fallida.
  */
 export const ProductsEmptyState: React.FC<ProductsEmptyStateProps> = ({
   isCatalogEmpty,
+  loadError = null,
   onClearFilters,
   onCreateProduct,
 }) => {
+  if (isCatalogEmpty && loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-text-muted">
+        <WifiOff size={36} className="text-danger/60 mb-2" />
+        <span className="text-xs font-semibold text-text-primary">No se pudo cargar el catálogo</span>
+        <p className="text-[11px] text-text-muted mt-1">
+          Los productos no se borraron: es un problema para leerlos. Probá de nuevo con el botón Reintentar.
+        </p>
+      </div>
+    );
+  }
+
   const Icon = isCatalogEmpty ? PackagePlus : PackageX;
 
   return (

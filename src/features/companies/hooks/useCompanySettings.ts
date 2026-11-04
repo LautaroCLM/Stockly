@@ -3,6 +3,7 @@ import type { CompanySettings } from '../types';
 import { fetchCompanySettings, setNegativeStockPolicyRpc } from '../api/companySettingsApi';
 import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
 import type { DataTable } from '@/features/realtime/changeBus';
+import { toUserMessage } from '@/lib/errorMessages';
 
 /** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
 const REALTIME_TABLES: readonly DataTable[] = ['companies'];
@@ -29,7 +30,7 @@ export function useCompanySettings(companyId: string) {
       }
     } catch (err) {
       if (activeCompanyIdRef.current === companyId) {
-        setError(err instanceof Error ? err.message : 'Error al cargar configuración de empresa.');
+        setError(toUserMessage(err, 'Error al cargar configuración de empresa.'));
       }
     } finally {
       if (activeCompanyIdRef.current === companyId) {
@@ -39,6 +40,8 @@ export function useCompanySettings(companyId: string) {
   }, [companyId]);
 
   useEffect(() => {
+    // Al cambiar de empresa no deben quedar a la vista los datos de la anterior
+    setSettings(null);
     loadSettings();
   }, [loadSettings]);
 
@@ -57,7 +60,7 @@ export function useCompanySettings(companyId: string) {
         await loadSettings();
         return { success: true };
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Error al actualizar la política de stock negativo.';
+        const errorMsg = toUserMessage(err, 'Error al actualizar la política de stock negativo.');
         return { success: false, error: errorMsg };
       } finally {
         setIsSaving(false);

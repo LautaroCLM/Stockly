@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
+import { isNetworkOrUncertainError } from '@/lib/errorMessages';
 import {
-  isNetworkOrUncertainError,
   sanitizeStockMovementError,
   type RegisterAdjustmentExecutionResult,
 } from './stockMovementsApi';

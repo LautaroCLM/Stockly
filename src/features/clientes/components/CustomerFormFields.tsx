@@ -1,6 +1,6 @@
 import React from 'react';
 import { Input } from '@/components/ui/Input';
-import { validateCuit, formatCuit } from '@/features/companies/utils/cuitValidator';
+import { emailError, formatTaxIdInput, taxIdError, usesCuitFormat } from '../customerFieldRules';
 import type { CustomerIdentificationType } from '../types';
 
 export const ID_TYPES: { value: CustomerIdentificationType; label: string }[] = [
@@ -43,11 +43,11 @@ export const CustomerFormFields: React.FC<CustomerFormFieldsProps> = ({
   setIdType,
   taxId,
   setTaxId,
-  taxIdError,
+  taxIdError: taxIdErrorMessage,
   setTaxIdError,
   email,
   setEmail,
-  emailError,
+  emailError: emailErrorMessage,
   setEmailError,
   phone,
   setPhone,
@@ -62,46 +62,18 @@ export const CustomerFormFields: React.FC<CustomerFormFieldsProps> = ({
   const handleIdTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newType = e.target.value as CustomerIdentificationType;
     setIdType(newType);
-    if ((newType === 'CUIT' || newType === 'CUIL') && taxId.trim()) {
-      if (!validateCuit(taxId)) {
-        setTaxIdError('El CUIT/CUIL no es válido según el algoritmo Módulo 11.');
-      } else {
-        setTaxIdError(null);
-      }
-    } else {
-      setTaxIdError(null);
-    }
+    setTaxIdError(taxIdError(newType, taxId));
   };
 
   const handleTaxIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    if (idType === 'CUIT' || idType === 'CUIL') {
-      const formatted = formatCuit(raw);
-      setTaxId(formatted);
-      if (!formatted.trim()) {
-        setTaxIdError(null);
-      } else if (!validateCuit(formatted)) {
-        setTaxIdError('El CUIT/CUIL ingresado no es válido (algoritmo Módulo 11).');
-      } else {
-        setTaxIdError(null);
-      }
-    } else {
-      setTaxId(raw);
-      setTaxIdError(null);
-    }
+    const value = formatTaxIdInput(idType, e.target.value);
+    setTaxId(value);
+    setTaxIdError(taxIdError(idType, value));
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setEmail(val);
-    const clean = val.trim();
-    if (!clean) {
-      setEmailError(null);
-    } else if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(clean)) {
-      setEmailError('Formato de correo electrónico inválido.');
-    } else {
-      setEmailError(null);
-    }
+    setEmail(e.target.value);
+    setEmailError(emailError(e.target.value));
   };
 
   return (
@@ -145,11 +117,11 @@ export const CustomerFormFields: React.FC<CustomerFormFieldsProps> = ({
           <Input
             value={taxId}
             onChange={handleTaxIdChange}
-            placeholder={idType === 'CUIT' || idType === 'CUIL' ? '20-12345678-9' : 'Ej. 35123456'}
+            placeholder={usesCuitFormat(idType) ? '20-12345678-9' : 'Ej. 35123456'}
             disabled={isSubmitting}
             maxLength={30}
           />
-          {taxIdError && <p className="text-[11px] text-destructive mt-1">{taxIdError}</p>}
+          {taxIdErrorMessage && <p className="text-[11px] text-destructive mt-1">{taxIdErrorMessage}</p>}
         </div>
       </div>
 
@@ -165,7 +137,7 @@ export const CustomerFormFields: React.FC<CustomerFormFieldsProps> = ({
             placeholder="cliente@ejemplo.com"
             disabled={isSubmitting}
           />
-          {emailError && <p className="text-[11px] text-destructive mt-1">{emailError}</p>}
+          {emailErrorMessage && <p className="text-[11px] text-destructive mt-1">{emailErrorMessage}</p>}
         </div>
 
         <div>

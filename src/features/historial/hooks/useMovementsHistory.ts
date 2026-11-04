@@ -5,16 +5,19 @@ import type {
   StockMovementDirection,
   StockMovementReason,
 } from '@/features/inventario/types';
+import type { DataTable } from '@/features/realtime/changeBus';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import { usePagedQuery } from '@/hooks/usePagedQuery';
 import {
+  MOVEMENTS_PAGE_SIZE,
   fetchMovementDirectionCounts,
   fetchMovementsPage,
   type MovementFilters,
 } from '../api/movementsHistoryApi';
-import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
-import type { DataTable } from '@/features/realtime/changeBus';
 
 /** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
 const REALTIME_TABLES: readonly DataTable[] = ['stock_movements', 'products'];
+const COUNT_TABLES: readonly DataTable[] = ['stock_movements'];
 
 export interface MovementFilterInputs {
   direction: 'all' | StockMovementDirection;
@@ -40,101 +43,68 @@ export function matchProductIds(products: Product[], search: string): string[] {
 
 /**
  * Historial de movimientos paginado en el servidor: primera página al montar o al cambiar
- * los filtros, y "cargar más" para las siguientes. Descarta respuestas de pedidos viejos.
+ * los filtros, "cargar más" para las siguientes y refresco en vivo sin perder lo cargado.
  */
 export function useMovementsHistory(companyId: string, products: Product[]) {
   const [filters, setFilters] = useState<MovementFilterInputs>(INITIAL_FILTERS);
-  const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [total, setTotal] = useState(0);
   const [counts, setCounts] = useState<{ entries: number; exits: number } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const requestIdRef = useRef(0);
   const productsRef = useRef(products);
   productsRef.current = products;
+  const filtersKey = `${companyId}|${filters.direction}|${filters.reason}|${filters.search}`;
 
   const toQueryFilters = useCallback(
-    (inputs: MovementFilterInputs): MovementFilters => ({
-      ...inputs,
-      matchingProductIds: matchProductIds(productsRef.current, inputs.search),
-    }),
-    []
+    (): MovementFilters => ({ ...filters, matchingProductIds: matchProductIds(productsRef.current, filters.search) }),
+    [filters]
   );
 
-  const reload = useCallback(async () => {
-    const requestId = ++requestIdRef.current;
-    setIsLoading(true);
-    setIsLoadingMore(false);
-    setError(null);
+  const fetchPage = useCallback(
+    (offset: number, limit: number) => fetchMovementsPage(companyId, toQueryFilters(), offset, limit),
+    [companyId, toQueryFilters]
+  );
 
-    try {
-      const queryFilters = toQueryFilters(filters);
-      const [page, directionCounts] = await Promise.all([
-        fetchMovementsPage(companyId, queryFilters, 0),
-        fetchMovementDirectionCounts(companyId, queryFilters),
-      ]);
-      if (requestId !== requestIdRef.current) return;
-      setMovements(page.rows);
-      setTotal(page.total);
-      setCounts(directionCounts);
-    } catch (err) {
-      if (requestId !== requestIdRef.current) return;
-      setError(err instanceof Error ? err.message : 'Error al cargar el historial de movimientos de stock.');
-      setMovements([]);
-      setTotal(0);
-      setCounts(null);
-    } finally {
-      if (requestId === requestIdRef.current) setIsLoading(false);
-    }
-  }, [companyId, filters, toQueryFilters]);
-
-  useEffect(() => {
-    reload();
-    return () => {
-      // Invalida respuestas pendientes al desmontar o antes de la próxima recarga
-      requestIdRef.current += 1;
-    };
-  }, [reload]);
-
-  const loadMore = useCallback(async () => {
-    if (isLoading || isLoadingMore) return;
-    const requestId = requestIdRef.current;
-    setIsLoadingMore(true);
-
-    try {
-      const page = await fetchMovementsPage(companyId, toQueryFilters(filters), movements.length);
-      if (requestId !== requestIdRef.current) return;
-      // Si entraron movimientos nuevos, el desplazamiento repite filas ya vistas: se descartan por id
-      setMovements((prev) => {
-        const seen = new Set(prev.map((m) => m.id));
-        return [...prev, ...page.rows.filter((row) => !seen.has(row.id))];
-      });
-      setTotal(page.total);
-    } catch (err) {
-      if (requestId !== requestIdRef.current) return;
-      setError(err instanceof Error ? err.message : 'Error al cargar más movimientos.');
-    } finally {
-      if (requestId === requestIdRef.current) setIsLoadingMore(false);
-    }
-  }, [companyId, filters, isLoading, isLoadingMore, movements.length, toQueryFilters]);
-
-  useOnDataChange(REALTIME_TABLES, () => {
-    void reload();
+  const query = usePagedQuery<StockMovement>({
+    queryKey: filtersKey,
+    enabled: Boolean(companyId),
+    pageSize: MOVEMENTS_PAGE_SIZE,
+    fetchPage,
+    realtimeTables: REALTIME_TABLES,
+    errorFallback: 'No se pudo cargar el historial de movimientos de stock.',
   });
 
+  // Contadores de entradas y salidas: si un refresco falla se conservan los anteriores
+  const loadCounts = useCallback(async () => {
+    try {
+      setCounts(await fetchMovementDirectionCounts(companyId, toQueryFilters()));
+    } catch {
+      // El aviso de error ya lo muestra la lista
+    }
+  }, [companyId, toQueryFilters]);
+
+  useEffect(() => {
+    setCounts(null);
+    void loadCounts();
+  }, [loadCounts]);
+
+  useOnDataChange(COUNT_TABLES, () => {
+    void loadCounts();
+  });
+
+  const { refresh } = query;
+  const reload = useCallback(async () => {
+    await Promise.all([refresh(), loadCounts()]);
+  }, [refresh, loadCounts]);
+
   return {
-    movements,
-    total,
+    movements: query.rows,
+    total: query.total,
     counts,
-    hasMore: movements.length < total,
-    isLoading,
-    isLoadingMore,
-    error,
+    hasMore: query.hasMore,
+    isLoading: query.isLoading,
+    isLoadingMore: query.isLoadingMore,
+    error: query.error,
     filters,
     setFilters,
-    loadMore,
+    loadMore: query.loadMore,
     reload,
   };
 }

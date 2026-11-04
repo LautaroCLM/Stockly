@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { isNetworkOrUncertainError } from '@/features/inventario/api/stockMovementsApi';
+import { isNetworkOrUncertainError } from '@/lib/errorMessages';
 import type { CashActionResult, CashMovement, CashMovementType, CashSession, CashSummary } from '../types';
 
 export const CASH_HISTORY_PAGE_SIZE = 20;
@@ -68,7 +68,8 @@ export async function fetchOpenSession(companyId: string): Promise<CashSession |
 /** Cajas cerradas, de la más reciente a la más antigua. */
 export async function fetchClosedSessions(
   companyId: string,
-  offset: number
+  offset: number,
+  limit: number = CASH_HISTORY_PAGE_SIZE
 ): Promise<{ rows: CashSession[]; total: number }> {
   const { data, error, count } = await supabase
     .from('cash_sessions')
@@ -77,7 +78,7 @@ export async function fetchClosedSessions(
     .eq('status', 'closed')
     .order('opened_at', { ascending: false })
     .order('id', { ascending: false })
-    .range(offset, offset + CASH_HISTORY_PAGE_SIZE - 1);
+    .range(offset, offset + limit - 1);
   if (error) throw new Error('No se pudo cargar el historial de cajas.');
   const rows = data ?? [];
   const names = await fetchNames(rows.flatMap((r) => [r.opened_by, r.closed_by]));

@@ -1,23 +1,12 @@
 import React, { useState } from 'react';
 import { Company } from '@/types';
-import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { formatDateTime } from '@/lib/formatters';
-import {
-  Building2,
-  RefreshCw,
-  ShieldCheck,
-  ShieldAlert,
-  CheckCircle2,
-  Info,
-  Calendar,
-  Lock,
-  Boxes,
-  HelpCircle,
-} from 'lucide-react';
+import { Building2, CheckCircle2, RefreshCw, ShieldAlert } from 'lucide-react';
 import type { CompanySettings } from '../types';
 import { NegativeStockModal } from './NegativeStockModal';
+import { NegativeStockPolicyCard } from './NegativeStockPolicyCard';
+import { CompanyIdentityCard } from './CompanyIdentityCard';
 
 export interface CompanySettingsPageProps {
   company: Company;
@@ -122,163 +111,10 @@ export const CompanySettingsPage: React.FC<CompanySettingsPageProps> = ({
         </div>
       )}
 
-      {/* SECCIÓN 1: POLÍTICA DE STOCK NEGATIVO */}
-      <Card className="overflow-hidden border-border/80">
-        <div className="p-4 sm:p-5 border-b border-border/60 bg-surface-2/40 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Boxes className="w-5 h-5 text-primary" />
-            <div>
-              <h2 className="text-sm font-bold text-text-primary">
-                Control de Existencias y Stock Negativo
-              </h2>
-              <p className="text-[11px] text-text-secondary">
-                Regla que determina si las ventas y salidas pueden consumir más unidades de las registradas.
-              </p>
-            </div>
-          </div>
+      <NegativeStockPolicyCard allowNegative={currentAllowNegative} isMasterAdmin={isMasterAdmin} isLoading={isLoading}
+        onChangePolicy={() => setIsModalOpen(true)} />
 
-          <div>
-            {currentAllowNegative ? (
-              <Badge variant="warning" size="sm">
-                Stock Negativo Habilitado
-              </Badge>
-            ) : (
-              <Badge variant="success" size="sm">
-                Control Estricto Activado
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        <CardContent className="p-4 sm:p-5 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl bg-surface-2/50 border border-border/60 space-y-2">
-              <span className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
-                <HelpCircle size={14} className="text-text-muted" />
-                <span>¿Cómo opera este parámetro?</span>
-              </span>
-              <p className="text-xs text-text-secondary leading-relaxed">
-                {currentAllowNegative
-                  ? 'Actualmente, el catálogo permite saldos menores a cero. Las operaciones continuarán confirmándose aun cuando el stock físico no haya sido ingresado previamente.'
-                  : 'Actualmente, el sistema bloquea cualquier venta o salida que exceda las existencias físicas registradas en el catálogo.'}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-surface-2/50 border border-border/60 flex flex-col justify-between space-y-3">
-              <div>
-                <span className="text-xs font-semibold text-text-primary">
-                  Acción de Gobernanza
-                </span>
-                <p className="text-xs text-text-secondary mt-1">
-                  {isMasterAdmin
-                    ? 'Como Administrador podés modificar esta política en cualquier momento con motivo justificatorio.'
-                    : 'Solo los administradores con rol master_admin pueden alterar esta política.'}
-                </p>
-              </div>
-
-              {isMasterAdmin && (
-                <div className="pt-2">
-                  <Button
-                    variant={currentAllowNegative ? 'outline' : 'primary'}
-                    size="sm"
-                    onClick={() => setIsModalOpen(true)}
-                    disabled={isLoading}
-                    className="text-xs w-full sm:w-auto"
-                  >
-                    <ShieldCheck size={14} className="mr-1.5" />
-                    <span>
-                      {currentAllowNegative
-                        ? 'Activar Control Estricto (Bloquear bajo cero)'
-                        : 'Habilitar Stock Negativo (Modo Flexible)'}
-                    </span>
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* SECCIÓN 2: INFORMACIÓN GENERAL Y FISCAL (Solo lectura) */}
-      <Card className="overflow-hidden border-border/80">
-        <div className="p-4 sm:p-5 border-b border-border/60 bg-surface-2/40 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Building2 className="w-5 h-5 text-text-secondary" />
-            <div>
-              <h2 className="text-sm font-bold text-text-primary">
-                Identificación Corporativa y Fiscal
-              </h2>
-              <p className="text-[11px] text-text-secondary">
-                Metadatos registrados en la base de datos para esta empresa.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 text-[11px] text-text-muted">
-            <Lock size={12} />
-            <span>Solo lectura</span>
-          </div>
-        </div>
-
-        <CardContent className="p-4 sm:p-5 space-y-4">
-          <div className="p-3 rounded-xl bg-surface-2/30 border border-border/50 text-xs text-text-secondary flex items-start gap-2.5">
-            <Info size={15} className="text-text-muted shrink-0 mt-0.5" />
-            <p className="leading-relaxed text-[11px]">
-              Por ahora, la razón social, el CUIT, la moneda y el huso horario no se pueden modificar desde la app.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-                Razón Social / Nombre Comercial
-              </label>
-              <div className="p-2.5 rounded-lg bg-surface-2 border border-border text-xs font-semibold text-text-primary">
-                {settings?.name || company.name}
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-                CUIT / Identificación Fiscal
-              </label>
-              <div className="p-2.5 rounded-lg bg-surface-2 border border-border text-xs font-mono text-text-primary">
-                {settings?.taxId || company.cuit || 'Sin CUIT asignado'}
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-                Moneda Base
-              </label>
-              <div className="p-2.5 rounded-lg bg-surface-2 border border-border text-xs font-medium text-text-primary">
-                {settings?.currency || company.currency || 'ARS'} (Pesos Argentinos)
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
-                Huso Horario
-              </label>
-              <div className="p-2.5 rounded-lg bg-surface-2 border border-border text-xs font-medium text-text-primary">
-                {settings?.timezone || company.timezone || 'America/Argentina/Buenos_Aires'}
-              </div>
-            </div>
-          </div>
-
-          {/* Fechas de auditoría */}
-          {settings && (
-            <div className="pt-3 border-t border-border/50 flex flex-wrap items-center justify-between gap-3 text-[11px] text-text-muted">
-              <div className="flex items-center gap-1.5">
-                <Calendar size={13} />
-                <span>Fecha de creación: {formatDateTime(settings.createdAt)}</span>
-              </div>
-              <div className="flex items-center gap-1.5 font-mono">
-                <span>Tenant ID: {settings.id}</span>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <CompanyIdentityCard company={company} settings={settings} />
 
       {/* Modal para cambiar política de stock negativo */}
       <NegativeStockModal

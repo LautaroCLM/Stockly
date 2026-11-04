@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { signInWithEmail, signOutUser, fetchProfile } from '../api/authApi';
 import type { AuthContextValue, ProfileRow } from '../types';
 import { translateAuthError } from '../authErrors';
+import { toUserMessage } from '@/lib/errorMessages';
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -36,6 +37,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch {
       if (isMountedRef.current && currentProfileUserIdRef.current === userId) {
         setProfile(null);
+        // Permite reintentar en el próximo evento de sesión (por ejemplo, tras un corte de red)
+        currentProfileUserIdRef.current = null;
       }
     }
   }, []);
@@ -66,7 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (err) {
         if (isMountedRef.current) {
-          setError(err instanceof Error ? err.message : 'Error al inicializar sesión.');
+          setError(toUserMessage(err, 'Error al inicializar sesión.'));
         }
       } finally {
         if (isMountedRef.current) {
@@ -77,32 +80,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        if (!isMountedRef.current) return;
+    // El callback es síncrono: Supabase recomienda no esperar otras llamadas a Supabase
+    // dentro de él, porque se ejecuta con el bloqueo de sesión tomado y puede trabarse.
+    // La carga del perfil se difiere al siguiente ciclo, fuera de ese bloqueo.
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (!isMountedRef.current) return;
 
-        if (event === 'SIGNED_OUT') {
-          currentProfileUserIdRef.current = null;
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setIsLoading(false);
-          return;
-        }
-
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-
-        if (newSession?.user) {
-          await loadProfile(newSession.user.id);
-        } else {
-          currentProfileUserIdRef.current = null;
-          setProfile(null);
-        }
-
+      if (event === 'SIGNED_OUT') {
+        currentProfileUserIdRef.current = null;
+        setSession(null);
+        setUser(null);
+        setProfile(null);
         setIsLoading(false);
+        return;
       }
-    );
+
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+
+      const userId = newSession?.user?.id;
+      if (!userId) {
+        currentProfileUserIdRef.current = null;
+        setProfile(null);
+        setIsLoading(false);
+        return;
+      }
+
+      setTimeout(() => {
+        if (!isMountedRef.current) return;
+        void loadProfile(userId).finally(() => {
+          if (isMountedRef.current) setIsLoading(false);
+        });
+      }, 0);
+    });
 
     return () => {
       isMountedRef.current = false;
@@ -154,7 +164,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (err) {
       if (isMountedRef.current) {
-        setError(err instanceof Error ? err.message : 'Error al cerrar sesión.');
+        setError(toUserMessage(err, 'Error al cerrar sesión.'));
       }
     } finally {
       if (isMountedRef.current) {

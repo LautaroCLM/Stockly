@@ -1,4 +1,4 @@
-import { isNetworkOrUncertainError } from '@/features/inventario/api/stockMovementsApi';
+import { isNetworkOrUncertainError } from './errorMessages';
 
 /** Resultado de anular una venta o una compra (RPC cancel_sale / cancel_purchase). */
 export type CancelDocumentResult =

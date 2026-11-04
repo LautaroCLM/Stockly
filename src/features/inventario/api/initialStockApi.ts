@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { isNetworkOrUncertainError } from './stockMovementsApi';
+import { isNetworkOrUncertainError } from '@/lib/errorMessages';
 import type { InitialStockItemInput, InitialStockMovementItem } from '../types';
 
 /**

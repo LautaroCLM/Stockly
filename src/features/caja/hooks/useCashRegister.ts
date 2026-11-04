@@ -10,6 +10,7 @@ import {
   registerCashMovementRpc,
 } from '../api/cashApi';
 import type { CashActionResult, CashMovement, CashMovementType, CashSession, CashSummary } from '../types';
+import { toUserMessage } from '@/lib/errorMessages';
 
 /** La caja abierta cambia con sus movimientos y con cada venta o anulación. */
 const REALTIME_TABLES: readonly DataTable[] = ['cash_sessions', 'cash_movements', 'sales'];
@@ -37,7 +38,7 @@ export function useCashRegister(companyId: string) {
       setMovements(nextMovements);
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
-      setError(err instanceof Error ? err.message : 'No se pudo cargar la caja.');
+      setError(toUserMessage(err, 'No se pudo cargar la caja.'));
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
