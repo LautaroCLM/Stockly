@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Supplier } from '@/features/proveedores/types';
 import type { Purchase, CreatePurchaseInput, PurchaseActionResult } from '../types';
 import { fetchPurchasesPage, fetchPurchasesSummary, processPurchaseRpc } from '../api/purchasesApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['purchases', 'suppliers'];
 
 /** Proveedores cuyo nombre o CUIT contienen el texto buscado. */
 export function matchSupplierIds(suppliers: Supplier[], search: string): string[] {
@@ -126,6 +131,10 @@ export function usePurchases(companyId: string, isMasterAdmin: boolean, supplier
     },
     [companyId, isMasterAdmin, reloadPurchases]
   );
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void reloadPurchases();
+  });
 
   return {
     purchases,

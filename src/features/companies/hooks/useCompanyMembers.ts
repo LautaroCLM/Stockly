@@ -8,6 +8,11 @@ import {
   deactivateMemberRpc,
   reactivateMemberRpc,
 } from '../api/membersApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['company_members', 'company_invitations'];
 
 export function useCompanyMembers(companyId: string, isMasterAdmin: boolean) {
   const [members, setMembers] = useState<CompanyMember[]>([]);
@@ -141,6 +146,10 @@ export function useCompanyMembers(companyId: string, isMasterAdmin: boolean) {
     },
     [companyId, loadData]
   );
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void reload();
+  });
 
   return {
     members,

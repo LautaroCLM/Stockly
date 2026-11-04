@@ -10,6 +10,11 @@ import {
   fetchMovementsPage,
   type MovementFilters,
 } from '../api/movementsHistoryApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['stock_movements', 'products'];
 
 export interface MovementFilterInputs {
   direction: 'all' | StockMovementDirection;
@@ -114,6 +119,10 @@ export function useMovementsHistory(companyId: string, products: Product[]) {
       if (requestId === requestIdRef.current) setIsLoadingMore(false);
     }
   }, [companyId, filters, isLoading, isLoadingMore, movements.length, toQueryFilters]);
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void reload();
+  });
 
   return {
     movements,

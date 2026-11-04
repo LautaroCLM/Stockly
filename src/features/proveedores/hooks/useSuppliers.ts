@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Supplier, UpsertSupplierInput, SupplierActionResult } from '../types';
 import { fetchSuppliers, upsertSupplierRpc, toggleSupplierStatusRpc } from '../api/suppliersApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['suppliers'];
 
 export function useSuppliers(companyId: string) {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -85,6 +90,10 @@ export function useSuppliers(companyId: string) {
     },
     [companyId, loadSuppliers]
   );
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void reloadSuppliers();
+  });
 
   return {
     suppliers,

@@ -6,6 +6,11 @@ import {
   upsertCategoryRpc,
   deactivateCategoryRpc,
 } from '../api/categoriesApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['categories'];
 
 export interface CategoryValidationResult {
   valid: boolean;
@@ -211,6 +216,10 @@ export function useCategories(
     },
     [companyId, categories]
   );
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void loadCategories(companyId);
+  });
 
   return {
     categories,

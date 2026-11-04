@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { CompanySettings } from '../types';
 import { fetchCompanySettings, setNegativeStockPolicyRpc } from '../api/companySettingsApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['companies'];
 
 export function useCompanySettings(companyId: string) {
   const [settings, setSettings] = useState<CompanySettings | null>(null);
@@ -60,6 +65,10 @@ export function useCompanySettings(companyId: string) {
     },
     [companyId, loadSettings]
   );
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void loadSettings();
+  });
 
   return {
     settings,

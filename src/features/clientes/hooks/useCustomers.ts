@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Customer, UpsertCustomerInput, CustomerActionResult } from '../types';
 import { fetchCustomers, upsertCustomerRpc, toggleCustomerStatusRpc } from '../api/customersApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['customers'];
 
 export function useCustomers(companyId: string) {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -83,6 +88,10 @@ export function useCustomers(companyId: string) {
     },
     [companyId, loadCustomers]
   );
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void reloadCustomers();
+  });
 
   return {
     customers,

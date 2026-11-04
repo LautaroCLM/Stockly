@@ -35,6 +35,7 @@ import { NoCompanyPage } from '@/features/companies/components/NoCompanyPage';
 import { Button } from '@/components/ui/Button';
 import { Loader2, Building2 } from 'lucide-react';
 import type { ProfileRow } from '@/features/auth/types';
+import { useCompanyRealtime } from '@/features/realtime/hooks/useCompanyRealtime';
 
 interface AppWorkspaceProps {
   user: User;
@@ -57,6 +58,9 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
 }) => {
   const [activeRoute, setActiveRoute] = useState<RouteId>('dashboard');
   const isMasterAdmin = userRole === 'master_admin';
+
+  // Cambios hechos por otros usuarios de la empresa: recarga los datos afectados
+  useCompanyRealtime(activeCompany.id);
 
   // Centralized products state per tenant with stock adjustment capabilities
   const {

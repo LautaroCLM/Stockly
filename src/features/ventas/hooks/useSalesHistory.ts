@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Sale } from '@/features/inventario/types';
 import type { Customer } from '@/features/clientes/types';
 import { fetchSalesPage } from '../api/salesHistoryApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['sales', 'customers'];
 
 /** Clientes cuyo nombre o documento contienen el texto buscado. */
 export function matchCustomerIds(customers: Customer[], search: string): string[] {
@@ -82,6 +87,10 @@ export function useSalesHistory(companyId: string, customers: Customer[]) {
       if (requestId === requestIdRef.current) setIsLoadingMore(false);
     }
   }, [companyId, search, isLoading, isLoadingMore, sales.length, toFilters]);
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void reload();
+  });
 
   return {
     sales,

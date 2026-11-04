@@ -9,6 +9,11 @@ import {
   buildRevenueHistory,
   type DailySales,
 } from '../dashboardMetrics';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['sales', 'stock_movements', 'products', 'product_costs'];
 
 const RECENT_ACTIVITY_SIZE = 8;
 const NO_FILTERS = { direction: 'all', reason: 'all', search: '', matchingProductIds: [] } as const;
@@ -56,6 +61,10 @@ export function useDashboardData(companyId: string, products: Product[]) {
   const revenueHistory = useMemo(() => buildRevenueHistory(dailySales), [dailySales]);
   const criticalStock = useMemo(() => buildCriticalStock(products), [products]);
   const activity = useMemo(() => buildActivity(movements, new Date()), [movements]);
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void reload();
+  });
 
   return { kpis, revenueHistory, criticalStock, activity, isLoading, error, reload };
 }

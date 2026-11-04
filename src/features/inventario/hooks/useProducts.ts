@@ -19,6 +19,11 @@ import {
 import { registerStockAdjustmentRpc } from '../api/stockMovementsApi';
 import { registerPhysicalCountRpc } from '../api/physicalCountApi';
 import { importInitialStockRpc } from '../api/initialStockApi';
+import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
+import type { DataTable } from '@/features/realtime/changeBus';
+
+/** Tablas cuyos cambios (de cualquier usuario de la empresa) recargan este hook. */
+const REALTIME_TABLES: readonly DataTable[] = ['products', 'product_costs', 'stock_movements', 'categories'];
 
 export interface ProductOperationResult {
   success: boolean;
@@ -588,6 +593,10 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
   const syncProductsFromTransaction = useCallback((_updatedProducts: Product[]) => {
     // No-op: el stock real es gobernado exclusivamente por el backend PostgreSQL
   }, []);
+
+  useOnDataChange(REALTIME_TABLES, () => {
+    void loadProducts(tenantId);
+  });
 
   return {
     products,
