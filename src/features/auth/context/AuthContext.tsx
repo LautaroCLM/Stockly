@@ -3,6 +3,7 @@ import type { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { signInWithEmail, signOutUser, fetchProfile } from '../api/authApi';
 import type { AuthContextValue, ProfileRow } from '../types';
+import { translateAuthError } from '../authErrors';
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -49,7 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (!isMountedRef.current) return;
 
         if (sessionErr) {
-          setError(sessionErr.message);
+          setError(translateAuthError(sessionErr));
           setIsLoading(false);
           return;
         }
@@ -119,7 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { error: signInErr } = await signInWithEmail(email, password);
       if (signInErr) {
         if (isMountedRef.current) {
-          setError(signInErr.message);
+          setError(translateAuthError(signInErr));
         }
         return { error: signInErr };
       }
@@ -127,7 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (err) {
       const e = err instanceof Error ? err : new Error('Error inesperado durante el inicio de sesión.');
       if (isMountedRef.current) {
-        setError(e.message);
+        setError(translateAuthError(e));
       }
       return { error: e as AuthError };
     } finally {

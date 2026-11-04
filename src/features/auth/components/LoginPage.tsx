@@ -3,6 +3,9 @@ import { useAuth } from '../hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
+import { describeSupabaseEnvironment } from '@/lib/supabaseEnvironment';
+
+const ENVIRONMENT_LABEL = describeSupabaseEnvironment(import.meta.env.VITE_SUPABASE_URL ?? '');
 
 export const LoginPage: React.FC = () => {
   const { signIn, isLoading, error, clearError } = useAuth();
@@ -141,7 +144,7 @@ export const LoginPage: React.FC = () => {
           </form>
 
           <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-[11px] text-text-muted">
-            <span>Ambiente: Supabase Local</span>
+            <span>Ambiente: {ENVIRONMENT_LABEL}</span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>RLS Activo</span>
