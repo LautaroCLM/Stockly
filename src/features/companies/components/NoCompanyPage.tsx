@@ -338,7 +338,7 @@ export const NoCompanyPage: React.FC<NoCompanyPageProps> = ({
         {/* Pie institucional */}
         <p className="text-center text-[11px] text-text-muted flex items-center justify-center gap-1.5">
           <ShieldAlert size={12} className="text-primary" />
-          <span>Aislamiento multiempresa gobernado por Supabase RLS</span>
+          <span>Cada empresa ve solo sus propios datos</span>
         </p>
       </div>
     </div>

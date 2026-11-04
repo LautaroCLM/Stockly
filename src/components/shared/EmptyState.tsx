@@ -168,7 +168,7 @@ const ROUTE_META_MAP: Record<RouteId, RouteMeta> = {
     phase: 'Fase 2 / 7',
     icon: <ShieldCheck className="w-8 h-8 text-accent" />,
     features: [
-      'Control de roles respaldado por Supabase Auth & RLS',
+      'Control de roles aplicado en la base de datos',
       'Restricción de vistas sensibles para personal de salón',
       'Auditoría de sesiones activas',
     ],
@@ -186,7 +186,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ routeId, onNavigateHome 
 
       <div className="inline-flex items-center gap-2 mb-3">
         <Badge variant="accent">{meta.phase}</Badge>
-        <Badge variant="neutral">Arquitectura SaaS Multi-tenant</Badge>
+        <Badge variant="neutral">Multiempresa</Badge>
       </div>
 
       <h2 className="text-xl font-bold text-text-primary tracking-tight mb-2">

@@ -138,7 +138,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por N° de venta (ej: V-0842) o nombre de cliente..."
+            placeholder="Buscar por N° de venta (ej: VTA-00000001) o nombre de cliente..."
             className="w-full h-8 pl-8 pr-3 text-xs bg-surface-2 border border-border rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary"
           />
         </div>

@@ -91,7 +91,7 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
               </span>
             </div>
             <p className="text-xs text-text-muted mt-0.5">
-              Trazabilidad inmutable de entradas, salidas, ventas y ajustes físicos en PostgreSQL.
+              Trazabilidad de entradas, salidas, ventas, compras, ajustes y anulaciones.
             </p>
           </div>
         </div>
@@ -204,6 +204,8 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
               <option value="initial_load">Cargas iniciales</option>
               <option value="purchase">Entradas / Compras</option>
               <option value="sale">Ventas mostrador</option>
+              <option value="cancellation">Anulaciones de venta</option>
+              <option value="purchase_cancellation">Anulaciones de compra</option>
             </select>
           </div>
         </div>
@@ -258,7 +260,7 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
                     <td colSpan={8} className="py-12 text-center text-text-muted">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 size={16} className="animate-spin text-primary" />
-                        <span>Cargando movimientos de stock desde PostgreSQL...</span>
+                        <span>Cargando movimientos de stock...</span>
                       </div>
                     </td>
                   </tr>

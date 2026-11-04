@@ -39,7 +39,7 @@ export const MembersTable: React.FC<MembersTableProps> = ({
           {isLoading && members.length === 0 ? (
             <div className="py-12 text-center text-text-muted flex flex-col items-center gap-2">
               <Loader2 size={22} className="animate-spin text-primary" />
-              <p className="text-xs">Cargando colaboradores desde Supabase...</p>
+              <p className="text-xs">Cargando colaboradores...</p>
             </div>
           ) : members.length === 0 ? (
             <div className="py-12 text-center text-text-muted">

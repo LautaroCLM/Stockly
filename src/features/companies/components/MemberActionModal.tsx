@@ -136,7 +136,7 @@ export const MemberActionModal: React.FC<MemberActionModalProps> = ({
 
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-text-secondary">
-              Motivo Justificatorio (Auditado en PostgreSQL)
+              Motivo (queda registrado en la auditoría)
             </label>
             <textarea
               value={reason}

@@ -101,7 +101,9 @@ export type StockMovementReason =
   | 'physical_count'
   | 'loss_damage'
   | 'internal_use'
-  | 'sale';
+  | 'sale'
+  | 'cancellation'
+  | 'purchase_cancellation';
 
 export interface StockMovement {
   id: string;

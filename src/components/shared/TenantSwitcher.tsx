@@ -34,7 +34,7 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-surface-2/80 hover:bg-surface-2 border border-border/80 hover:border-border transition-all text-left group focus:outline-none focus:ring-1 focus:ring-primary/40"
-        title="Cambiar empresa activa (Aislamiento Multi-tenant)"
+        title="Cambiar empresa activa"
       >
         <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary/30 to-accent/30 border border-primary/30 flex items-center justify-center text-xs font-bold text-accent shadow-inner">
           {activeCompany.initials}
@@ -78,7 +78,7 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
               <Store size={12} className="text-primary" />
               Empresas disponibles
             </span>
-            <span className="text-[10px] font-mono text-text-muted">Multi-tenant</span>
+            <span className="text-[10px] font-mono text-text-muted">Multiempresa</span>
           </div>
 
           <div className="p-1.5 space-y-1">
@@ -157,7 +157,7 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
           <div className="p-2 border-t border-border bg-surface-2/30">
             <div className="text-[11px] text-text-muted flex items-center gap-1.5">
               <Building2 size={12} className="text-accent" />
-              <span>Aislamiento estricto por RLS a nivel de base.</span>
+              <span>Cada empresa ve solo sus propios datos.</span>
             </div>
           </div>
         </div>

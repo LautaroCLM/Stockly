@@ -450,7 +450,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
               ) : (
                 <>
                   <Check size={15} />
-                  <span>Confirmar Ajuste en PostgreSQL</span>
+                  <span>Confirmar ajuste</span>
                 </>
               )}
             </Button>

@@ -239,6 +239,11 @@ export const PurchaseFormModal: React.FC<PurchaseFormModalProps> = ({
                   </option>
                 ))}
               </select>
+              {activeSuppliers.length === 0 && (
+                <p className="mt-1 text-[11px] text-warning">
+                  No hay proveedores activos. Creá uno en la sección Proveedores para poder registrar compras.
+                </p>
+              )}
             </div>
 
             <div>

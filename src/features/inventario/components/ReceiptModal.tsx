@@ -78,7 +78,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
               </div>
               <div className="text-xs font-bold uppercase">{company.name}</div>
               <div className="text-[10px] text-zinc-600">
-                CUIT: {company.cuit} • {company.industry}
+                {[company.cuit ? `CUIT: ${company.cuit}` : null, company.industry].filter(Boolean).join(' • ')}
               </div>
               <div className="pt-1 text-[9px] uppercase font-bold text-rose-700 bg-rose-50 border border-rose-200 py-0.5 px-2 rounded">
                 COMPROBANTE NO FISCAL - USO INTERNO

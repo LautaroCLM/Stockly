@@ -222,7 +222,7 @@ export const InitialStockModal: React.FC<InitialStockModalProps> = ({
             <div className="space-y-1">
               <p className="font-semibold text-text-primary">Diferencia con ajustes ordinarios:</p>
               <p className="text-text-muted leading-relaxed">
-                Esta función utiliza el procedimiento transaccional <code className="font-mono text-primary">import_initial_stock</code> para establecer el saldo de apertura.
+                Esta función establece el saldo de apertura de cada producto.
                 Solo admite productos con stock en 0 y sin historial previo. Si un producto ya posee movimientos registrados, debe regularizarse mediante <strong>Ajuste de Stock</strong>.
               </p>
             </div>
@@ -241,7 +241,7 @@ export const InitialStockModal: React.FC<InitialStockModalProps> = ({
             <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 space-y-2">
               <div className="flex items-center gap-2 font-semibold text-emerald-400">
                 <CheckCircle2 size={16} />
-                <span>Carga inicial confirmada con éxito ({successInfo.count} productos registrados en PostgreSQL)</span>
+                <span>Carga inicial confirmada con éxito ({successInfo.count} productos registrados)</span>
               </div>
               {successInfo.syncWarning && (
                 <p className="text-amber-400 text-[11px]">{successInfo.syncWarning}</p>

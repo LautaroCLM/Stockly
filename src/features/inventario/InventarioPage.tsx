@@ -328,7 +328,7 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
                     <td colSpan={6} className="py-12 text-center">
                       <div className="flex items-center justify-center gap-2 text-xs text-text-muted">
                         <Loader2 size={16} className="animate-spin text-primary" />
-                        <span>Cargando catálogo de productos desde PostgreSQL...</span>
+                        <span>Cargando catálogo de productos...</span>
                       </div>
                     </td>
                   </tr>

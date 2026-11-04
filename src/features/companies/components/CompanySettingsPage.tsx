@@ -223,7 +223,7 @@ export const CompanySettingsPage: React.FC<CompanySettingsPageProps> = ({
           <div className="p-3 rounded-xl bg-surface-2/30 border border-border/50 text-xs text-text-secondary flex items-start gap-2.5">
             <Info size={15} className="text-text-muted shrink-0 mt-0.5" />
             <p className="leading-relaxed text-[11px]">
-              La modificación de Razón Social, CUIT, Moneda o Huso Horario se encuentra protegida a nivel de base de datos y no dispone de una RPC de mutación directa en esta etapa para preservar la integridad tributaria.
+              Por ahora, la razón social, el CUIT, la moneda y el huso horario no se pueden modificar desde la app.
             </p>
           </div>
 

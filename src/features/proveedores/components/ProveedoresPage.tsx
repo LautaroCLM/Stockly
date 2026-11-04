@@ -219,7 +219,7 @@ export const ProveedoresPage: React.FC<ProveedoresPageProps> = ({
           {isLoading && suppliers.length === 0 ? (
             <div className="py-16 text-center text-text-muted flex flex-col items-center gap-2">
               <Loader2 size={24} className="animate-spin text-primary" />
-              <p className="text-xs">Cargando proveedores desde Supabase...</p>
+              <p className="text-xs">Cargando proveedores...</p>
             </div>
           ) : filteredSuppliers.length === 0 ? (
             <div className="py-16 text-center text-text-muted space-y-3">
