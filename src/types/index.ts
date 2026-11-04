@@ -25,6 +25,7 @@ export type RouteId =
   | 'finanzas'
   | 'personal'
   | 'historial'
+  | 'auditoria'
   | 'config-empresa'
   | 'config-miembros';
 

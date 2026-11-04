@@ -71,9 +71,15 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         id: 'historial',
-        label: 'Auditoría y Eventos',
+        label: 'Movimientos de Stock',
         path: '/historial',
         iconName: 'History',
+      },
+      {
+        id: 'auditoria',
+        label: 'Auditoría',
+        path: '/auditoria',
+        iconName: 'ScrollText',
       },
     ],
   },

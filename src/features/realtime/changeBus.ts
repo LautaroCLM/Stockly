@@ -14,7 +14,8 @@ export type DataTable =
   | 'sales'
   | 'purchases'
   | 'suppliers'
-  | 'customers';
+  | 'customers'
+  | 'audit_log';
 
 /** 'all' = recargar todo (al volver a la pestaña o recuperar la conexión). */
 export type DataChange = DataTable | 'all';

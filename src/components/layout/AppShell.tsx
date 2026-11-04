@@ -14,6 +14,8 @@ interface AppShellProps {
   cartItemsCount?: number;
   cartTotal?: number;
   onOpenCart?: () => void;
+  /** Búsqueda de productos desde el encabezado. */
+  onSearch: (query: string) => void;
   userName?: string;
   userEmail?: string;
   onSignOut?: () => void;
@@ -32,6 +34,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   cartItemsCount = 0,
   cartTotal = 0,
   onOpenCart,
+  onSearch,
   userName,
   userEmail,
   onSignOut,
@@ -62,6 +65,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           onSelectCompany={onSelectCompany}
           onOpenMobileSidebar={() => setIsOpenMobile(true)}
           onQuickSaleClick={() => onNavigate('inventario')}
+          onSearch={onSearch}
           cartItemsCount={cartItemsCount}
           cartTotal={cartTotal}
           onOpenCart={onOpenCart}

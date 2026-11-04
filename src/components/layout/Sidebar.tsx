@@ -15,6 +15,7 @@ import {
   History,
   Building2,
   ShieldCheck,
+  ScrollText,
   X,
   LogOut,
 } from 'lucide-react';
@@ -43,6 +44,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   History,
   Building2,
   ShieldCheck,
+  ScrollText,
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({

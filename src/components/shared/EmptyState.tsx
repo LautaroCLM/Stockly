@@ -138,16 +138,18 @@ const ROUTE_META_MAP: Record<RouteId, RouteMeta> = {
     ],
   },
   historial: {
-    title: 'Auditoría y Eventos del Sistema',
-    description:
-      'Registro inmutable (audit_log) de cada inserción, modificación o anulación realizada por cualquier usuario de la empresa.',
+    title: 'Movimientos de Stock',
+    description: 'Entradas, salidas, ventas, compras, ajustes y anulaciones de cada producto.',
     phase: 'Fase 5',
     icon: <History className="w-8 h-8 text-slate-400" />,
-    features: [
-      'Trazabilidad completa con ID de usuario y timestamp',
-      'Historial de ajustes manuales de stock',
-      'Inmutabilidad garantizada por triggers Postgres',
-    ],
+    features: ['Stock antes y después de cada movimiento', 'Comprobante y usuario de cada operación'],
+  },
+  auditoria: {
+    title: 'Auditoría',
+    description: 'Registro de altas, modificaciones y bajas hechas por los usuarios de la empresa.',
+    phase: 'Fase 5',
+    icon: <History className="w-8 h-8 text-slate-400" />,
+    features: ['Quién hizo cada cambio y cuándo', 'Valores anteriores y nuevos de cada modificación'],
   },
   'config-empresa': {
     title: 'Datos de la Empresa',

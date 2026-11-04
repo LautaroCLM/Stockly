@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { RouteId, Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
@@ -19,6 +19,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { InventarioPage } from '@/features/inventario/InventarioPage';
 import { VentasPage } from '@/features/ventas/VentasPage';
 import { HistorialStockPage } from '@/features/historial/HistorialStockPage';
+import { AuditLogPage } from '@/features/auditoria/AuditLogPage';
 import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
 import { ClientesPage } from '@/features/clientes/components/ClientesPage';
 import { ComprasPage } from '@/features/compras/components/ComprasPage';
@@ -57,6 +58,16 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   onSignOut,
 }) => {
   const [activeRoute, setActiveRoute] = useState<RouteId>('dashboard');
+
+  // Búsqueda del encabezado: abre Inventario filtrado. Se descarta al salir de Inventario.
+  const [inventorySearch, setInventorySearch] = useState<{ query: string; id: number } | null>(null);
+  const handleHeaderSearch = useCallback((query: string) => {
+    setInventorySearch({ query, id: Date.now() });
+    setActiveRoute('inventario');
+  }, []);
+  useEffect(() => {
+    if (activeRoute !== 'inventario') setInventorySearch(null);
+  }, [activeRoute]);
   const isMasterAdmin = userRole === 'master_admin';
 
   // Cambios hechos por otros usuarios de la empresa: recarga los datos afectados
@@ -75,7 +86,6 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     reactivateProduct,
     adjustStock,
     importInitialStock,
-    syncProductsFromTransaction,
     reloadProducts,
   } = useProducts(activeCompany.id, isMasterAdmin);
 
@@ -272,7 +282,6 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
       discountAmount,
       cartTotal,
       clearCart,
-      syncProductsFromTransaction,
       reloadProducts,
       acquireSaleKey,
       markSaleUncertain,
@@ -307,6 +316,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         cartItemsCount={totalItemsCount}
         cartTotal={cartTotal}
         onOpenCart={() => setIsCartOpen(true)}
+        onSearch={handleHeaderSearch}
         userName={profile?.full_name || undefined}
         userEmail={user.email || undefined}
         onSignOut={onSignOut}
@@ -325,6 +335,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         {activeRoute === 'inventario' && (
           <InventarioPage
             company={activeCompany}
+            searchRequest={inventorySearch}
             products={products}
             categories={categories}
             isProductsLoading={isProductsLoading}
@@ -373,6 +384,10 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             products={products}
             onNavigateToInventario={() => setActiveRoute('inventario')}
           />
+        )}
+
+        {activeRoute === 'auditoria' && (
+          <AuditLogPage company={activeCompany} isMasterAdmin={isMasterAdmin} />
         )}
 
         {activeRoute === 'proveedores' && (
@@ -450,6 +465,7 @@ const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           activeRoute !== 'inventario' &&
           activeRoute !== 'ventas' &&
           activeRoute !== 'historial' &&
+          activeRoute !== 'auditoria' &&
           activeRoute !== 'proveedores' &&
           activeRoute !== 'compras' &&
           activeRoute !== 'clientes' &&

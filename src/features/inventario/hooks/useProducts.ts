@@ -590,10 +590,6 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
     [tenantId, products, isMasterAdmin]
   );
 
-  const syncProductsFromTransaction = useCallback((_updatedProducts: Product[]) => {
-    // No-op: el stock real es gobernado exclusivamente por el backend PostgreSQL
-  }, []);
-
   useOnDataChange(REALTIME_TABLES, () => {
     void loadProducts(tenantId);
   });
@@ -611,41 +607,7 @@ export function useProducts(tenantId: TenantId, isMasterAdmin: boolean = true) {
     reactivateProduct,
     adjustStock,
     importInitialStock,
-    syncProductsFromTransaction,
     reloadProducts: () => loadProducts(tenantId),
   };
 }
 
-// ---------------------------------------------------------------------------
-// Helpers transitorios de compatibilidad con checkout/ventas locales (Paso 25E)
-// ---------------------------------------------------------------------------
-export { computeStatus } from '../api/productsApi';
-
-export function getProductStorageKey(tenantId: TenantId): string {
-  return `stockly_products_${tenantId}_v1`;
-}
-
-export function loadProductsFromStorage(tenantId: TenantId): Product[] {
-  try {
-    const raw = localStorage.getItem(getProductStorageKey(tenantId));
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
-    }
-  } catch (err) {
-    console.warn('Error al leer productos locales:', err);
-  }
-  return [];
-}
-
-export function saveProductsToStorage(tenantId: TenantId, products: Product[]): boolean {
-  try {
-    localStorage.setItem(getProductStorageKey(tenantId), JSON.stringify(products));
-    return true;
-  } catch (err) {
-    console.error('Error al guardar productos locales:', err);
-    return false;
-  }
-}

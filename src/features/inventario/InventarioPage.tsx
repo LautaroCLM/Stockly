@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Product,
   StockStatus,
@@ -59,6 +59,8 @@ interface InventarioPageProps {
   onCreateCategory: (name: string, description?: string) => Promise<{ success: boolean; error?: string; category?: Category }>;
   onRenameCategory: (id: string, newName: string) => Promise<{ success: boolean; error?: string; category?: Category }>;
   onDeleteCategory: (id: string, productCount: number) => Promise<{ success: boolean; error?: string }>;
+  /** Búsqueda pedida desde el encabezado; `id` cambia en cada búsqueda nueva. */
+  searchRequest?: { query: string; id: number } | null;
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -86,6 +88,7 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
   onAdjustStock,
   onImportInitialStock,
   onCreateCategory,
+  searchRequest = null,
   onRenameCategory,
   onDeleteCategory,
 }) => {
@@ -93,6 +96,15 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState<'all' | StockStatus>('all');
   const [activeFilter, setActiveFilter] = useState<'active' | 'inactive' | 'all'>('active');
+
+  // Búsqueda desde el encabezado: aplica el texto y limpia los demás filtros
+  useEffect(() => {
+    if (!searchRequest) return;
+    setSearchQuery(searchRequest.query);
+    setSelectedCategory('all');
+    setSelectedStatus('all');
+    setActiveFilter('active');
+  }, [searchRequest]);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
 

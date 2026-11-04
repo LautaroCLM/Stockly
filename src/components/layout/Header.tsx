@@ -3,13 +3,9 @@ import { Company } from '@/types';
 import { TenantSwitcher } from '@/components/shared/TenantSwitcher';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
-import {
-  Menu,
-  Search,
-  Bell,
-  ShoppingCart,
-  Zap,
-} from 'lucide-react';
+import { Menu, Bell, ShoppingCart } from 'lucide-react';
+import { HeaderSearch } from './HeaderSearch';
+import { ConnectionBadge } from './ConnectionBadge';
 
 interface HeaderProps {
   companies: Company[];
@@ -19,6 +15,8 @@ interface HeaderProps {
   onSelectCompany: (company: Company) => void;
   onOpenMobileSidebar: () => void;
   onQuickSaleClick: () => void;
+  /** Buscar productos desde el encabezado (abre Inventario filtrado). */
+  onSearch: (query: string) => void;
   onOpenCart?: () => void;
   /** Productos activos en o bajo su stock mínimo. */
   restockCount?: number;
@@ -33,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectCompany,
   onOpenMobileSidebar,
   onQuickSaleClick,
+  onSearch,
   onOpenCart,
   restockCount = 0,
   onRestockAlertClick,
@@ -65,24 +64,9 @@ export const Header: React.FC<HeaderProps> = ({
         />
       </div>
 
-      {/* Middle: Omnisearch mockup */}
+      {/* Middle: búsqueda de productos */}
       <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
-        <div className="w-full relative">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-          />
-          <input
-            type="text"
-            readOnly
-            placeholder="Buscar por código, SKU o cliente... (Ctrl + K o '/')"
-            className="w-full h-9 pl-9 pr-14 text-xs bg-surface-2/60 hover:bg-surface-2 border border-border/80 focus:border-primary/50 focus:bg-surface-2 rounded-lg text-text-primary placeholder:text-text-muted cursor-pointer transition-colors"
-            onClick={onQuickSaleClick}
-          />
-          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-3 text-text-muted border border-border">
-            ⌘K
-          </kbd>
-        </div>
+        <HeaderSearch onSearch={onSearch} />
       </div>
 
       {/* Right: Quick actions, cart badge, notifications, status */}
@@ -143,10 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
-        <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-full bg-surface-2/60 border border-border/60 text-[11px] text-text-muted">
-          <Zap size={12} className="text-emerald-400" />
-          <span>Online</span>
-        </div>
+        <ConnectionBadge />
       </div>
     </header>
   );
