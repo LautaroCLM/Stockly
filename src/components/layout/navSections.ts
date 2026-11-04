@@ -16,8 +16,6 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'Inventario y Venta',
         path: '/inventario',
         iconName: 'Boxes',
-        badge: 'Carrito activo',
-        badgeVariant: 'primary',
       },
       {
         id: 'ventas',
@@ -97,3 +95,19 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
 ];
+
+/**
+ * Agrega al ítem de Inventario un badge con la cantidad del carrito.
+ * Si el carrito está vacío no se muestra ningún badge.
+ */
+export function withCartBadge(sections: NavSection[], cartItemsCount: number): NavSection[] {
+  if (cartItemsCount <= 0) return sections;
+  return sections.map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.id === 'inventario'
+        ? { ...item, badge: `Carrito: ${cartItemsCount}`, badgeVariant: 'primary' as const }
+        : item
+    ),
+  }));
+}

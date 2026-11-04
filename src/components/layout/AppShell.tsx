@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { RouteId, Company, NavSection } from '@/types';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { withCartBadge } from './navSections';
 
 interface AppShellProps {
   sections: NavSection[];
@@ -43,7 +44,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     <div className="min-h-screen bg-bg text-text-primary flex">
       {/* Sidebar navigation */}
       <Sidebar
-        sections={sections}
+        sections={withCartBadge(sections, cartItemsCount)}
         activeRoute={activeRoute}
         onNavigate={onNavigate}
         isOpenMobile={isOpenMobile}

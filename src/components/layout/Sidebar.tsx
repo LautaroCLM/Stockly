@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userEmail,
   onSignOut,
 }) => {
-  const displayName = userName || (userEmail ? userEmail.split('@')[0] : 'Lautaro C.');
+  const displayName = userName || (userEmail ? userEmail.split('@')[0] : 'Usuario');
   const avatarInitials = displayName
     .split(' ')
     .filter(Boolean)

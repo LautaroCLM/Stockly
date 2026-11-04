@@ -17,6 +17,7 @@ import { StockAdjustmentModal } from './components/StockAdjustmentModal';
 import { InitialStockModal } from './components/InitialStockModal';
 import { ConfirmDeactivateModal } from './components/ConfirmDeactivateModal';
 import { CategoryManagementModal } from './components/CategoryManagementModal';
+import { ProductsEmptyState } from './components/ProductsEmptyState';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
@@ -27,7 +28,6 @@ import {
   PackagePlus,
   ChevronLeft,
   ChevronRight,
-  PackageX,
   FolderTree,
   Loader2,
   AlertTriangle,
@@ -335,26 +335,20 @@ export const InventarioPage: React.FC<InventarioPageProps> = ({
                 ) : paginatedProducts.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center">
-                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-text-muted">
-                        <PackageX size={36} className="text-text-muted/50 mb-2" />
-                        <span className="text-xs font-semibold text-text-primary">
-                          No se encontraron productos
-                        </span>
-                        <p className="text-[11px] text-text-muted mt-1 mb-3">
-                          Intenta con otro término de búsqueda o limpia los filtros activos.
-                        </p>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            setSearchQuery('');
-                            setSelectedCategory('all');
-                            setSelectedStatus('all');
-                          }}
-                        >
-                          Limpiar Filtros
-                        </Button>
-                      </div>
+                      <ProductsEmptyState
+                        isCatalogEmpty={products.length === 0}
+                        onClearFilters={() => {
+                          setSearchQuery('');
+                          setSelectedCategory('all');
+                          setSelectedStatus('all');
+                          setActiveFilter('all');
+                        }}
+                        onCreateProduct={() => {
+                          setFormMode('create');
+                          setProductToEdit(null);
+                          setIsFormOpen(true);
+                        }}
+                      />
                     </td>
                   </tr>
                 ) : (
