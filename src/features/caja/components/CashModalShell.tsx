@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { ModalFrame } from '@/components/motion/ModalFrame';
 
 interface CashModalShellProps {
   title: string;
@@ -21,31 +22,28 @@ export const CashModalShell: React.FC<CashModalShellProps> = ({ title, subtitle,
   }, [isBusy, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isBusy && onClose()} />
-      <div className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl shadow-black/90 z-10 overflow-hidden">
-        <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/50">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
-              {icon}
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-text-primary">{title}</h2>
-              {subtitle && <span className="text-xs text-text-muted">{subtitle}</span>}
-            </div>
+    <ModalFrame ariaLabel={title} onBackdropClick={() => !isBusy && onClose()}>
+      <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
+            {icon}
           </div>
-          <button
-            onClick={onClose}
-            disabled={isBusy}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 disabled:opacity-50"
-            aria-label="Cerrar"
-          >
-            <X size={18} />
-          </button>
+          <div>
+            <h2 className="text-base font-bold text-text-primary">{title}</h2>
+            {subtitle && <span className="text-xs text-text-muted">{subtitle}</span>}
+          </div>
         </div>
-        {children}
+        <button
+          onClick={onClose}
+          disabled={isBusy}
+          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 disabled:opacity-50"
+          aria-label="Cerrar"
+        >
+          <X size={18} />
+        </button>
       </div>
-    </div>
+      {children}
+    </ModalFrame>
   );
 };
 

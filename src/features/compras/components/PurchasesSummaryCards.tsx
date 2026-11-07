@@ -28,7 +28,7 @@ const SummaryCard: React.FC<{ icon: React.ReactNode; tone: string; label: string
 
 /** Compras completadas, total invertido y proveedores activos. */
 export const PurchasesSummaryCards: React.FC<PurchasesSummaryCardsProps> = ({ summary, activeSuppliers }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+  <div data-stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
     <SummaryCard icon={<Package size={20} />} tone="bg-primary/10 border-primary/20 text-primary"
       label="Compras Realizadas" value={summary ? String(summary.count) : '...'} />
     <SummaryCard icon={<DollarSign size={20} />} tone="bg-success/10 border-success/20 text-success"

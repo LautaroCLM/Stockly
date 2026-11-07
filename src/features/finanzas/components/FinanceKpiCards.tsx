@@ -48,7 +48,7 @@ export const FinanceKpiCards: React.FC<FinanceKpiCardsProps> = ({ current, previ
   const result = operatingResult(current);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+    <div data-stagger className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
       <Kpi label="Vendido" value={formatCurrency(current.salesTotal)}
         detail={<>{plural(current.salesCount, 'venta', 'ventas')}{ticket !== null && ` · ticket promedio ${formatCurrency(ticket)}`}{previous && <><br /><Delta current={current.salesTotal} previous={previous.salesTotal} /></>}</>} />
       <Kpi label="Costo de la mercadería vendida" value={formatCurrency(current.cogsTotal)}

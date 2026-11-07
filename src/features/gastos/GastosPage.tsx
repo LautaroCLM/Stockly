@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { AlertTriangle, Loader2, Plus, ReceiptText, RotateCcw, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { Company } from '@/types';
@@ -114,8 +115,8 @@ export const GastosPage: React.FC<GastosPageProps> = ({ company, isMasterAdmin, 
         </>
       )}
 
-      {isFormOpen && <ExpenseFormModal suppliers={suppliers} machines={machines} onClose={() => setIsFormOpen(false)} onSubmit={exp.createExpense} />}
-      {voiding && <VoidExpenseModal expense={voiding} onClose={() => setVoiding(null)} onSubmit={exp.voidExpense} />}
+      <AnimatePresence>{isFormOpen && <ExpenseFormModal suppliers={suppliers} machines={machines} onClose={() => setIsFormOpen(false)} onSubmit={exp.createExpense} />}</AnimatePresence>
+      <AnimatePresence>{voiding && <VoidExpenseModal expense={voiding} onClose={() => setVoiding(null)} onSubmit={exp.voidExpense} />}</AnimatePresence>
     </div>
   );
 };

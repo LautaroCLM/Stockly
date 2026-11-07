@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { AlertTriangle, ArrowLeftRight, Loader2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
@@ -46,7 +47,7 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMas
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div data-stagger className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="p-4 rounded-xl bg-surface border border-border">
           <p className="text-[11px] text-text-muted">Total a cobrar</p>
           <p className="text-xl font-bold tabular-nums text-text-primary">{formatCurrency(fromHundredths(receivableCents))}</p>
@@ -81,13 +82,17 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMas
         <BalancesTable balances={accounts.balances} onCollect={setCollecting} onOpenStatement={setStatementOf} />
       )}
 
+      <AnimatePresence>
       {collectingLive && (
         <CollectionModal customer={collectingLive} onClose={() => setCollecting(null)} onSubmit={accounts.registerCollection} />
       )}
+      </AnimatePresence>
+      <AnimatePresence>
       {statementLive && (
         <StatementModal companyId={company.id} customer={statementLive} isMasterAdmin={isMasterAdmin}
           onClose={() => setStatementOf(null)} onVoid={accounts.voidCollection} />
       )}
+      </AnimatePresence>
     </div>
   );
 };

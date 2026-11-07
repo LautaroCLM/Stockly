@@ -26,7 +26,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           disabled={disabled}
           className={cn(
-            'w-full px-3 py-2 text-xs rounded-lg bg-surface-2 border transition-colors',
+            'w-full px-3 py-2 text-xs rounded-lg bg-surface-2 border transition-[border-color,box-shadow] duration-150',
             'text-text-primary placeholder:text-text-muted',
             'focus:outline-none focus:ring-1',
             error
@@ -38,7 +38,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p className="text-[11px] text-danger font-medium">{error}</p>
+          <p className="animate-in fade-in slide-in-from-top text-[11px] text-danger font-medium">{error}</p>
         )}
         {helperText && !error && (
           <p className="text-[11px] text-text-muted">{helperText}</p>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Loader2, Lock, RotateCcw, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -85,6 +86,7 @@ export const CajaPage: React.FC<{ company: Company }> = ({ company }) => {
 
       <CashHistoryTable companyId={company.id} />
 
+      <AnimatePresence>
       {movementType && summary && (
         <CashMovementModal
           movementType={movementType}
@@ -93,9 +95,12 @@ export const CajaPage: React.FC<{ company: Company }> = ({ company }) => {
           onSubmit={registerMovement}
         />
       )}
+      </AnimatePresence>
+      <AnimatePresence>
       {isClosing && summary && (
         <CloseCashModal expectedAmount={summary.expectedAmount} onClose={() => setIsClosing(false)} onSubmit={closeSession} />
       )}
+      </AnimatePresence>
     </div>
   );
 };

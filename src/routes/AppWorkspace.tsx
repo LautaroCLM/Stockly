@@ -20,6 +20,7 @@ import { CartDrawer } from '@/features/inventario/components/CartDrawer';
 import { CheckoutModal } from '@/features/inventario/components/CheckoutModal';
 import { ReceiptModal } from '@/features/inventario/components/ReceiptModal';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
+import { PageEnter } from '@/components/motion/PageEnter';
 
 const ADMIN_ONLY_ROUTES = new Set<RouteId>(['compras', 'finanzas', 'gastos', 'cobros-pagos', 'informes', 'maquinas', 'personal']);
 
@@ -122,6 +123,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         onSignOut={onSignOut}
         restockCount={restockCount}
       >
+        <PageEnter routeKey={activeRoute}>
         <WorkspaceRoutes
           route={activeRoute}
           onNavigate={setActiveRoute}
@@ -144,6 +146,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           }}
           onViewReceipt={setReceiptSale}
         />
+        </PageEnter>
       </AppShell>
 
       <CartDrawer

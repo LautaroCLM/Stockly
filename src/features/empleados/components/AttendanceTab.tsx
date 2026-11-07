@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { AlertTriangle, Ban, Loader2, Pencil, Plus } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -103,12 +104,14 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ companyId, employe
         </>
       )}
 
-      {editing !== undefined && <AttendanceEditModal employees={employees} record={editing} onClose={() => setEditing(undefined)} onSubmit={att.saveRecord} />}
+      <AnimatePresence>{editing !== undefined && <AttendanceEditModal employees={employees} record={editing} onClose={() => setEditing(undefined)} onSubmit={att.saveRecord} />}</AnimatePresence>
+      <AnimatePresence>
       {voiding && (
         <ReasonModal title="Anular registro" subtitle={nameOf(voiding.employeeId)} confirmLabel="Anular registro"
           help="El registro deja de contar en las horas, pero queda en el historial con el motivo."
           onClose={() => setVoiding(null)} onSubmit={(reason) => att.voidRecord(voiding.id, reason)} />
       )}
+      </AnimatePresence>
     </div>
   );
 };

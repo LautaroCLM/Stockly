@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { AlertTriangle, Loader2, Plus, RotateCcw, ShieldAlert, Tractor } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
@@ -99,7 +100,7 @@ export const MaquinasPage: React.FC<MaquinasPageProps> = ({ company, isMasterAdm
         <MachinesTable machines={visible} costs={costById} onEdit={(m: Machine) => setEditing(machineToInput(m))} />
       )}
 
-      {editing !== undefined && <MachineFormModal initial={editing} onClose={() => setEditing(undefined)} onSubmit={data.saveMachine} />}
+      <AnimatePresence>{editing !== undefined && <MachineFormModal initial={editing} onClose={() => setEditing(undefined)} onSubmit={data.saveMachine} />}</AnimatePresence>
     </div>
   );
 };

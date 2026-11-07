@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { AlertTriangle, Loader2, Plus, RotateCcw, ShieldAlert, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { Company } from '@/types';
@@ -93,8 +94,8 @@ export const EmpleadosPage: React.FC<EmpleadosPageProps> = ({ company, isMasterA
         <AttendanceTab companyId={company.id} employees={employees} />
       )}
 
-      {editing !== undefined && <EmployeeFormModal initial={editing} onClose={() => setEditing(undefined)} onSubmit={staff.saveEmployee} />}
-      {scheduling && <ScheduleModal employee={scheduling} initial={scheduleOf(scheduling)} onClose={() => setScheduling(null)} onSubmit={staff.saveSchedule} />}
+      <AnimatePresence>{editing !== undefined && <EmployeeFormModal initial={editing} onClose={() => setEditing(undefined)} onSubmit={staff.saveEmployee} />}</AnimatePresence>
+      <AnimatePresence>{scheduling && <ScheduleModal employee={scheduling} initial={scheduleOf(scheduling)} onClose={() => setScheduling(null)} onSubmit={staff.saveSchedule} />}</AnimatePresence>
     </div>
   );
 };
