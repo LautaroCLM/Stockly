@@ -21,7 +21,7 @@ import { CheckoutModal } from '@/features/inventario/components/CheckoutModal';
 import { ReceiptModal } from '@/features/inventario/components/ReceiptModal';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
 
-const ADMIN_ONLY_ROUTES = new Set<RouteId>(['compras', 'finanzas', 'gastos', 'cobros-pagos', 'informes', 'personal']);
+const ADMIN_ONLY_ROUTES = new Set<RouteId>(['compras', 'finanzas', 'gastos', 'cobros-pagos', 'informes', 'maquinas', 'personal']);
 
 interface AppWorkspaceProps {
   user: User;

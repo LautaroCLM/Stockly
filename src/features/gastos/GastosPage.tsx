@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import type { Company } from '@/types';
 import type { Supplier } from '@/features/proveedores/types';
 import { useExpenses } from './hooks/useExpenses';
+import { useMachineOptions } from '@/features/maquinas/hooks/useMachineOptions';
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from './types';
 import type { Expense, ExpenseCategory } from './types';
 import { ExpensesTable } from './components/ExpensesTable';
@@ -19,6 +20,7 @@ interface GastosPageProps {
 /** Gastos de la empresa: registrar, filtrar por categoría y anular con motivo. */
 export const GastosPage: React.FC<GastosPageProps> = ({ company, isMasterAdmin, suppliers }) => {
   const exp = useExpenses(company.id, isMasterAdmin);
+  const machines = useMachineOptions(company.id, isMasterAdmin);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [voiding, setVoiding] = useState<Expense | null>(null);
 
@@ -31,7 +33,7 @@ export const GastosPage: React.FC<GastosPageProps> = ({ company, isMasterAdmin, 
     );
   }
 
-  const hasFilters = exp.filters.category !== 'all' || exp.filters.showVoided;
+  const hasFilters = exp.filters.category !== 'all' || exp.filters.showVoided || exp.filters.machineId !== 'all';
 
   return (
     <div className="space-y-5 max-w-5xl mx-auto pb-12">
@@ -64,6 +66,14 @@ export const GastosPage: React.FC<GastosPageProps> = ({ company, isMasterAdmin, 
           <option value="all">Todas las categorías</option>
           {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{EXPENSE_CATEGORY_LABELS[c]}</option>)}
         </select>
+        {machines.length > 0 && (
+          <select aria-label="Máquina" value={exp.filters.machineId}
+            onChange={(e) => exp.setFilters({ ...exp.filters, machineId: e.target.value })}
+            className="h-9 px-3 bg-surface-2 border border-border rounded-lg text-text-primary focus:outline-none cursor-pointer">
+            <option value="all">Todas las máquinas</option>
+            {machines.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+        )}
         <label className="flex items-center gap-2 text-text-secondary cursor-pointer">
           <input type="checkbox" checked={exp.filters.showVoided}
             onChange={(e) => exp.setFilters({ ...exp.filters, showVoided: e.target.checked })} />
@@ -104,7 +114,7 @@ export const GastosPage: React.FC<GastosPageProps> = ({ company, isMasterAdmin, 
         </>
       )}
 
-      {isFormOpen && <ExpenseFormModal suppliers={suppliers} onClose={() => setIsFormOpen(false)} onSubmit={exp.createExpense} />}
+      {isFormOpen && <ExpenseFormModal suppliers={suppliers} machines={machines} onClose={() => setIsFormOpen(false)} onSubmit={exp.createExpense} />}
       {voiding && <VoidExpenseModal expense={voiding} onClose={() => setVoiding(null)} onSubmit={exp.voidExpense} />}
     </div>
   );

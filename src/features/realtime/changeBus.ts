@@ -19,7 +19,11 @@ export type DataTable =
   | 'cash_sessions'
   | 'cash_movements'
   | 'expenses'
-  | 'customer_payments';
+  | 'customer_payments'
+  | 'machines'
+  | 'employees'
+  | 'employee_schedules'
+  | 'attendance_records';
 
 /** 'all' = recargar todo (al volver a la pestaña o recuperar la conexión). */
 export type DataChange = DataTable | 'all';

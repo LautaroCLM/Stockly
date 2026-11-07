@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Construction, Sparkles, Tractor, UserCheck } from 'lucide-react';
+import { ArrowLeft, Construction, Sparkles } from 'lucide-react';
 import type { RouteId } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -19,30 +19,6 @@ interface RouteMeta {
 
 /** Módulos del menú que todavía no están construidos. */
 const PLANNED_MODULES: Partial<Record<RouteId, RouteMeta>> = {
-  maquinas: {
-    title: 'Máquinas',
-    description:
-      'Fichas de las máquinas y equipos, con su consumo, producción y mantenimiento.',
-    phase: 'Fase 5',
-    icon: <Tractor className="w-8 h-8 text-orange-400" />,
-    features: [
-      'Consumo de combustible y producción',
-      'Mantenimientos preventivos y correctivos, con próximos vencimientos',
-      'Historial, costos y estadísticas de rendimiento',
-    ],
-  },
-  personal: {
-    title: 'Empleados',
-    description:
-      'Plantel de empleados, adelantos de sueldo, liquidación de haberes y comisiones por venta.',
-    phase: 'Fase 5',
-    icon: <UserCheck className="w-8 h-8 text-emerald-400" />,
-    features: [
-      'Legajos con roles y permisos específicos',
-      'Liquidaciones y registro de adelantos y descuentos',
-      'Productividad por colaborador',
-    ],
-  },
 };
 
 const FALLBACK: RouteMeta = {

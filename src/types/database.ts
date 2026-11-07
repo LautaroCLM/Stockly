@@ -23,7 +23,33 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "audit_log": {
+            "attendance_records": {
+                  Row: {
+                    "check_in": string,"check_out": string | null,"company_id": string,"created_at": string,"created_by": string,"employee_id": string,"id": string,"reason": string | null,"source": string,"status": string,"updated_at": string,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "check_in": string,"check_out"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"employee_id": string,"id"?: string,"reason"?: string | null,"source"?: string,"status"?: string,"updated_at"?: string,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Update: {
+                    "check_in"?: string,"check_out"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"employee_id"?: string,"id"?: string,"reason"?: string | null,"source"?: string,"status"?: string,"updated_at"?: string,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "attendance_records_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fk_attendance_employee"
+      columns: ["company_id","employee_id"]
+isOneToOne: false
+      referencedRelation: "employees"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"audit_log": {
                   Row: {
                     "action": string,"actor_role": string | null,"company_id": string | null,"created_at": string,"id": string,"new_data": Json | null,"old_data": Json | null,"performed_by": string | null,"record_id": string,"table_name": string
                   }
@@ -313,16 +339,62 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"expenses": {
+                },"employee_schedules": {
                   Row: {
-                    "amount": number,"cash_movement_id": string | null,"category": string,"company_id": string,"created_at": string,"created_by": string,"description": string,"expense_date": string,"id": string,"payment_method": string,"status": string,"supplier_id": string | null,"void_cash_movement_id": string | null,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
+                    "company_id": string,"employee_id": string,"end_time": string,"id": string,"start_time": string,"weekday": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount": number,"cash_movement_id"?: string | null,"category": string,"company_id": string,"created_at"?: string,"created_by": string,"description": string,"expense_date": string,"id"?: string,"payment_method": string,"status"?: string,"supplier_id"?: string | null,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                    "company_id": string,"employee_id": string,"end_time": string,"id"?: string,"start_time": string,"weekday": number
                   }
                   Update: {
-                    "amount"?: number,"cash_movement_id"?: string | null,"category"?: string,"company_id"?: string,"created_at"?: string,"created_by"?: string,"description"?: string,"expense_date"?: string,"id"?: string,"payment_method"?: string,"status"?: string,"supplier_id"?: string | null,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                    "company_id"?: string,"employee_id"?: string,"end_time"?: string,"id"?: string,"start_time"?: string,"weekday"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "employee_schedules_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fk_schedules_employee"
+      columns: ["company_id","employee_id"]
+isOneToOne: false
+      referencedRelation: "employees"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"employees": {
+                  Row: {
+                    "company_id": string,"created_at": string,"created_by": string,"document_number": string | null,"full_name": string,"hire_date": string | null,"id": string,"job_title": string | null,"notes": string | null,"phone": string | null,"status": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"created_by": string,"document_number"?: string | null,"full_name": string,"hire_date"?: string | null,"id"?: string,"job_title"?: string | null,"notes"?: string | null,"phone"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"document_number"?: string | null,"full_name"?: string,"hire_date"?: string | null,"id"?: string,"job_title"?: string | null,"notes"?: string | null,"phone"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "employees_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"expenses": {
+                  Row: {
+                    "amount": number,"cash_movement_id": string | null,"category": string,"company_id": string,"created_at": string,"created_by": string,"description": string,"expense_date": string,"id": string,"machine_id": string | null,"payment_method": string,"status": string,"supplier_id": string | null,"void_cash_movement_id": string | null,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"cash_movement_id"?: string | null,"category": string,"company_id": string,"created_at"?: string,"created_by": string,"description": string,"expense_date": string,"id"?: string,"machine_id"?: string | null,"payment_method": string,"status"?: string,"supplier_id"?: string | null,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Update: {
+                    "amount"?: number,"cash_movement_id"?: string | null,"category"?: string,"company_id"?: string,"created_at"?: string,"created_by"?: string,"description"?: string,"expense_date"?: string,"id"?: string,"machine_id"?: string | null,"payment_method"?: string,"status"?: string,"supplier_id"?: string | null,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
                   }
                   Relationships: [
                     {
@@ -348,6 +420,32 @@ isOneToOne: false
       columns: ["void_cash_movement_id"]
 isOneToOne: false
       referencedRelation: "cash_movements"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fk_expenses_machine"
+      columns: ["company_id","machine_id"]
+isOneToOne: false
+      referencedRelation: "machines"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"machines": {
+                  Row: {
+                    "brand": string | null,"company_id": string,"created_at": string,"created_by": string,"id": string,"identifier": string | null,"machine_type": string,"model": string | null,"model_year": number | null,"name": string,"notes": string | null,"status": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "brand"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"id"?: string,"identifier"?: string | null,"machine_type": string,"model"?: string | null,"model_year"?: number | null,"name": string,"notes"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "brand"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"id"?: string,"identifier"?: string | null,"machine_type"?: string,"model"?: string | null,"model_year"?: number | null,"name"?: string,"notes"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "machines_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
       referencedColumns: ["id"]
     }
                   ]
@@ -750,6 +848,11 @@ isOneToOne: false
             "accept_company_invitation":
 { Args: { "p_token": string }; Returns: string
                            },
+"attendance_report":
+{ Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
+              "days_worked": number,"employee_id": string,"employee_name": string,"late_count": number,"open_count": number,"scheduled_minutes": number,"worked_minutes": number
+            }[]
+                           },
 "bulk_update_prices":
 { Args: { "p_category_id"?: string,"p_company_id": string,"p_fixed_delta"?: number,"p_percentage"?: number,"p_product_ids"?: (string)[] }; Returns: number
                            },
@@ -762,6 +865,12 @@ isOneToOne: false
 "cash_session_summary":
 { Args: { "p_company_id": string,"p_session_id": string }; Returns: Json
                            },
+"clock_in":
+{ Args: { "p_company_id": string,"p_employee_id": string }; Returns: string
+                           },
+"clock_out":
+{ Args: { "p_company_id": string,"p_employee_id": string }; Returns: string
+                           },
 "close_cash_session":
 { Args: { "p_company_id": string,"p_counted_amount": number,"p_notes"?: string,"p_session_id": string }; Returns: Json
                            },
@@ -769,7 +878,7 @@ isOneToOne: false
 { Args: { "p_currency"?: string,"p_name": string,"p_tax_id": string,"p_timezone"?: string }; Returns: string
                            },
 "create_expense":
-{ Args: { "p_amount": number,"p_category": string,"p_company_id": string,"p_description": string,"p_expense_date": string,"p_pay_from_cash": boolean,"p_payment_method": string,"p_supplier_id": string }; Returns: Json
+{ Args: { "p_amount": number,"p_category": string,"p_company_id": string,"p_description": string,"p_expense_date": string,"p_machine_id"?: string,"p_pay_from_cash": boolean,"p_payment_method": string,"p_supplier_id": string }; Returns: Json
                            },
 "create_product":
 { Args: { "p_barcode"?: string,"p_category_id"?: string,"p_company_id": string,"p_cost_price"?: number,"p_description"?: string,"p_min_stock"?: number,"p_name": string,"p_selling_price"?: number,"p_sku": string,"p_supplier_id"?: string,"p_unit"?: string }; Returns: string
@@ -809,6 +918,11 @@ isOneToOne: false
                            },
 "local_today":
 { Args: { "p_company_id": string }; Returns: string
+                           },
+"machine_costs":
+{ Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
+              "expenses_count": number,"fuel_total": number,"machine_id": string,"machine_name": string,"machine_type": string,"maintenance_total": number,"other_total": number,"status": string,"total": number
+            }[]
                            },
 "open_cash_session":
 { Args: { "p_company_id": string,"p_notes"?: string,"p_opening_amount": number }; Returns: Json
@@ -867,8 +981,14 @@ isOneToOne: false
 "revoke_company_invitation":
 { Args: { "p_company_id": string,"p_invitation_id": string }; Returns: undefined
                            },
+"save_attendance":
+{ Args: { "p_check_in": string,"p_check_out": string,"p_company_id": string,"p_employee_id": string,"p_reason": string,"p_record_id": string }; Returns: string
+                           },
 "set_company_negative_stock_policy":
 { Args: { "p_allow_negative_stock": boolean,"p_company_id": string,"p_reason": string }; Returns: undefined
+                           },
+"set_employee_schedule":
+{ Args: { "p_blocks": Json,"p_company_id": string,"p_employee_id": string }; Returns: number
                            },
 "transfer_company_ownership":
 { Args: { "p_company_id": string,"p_new_owner_id": string }; Returns: undefined
@@ -885,11 +1005,20 @@ isOneToOne: false
 "upsert_customer":
 { Args: { "p_address"?: string,"p_company_id": string,"p_customer_id"?: string,"p_email"?: string,"p_identification_type"?: string,"p_is_active"?: boolean,"p_name": string,"p_notes"?: string,"p_phone"?: string,"p_tax_id"?: string }; Returns: string
                            },
+"upsert_employee":
+{ Args: { "p_company_id": string,"p_document_number": string,"p_employee_id": string,"p_full_name": string,"p_hire_date": string,"p_job_title": string,"p_notes": string,"p_phone": string,"p_status": string }; Returns: string
+                           },
+"upsert_machine":
+{ Args: { "p_brand": string,"p_company_id": string,"p_identifier": string,"p_machine_id": string,"p_machine_type": string,"p_model": string,"p_model_year": number,"p_name": string,"p_notes": string,"p_status": string }; Returns: string
+                           },
 "upsert_supplier":
 { Args: { "p_address"?: string,"p_company_id": string,"p_contact_name"?: string,"p_email"?: string,"p_is_active"?: boolean,"p_name": string,"p_phone"?: string,"p_supplier_id"?: string,"p_tax_id"?: string }; Returns: string
                            },
 "validate_cuit":
 { Args: { "p_cuit": string }; Returns: boolean
+                           },
+"void_attendance":
+{ Args: { "p_company_id": string,"p_reason": string,"p_record_id": string }; Returns: string
                            },
 "void_customer_payment":
 { Args: { "p_company_id": string,"p_payment_id": string,"p_reason": string }; Returns: Json

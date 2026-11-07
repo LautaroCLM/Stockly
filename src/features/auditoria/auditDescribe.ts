@@ -16,6 +16,10 @@ export const AUDIT_TABLE_LABELS: Record<string, string> = {
   cash_movements: 'Movimiento de caja',
   expenses: 'Gasto',
   customer_payments: 'Cobro de cliente',
+  machines: 'Máquina',
+  employees: 'Empleado',
+  employee_schedules: 'Horario de empleado',
+  attendance_records: 'Asistencia',
 };
 
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {

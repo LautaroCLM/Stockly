@@ -31,7 +31,7 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({ expenses, onVoid }
               <p className={`text-text-primary ${e.isVoided ? 'line-through' : ''}`}>{e.description}</p>
               <p className="text-[11px] text-text-muted">
                 {EXPENSE_CATEGORY_LABELS[e.category]}
-                {e.supplierName && ` · ${e.supplierName}`} · {e.createdByName}
+                {e.supplierName && ` · ${e.supplierName}`}{e.machineName && ` · Máquina: ${e.machineName}`} · {e.createdByName}
                 {e.isVoided && e.voidReason && ` · Anulado: ${e.voidReason}`}
               </p>
             </td>

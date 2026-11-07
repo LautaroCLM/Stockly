@@ -5,7 +5,7 @@ import { EXPENSES_PAGE_SIZE, createExpenseRpc, fetchExpenses, voidExpenseRpc } f
 import type { Expense, ExpenseActionResult, ExpenseFilters, NewExpenseInput } from '../types';
 
 const REALTIME_TABLES: readonly DataTable[] = ['expenses'];
-const INITIAL_FILTERS: ExpenseFilters = { category: 'all', showVoided: false };
+const INITIAL_FILTERS: ExpenseFilters = { category: 'all', showVoided: false, machineId: 'all' };
 
 /** Lista de gastos con filtros, en vivo, y las operaciones de registrar y anular. */
 export function useExpenses(companyId: string, enabled: boolean) {
@@ -17,7 +17,7 @@ export function useExpenses(companyId: string, enabled: boolean) {
   );
 
   const query = usePagedQuery<Expense>({
-    queryKey: `${companyId}|${filters.category}|${filters.showVoided}`,
+    queryKey: `${companyId}|${filters.category}|${filters.showVoided}|${filters.machineId}`,
     enabled: enabled && Boolean(companyId),
     pageSize: EXPENSES_PAGE_SIZE,
     fetchPage,

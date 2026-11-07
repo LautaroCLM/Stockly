@@ -5,6 +5,7 @@ import { parseHundredths, fromHundredths } from '@/lib/decimal';
 import { localDateInputValue } from '@/lib/localDate';
 import { CASH_FIELD_CLASS, CashFormError, CashModalShell } from '@/features/caja/components/CashModalShell';
 import type { Supplier } from '@/features/proveedores/types';
+import type { Machine } from '@/features/maquinas/types';
 import {
   EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS, EXPENSE_METHOD_LABELS, EXPENSE_PAYMENT_METHODS,
 } from '../types';
@@ -12,6 +13,7 @@ import type { ExpenseActionResult, ExpenseCategory, ExpensePaymentMethod, NewExp
 
 interface ExpenseFormModalProps {
   suppliers: Supplier[];
+  machines: Machine[];
   onClose: () => void;
   onSubmit: (input: NewExpenseInput) => Promise<ExpenseActionResult>;
 }
@@ -26,13 +28,14 @@ const Field: React.FC<{ id: string; label: string; required?: boolean; children:
 );
 
 /** Formulario para registrar un gasto, con la opción de pagarlo desde la caja abierta. */
-export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({ suppliers, onClose, onSubmit }) => {
+export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({ suppliers, machines, onClose, onSubmit }) => {
   const [date, setDate] = useState(localDateInputValue());
   const [category, setCategory] = useState<ExpenseCategory>('combustible');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<ExpensePaymentMethod>('transferencia');
   const [supplierId, setSupplierId] = useState('');
+  const [machineId, setMachineId] = useState('');
   const [payFromCash, setPayFromCash] = useState(false);
   const [error, setError] = useState<{ message: string; uncertain?: boolean } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,6 +55,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({ suppliers, o
       amount: fromHundredths(cents),
       paymentMethod: method,
       supplierId: supplierId || null,
+      machineId: machineId || null,
       payFromCash: method === 'efectivo' && payFromCash,
     });
     setIsSubmitting(false);
@@ -97,6 +101,14 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({ suppliers, o
             </select>
           </Field>
         </div>
+        {machines.some((m) => m.status !== 'inactive') && (
+          <Field id="expense-machine" label="Máquina (opcional)">
+            <select id="expense-machine" value={machineId} onChange={(e) => setMachineId(e.target.value)} disabled={isSubmitting} className={CASH_FIELD_CLASS}>
+              <option value="">Sin máquina</option>
+              {machines.filter((m) => m.status !== 'inactive').map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+          </Field>
+        )}
         {method === 'efectivo' && (
           <label className="flex items-start gap-2 p-2.5 rounded-lg bg-surface-2 border border-border cursor-pointer">
             <input type="checkbox" checked={payFromCash} onChange={(e) => setPayFromCash(e.target.checked)} disabled={isSubmitting} className="mt-0.5" />

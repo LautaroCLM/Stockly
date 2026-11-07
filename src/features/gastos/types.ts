@@ -38,6 +38,8 @@ export interface Expense {
   paymentMethod: ExpensePaymentMethod;
   supplierId: string | null;
   supplierName: string | null;
+  machineId: string | null;
+  machineName: string | null;
   paidFromCash: boolean;
   isVoided: boolean;
   voidReason: string | null;
@@ -52,6 +54,7 @@ export interface NewExpenseInput {
   amount: number;
   paymentMethod: ExpensePaymentMethod;
   supplierId: string | null;
+  machineId: string | null;
   payFromCash: boolean;
 }
 
@@ -60,4 +63,5 @@ export type ExpenseActionResult = { ok: true } | { ok: false; message: string; u
 export interface ExpenseFilters {
   category: 'all' | ExpenseCategory;
   showVoided: boolean;
+  machineId: 'all' | string;
 }
