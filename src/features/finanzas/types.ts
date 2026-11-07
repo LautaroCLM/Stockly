@@ -1,0 +1,23 @@
+export type PeriodKey = 'today' | '7d' | '30d' | 'month' | 'prev-month';
+
+/** Fechas AAAA-MM-DD, ambas incluidas. */
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
+/** Números del período (respuesta de public.financial_summary). */
+export interface FinancialSummary {
+  salesTotal: number;
+  salesCount: number;
+  cancelledTotal: number;
+  cancelledCount: number;
+  /** Costo de la mercadería vendida. */
+  cogsTotal: number;
+  purchasesTotal: number;
+  purchasesCount: number;
+  /** Cobrado por medio de pago (efectivo, transferencia, debito, credito, cheque). */
+  paymentsByMethod: Record<string, number>;
+  /** Valor actual del inventario al costo (no depende del período). */
+  inventoryValue: number;
+}

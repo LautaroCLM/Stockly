@@ -18,6 +18,12 @@ export const NAV_SECTIONS: NavSection[] = [
         iconName: 'Boxes',
       },
       {
+        id: 'historial',
+        label: 'Movimientos de Stock',
+        path: '/historial',
+        iconName: 'History',
+      },
+      {
         id: 'ventas',
         label: 'Historial de Ventas',
         path: '/ventas',
@@ -55,37 +61,60 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: 'Administración y Control',
+    title: 'Finanzas',
     items: [
       {
         id: 'finanzas',
-        label: 'Finanzas y Balances',
+        label: 'Resumen Financiero',
         path: '/finanzas',
         iconName: 'BarChart3',
       },
       {
+        id: 'gastos',
+        label: 'Gastos',
+        path: '/gastos',
+        iconName: 'ReceiptText',
+      },
+      {
+        id: 'cobros-pagos',
+        label: 'Cobros y Pagos',
+        path: '/cobros-pagos',
+        iconName: 'ArrowLeftRight',
+      },
+      {
+        id: 'informes',
+        label: 'Informes',
+        path: '/informes',
+        iconName: 'FileBarChart',
+      },
+    ],
+  },
+  {
+    title: 'Equipos y Personal',
+    items: [
+      {
+        id: 'maquinas',
+        label: 'Máquinas',
+        path: '/maquinas',
+        iconName: 'Tractor',
+      },
+      {
         id: 'personal',
-        label: 'Personal y Haberes',
+        label: 'Empleados',
         path: '/personal',
         iconName: 'UserCheck',
       },
-      {
-        id: 'historial',
-        label: 'Movimientos de Stock',
-        path: '/historial',
-        iconName: 'History',
-      },
+    ],
+  },
+  {
+    title: 'Sistema',
+    items: [
       {
         id: 'auditoria',
         label: 'Auditoría',
         path: '/auditoria',
         iconName: 'ScrollText',
       },
-    ],
-  },
-  {
-    title: 'Configuración',
-    items: [
       {
         id: 'config-empresa',
         label: 'Datos de Empresa',

@@ -16,6 +16,10 @@ import {
   Building2,
   ShieldCheck,
   ScrollText,
+  ReceiptText,
+  ArrowLeftRight,
+  FileBarChart,
+  Tractor,
   X,
   LogOut,
 } from 'lucide-react';
@@ -45,6 +49,10 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Building2,
   ShieldCheck,
   ScrollText,
+  ReceiptText,
+  ArrowLeftRight,
+  FileBarChart,
+  Tractor,
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({

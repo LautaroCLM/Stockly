@@ -706,6 +706,9 @@ isOneToOne: false
 "deactivate_member":
 { Args: { "p_company_id": string,"p_reason": string,"p_user_id": string }; Returns: undefined
                            },
+"financial_summary":
+{ Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: Json
+                           },
 "import_initial_stock":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_items": Json }; Returns: Json
                            },

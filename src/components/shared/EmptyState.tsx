@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, BarChart3, Construction, Sparkles, UserCheck } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, Construction, FileBarChart, ReceiptText, Sparkles, Tractor, UserCheck } from 'lucide-react';
 import type { RouteId } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -19,19 +19,65 @@ interface RouteMeta {
 
 /** Módulos del menú que todavía no están construidos. */
 const PLANNED_MODULES: Partial<Record<RouteId, RouteMeta>> = {
-  finanzas: {
-    title: 'Finanzas y Balances',
-    description: 'Estado de resultados, flujo de fondos proyectado, márgenes brutos por categoría y rentabilidad neta.',
+  'cobros-pagos': {
+    title: 'Cobros y Pagos',
+    description:
+      'Cuentas a cobrar y a pagar, cuenta corriente de clientes y proveedores, y seguimiento de cheques hasta su acreditación.',
     phase: 'Fase 6',
-    icon: <BarChart3 className="w-8 h-8 text-cyan-400" />,
-    features: ['Cálculo estricto en numeric (es-AR)', 'Ingresos vs. costos de mercadería vendida', 'Exportación de balances en PDF y Excel'],
+    icon: <ArrowLeftRight className="w-8 h-8 text-sky-400" />,
+    features: [
+      'Cuenta corriente de clientes, por ejemplo el municipio',
+      'Pagos a proveedores con cualquier medio de pago',
+      'Cheques: recibido, pendiente de acreditación, acreditado o rechazado',
+    ],
+  },
+  gastos: {
+    title: 'Gastos',
+    description:
+      'Registro de gastos operativos que no son compras de mercadería: limpieza, insumos, gastos cotidianos y otros.',
+    phase: 'Fase 6',
+    icon: <ReceiptText className="w-8 h-8 text-amber-400" />,
+    features: [
+      'Gastos por categoría y por fecha',
+      'Opción de pagar desde la caja abierta',
+      'Base para el resumen financiero',
+    ],
+  },
+  informes: {
+    title: 'Informes',
+    description:
+      'Reportes y estadísticas del negocio con filtros por período y exportación.',
+    phase: 'Fase 6',
+    icon: <FileBarChart className="w-8 h-8 text-violet-400" />,
+    features: [
+      'Ventas, compras, stock y gastos en un solo lugar',
+      'Comparativas por período',
+      'Exportación a PDF y Excel',
+    ],
+  },
+  maquinas: {
+    title: 'Máquinas',
+    description:
+      'Fichas de las máquinas y equipos, con su consumo, producción y mantenimiento.',
+    phase: 'Fase 5',
+    icon: <Tractor className="w-8 h-8 text-orange-400" />,
+    features: [
+      'Consumo de combustible y producción',
+      'Mantenimientos preventivos y correctivos, con próximos vencimientos',
+      'Historial, costos y estadísticas de rendimiento',
+    ],
   },
   personal: {
-    title: 'Personal y Haberes',
-    description: 'Plantel de empleados, turnos, adelantos de sueldo, liquidación de haberes y comisiones por venta.',
+    title: 'Empleados',
+    description:
+      'Plantel de empleados, adelantos de sueldo, liquidación de haberes y comisiones por venta.',
     phase: 'Fase 5',
     icon: <UserCheck className="w-8 h-8 text-emerald-400" />,
-    features: ['Legajos con roles y permisos específicos', 'Registro de adelantos y descuentos', 'Productividad por colaborador'],
+    features: [
+      'Legajos con roles y permisos específicos',
+      'Liquidaciones y registro de adelantos y descuentos',
+      'Productividad por colaborador',
+    ],
   },
 };
 

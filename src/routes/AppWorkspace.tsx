@@ -21,6 +21,8 @@ import { CheckoutModal } from '@/features/inventario/components/CheckoutModal';
 import { ReceiptModal } from '@/features/inventario/components/ReceiptModal';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
 
+const ADMIN_ONLY_ROUTES = new Set<RouteId>(['compras', 'finanzas', 'gastos', 'cobros-pagos', 'informes', 'personal']);
+
 interface AppWorkspaceProps {
   user: User;
   profile: ProfileRow | null;
@@ -90,12 +92,12 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   // Alerta del header: productos activos en o bajo su stock mínimo
   const restockCount = useMemo(() => productsToRestock(catalog.products).length, [catalog.products]);
 
-  // Compras es exclusivo de master_admin
+  // Compras, Finanzas y Empleados muestran costos o datos sensibles: solo administradores
   const navSections = useMemo(() => {
     if (isMasterAdmin) return NAV_SECTIONS;
     return NAV_SECTIONS.map((section) => ({
       ...section,
-      items: section.items.filter((item) => item.id !== 'compras'),
+      items: section.items.filter((item) => !ADMIN_ONLY_ROUTES.has(item.id)),
     })).filter((section) => section.items.length > 0);
   }, [isMasterAdmin]);
 
