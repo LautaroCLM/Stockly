@@ -19,6 +19,7 @@ const REALTIME_TABLES: readonly DataTable[] = [
   'customers',
   'cash_sessions',
   'cash_movements',
+  'expenses',
 ];
 
 const INITIAL_FILTERS: AuditFilters = { tableName: 'all', action: 'all' };

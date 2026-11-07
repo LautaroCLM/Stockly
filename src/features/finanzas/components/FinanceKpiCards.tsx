@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatCurrency, formatPercent } from '@/lib/formatters';
-import { averageTicket, deltaPercent, grossMarginPercent, grossProfit } from '../financeMath';
+import { averageTicket, deltaPercent, grossMarginPercent, grossProfit, operatingResult } from '../financeMath';
 import type { FinancialSummary } from '../types';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -45,15 +45,20 @@ export const FinanceKpiCards: React.FC<FinanceKpiCardsProps> = ({ current, previ
   const profit = grossProfit(current);
   const margin = grossMarginPercent(current);
   const ticket = averageTicket(current);
+  const result = operatingResult(current);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
       <Kpi label="Vendido" value={formatCurrency(current.salesTotal)}
         detail={<>{plural(current.salesCount, 'venta', 'ventas')}{ticket !== null && ` · ticket promedio ${formatCurrency(ticket)}`}{previous && <><br /><Delta current={current.salesTotal} previous={previous.salesTotal} /></>}</>} />
       <Kpi label="Costo de la mercadería vendida" value={formatCurrency(current.cogsTotal)}
         detail="Costo que tenía cada producto al momento de venderse" />
       <Kpi label="Ganancia bruta" value={formatCurrency(profit)} tone={profit >= 0 ? 'text-emerald-400' : 'text-danger'}
         detail={<>{margin !== null ? `Margen ${margin.toFixed(1)}% sobre lo vendido` : 'Sin ventas en el período'}{previous && <><br /><Delta current={profit} previous={grossProfit(previous)} /></>}</>} />
+      <Kpi label="Gastos" value={formatCurrency(current.expensesTotal)}
+        detail={<>{plural(current.expensesCount, 'gasto', 'gastos')}{previous && <><br /><Delta current={current.expensesTotal} previous={previous.expensesTotal} goodWhenUp={false} /></>}</>} />
+      <Kpi label="Resultado después de gastos" value={formatCurrency(result)} tone={result >= 0 ? 'text-emerald-400' : 'text-danger'}
+        detail={<>Ganancia bruta menos gastos{previous && <><br /><Delta current={result} previous={operatingResult(previous)} /></>}</>} />
       <Kpi label="Compras a proveedores" value={formatCurrency(current.purchasesTotal)}
         detail={<>{plural(current.purchasesCount, 'compra', 'compras')}{previous && <><br /><Delta current={current.purchasesTotal} previous={previous.purchasesTotal} goodWhenUp={false} /></>}</>} />
       <Kpi label="Ventas anuladas" value={formatCurrency(current.cancelledTotal)}

@@ -8,7 +8,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(11);
+SELECT plan(13);
 
 DO $$
 DECLARE
@@ -147,6 +147,20 @@ SELECT throws_like(
   format('SELECT public.financial_summary(%L, CURRENT_DATE - 7, CURRENT_DATE)', :'comp_a'),
   '%miembro activo%',
   'T-11: el administrador de otra empresa no puede ver los datos de la empresa A.');
+
+-- Gastos: uno activo de 300,25 hoy, uno anulado de 999 y otro fuera del período
+SET LOCAL "request.jwt.claim.sub" = 'aaaa0021-0000-0000-0000-000000000001';
+SELECT public.create_expense(:'comp_a', CURRENT_DATE, 'servicios', 'Luz', 300.25, 'transferencia', NULL, false);
+SELECT (public.create_expense(:'comp_a', CURRENT_DATE, 'otros', 'Error', 999, 'transferencia', NULL, false) ->> 'expense_id') AS exp_void \gset
+SELECT public.void_expense(:'comp_a', :'exp_void', 'Carga equivocada');
+SELECT public.create_expense(:'comp_a', CURRENT_DATE - 40, 'otros', 'Viejo', 50, 'transferencia', NULL, false);
+
+SELECT is(
+  (SELECT s ->> 'expenses_total' FROM public.financial_summary(:'comp_a', CURRENT_DATE - 7, CURRENT_DATE) AS s),
+  '300.25', 'T-12: los gastos del período suman solo los activos y dentro de las fechas.');
+SELECT is(
+  (SELECT s -> 'expenses_by_category' ->> 'servicios' FROM public.financial_summary(:'comp_a', CURRENT_DATE - 7, CURRENT_DATE) AS s),
+  '300.25', 'T-13: los gastos se agrupan por categoría.');
 
 RESET ROLE;
 

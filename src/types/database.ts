@@ -275,6 +275,44 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"expenses": {
+                  Row: {
+                    "amount": number,"cash_movement_id": string | null,"category": string,"company_id": string,"created_at": string,"created_by": string,"description": string,"expense_date": string,"id": string,"payment_method": string,"status": string,"supplier_id": string | null,"void_cash_movement_id": string | null,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"cash_movement_id"?: string | null,"category": string,"company_id": string,"created_at"?: string,"created_by": string,"description": string,"expense_date": string,"id"?: string,"payment_method": string,"status"?: string,"supplier_id"?: string | null,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Update: {
+                    "amount"?: number,"cash_movement_id"?: string | null,"category"?: string,"company_id"?: string,"created_at"?: string,"created_by"?: string,"description"?: string,"expense_date"?: string,"id"?: string,"payment_method"?: string,"status"?: string,"supplier_id"?: string | null,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "expenses_cash_movement_id_fkey"
+      columns: ["cash_movement_id"]
+isOneToOne: false
+      referencedRelation: "cash_movements"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "expenses_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "expenses_supplier_id_fkey"
+      columns: ["supplier_id"]
+isOneToOne: false
+      referencedRelation: "suppliers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "expenses_void_cash_movement_id_fkey"
+      columns: ["void_cash_movement_id"]
+isOneToOne: false
+      referencedRelation: "cash_movements"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"movement_costs": {
                   Row: {
                     "company_id": string,"movement_id": string,"total_cost": number,"unit_cost": number
@@ -692,6 +730,9 @@ isOneToOne: false
 "create_company":
 { Args: { "p_currency"?: string,"p_name": string,"p_tax_id": string,"p_timezone"?: string }; Returns: string
                            },
+"create_expense":
+{ Args: { "p_amount": number,"p_category": string,"p_company_id": string,"p_description": string,"p_expense_date": string,"p_pay_from_cash": boolean,"p_payment_method": string,"p_supplier_id": string }; Returns: Json
+                           },
 "create_product":
 { Args: { "p_barcode"?: string,"p_category_id"?: string,"p_company_id": string,"p_cost_price"?: number,"p_description"?: string,"p_min_stock"?: number,"p_name": string,"p_selling_price"?: number,"p_sku": string,"p_supplier_id"?: string,"p_unit"?: string }; Returns: string
                            },
@@ -778,6 +819,9 @@ isOneToOne: false
                            },
 "validate_cuit":
 { Args: { "p_cuit": string }; Returns: boolean
+                           },
+"void_expense":
+{ Args: { "p_company_id": string,"p_expense_id": string,"p_reason": string }; Returns: Json
                            }
           }
           Enums: {

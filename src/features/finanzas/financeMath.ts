@@ -50,6 +50,11 @@ export function grossProfit(summary: FinancialSummary): number {
   return fromHundredths(toHundredths(summary.salesTotal) - toHundredths(summary.cogsTotal));
 }
 
+/** Resultado = ganancia bruta - gastos activos del período. */
+export function operatingResult(summary: FinancialSummary): number {
+  return fromHundredths(toHundredths(grossProfit(summary)) - toHundredths(summary.expensesTotal));
+}
+
 /** Margen bruto sobre lo vendido, en %; null si no hubo ventas. */
 export function grossMarginPercent(summary: FinancialSummary): number | null {
   const sales = toHundredths(summary.salesTotal);

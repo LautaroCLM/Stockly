@@ -15,6 +15,7 @@ export async function fetchFinancialSummary(companyId: string, range: DateRange)
 
   const s = (data ?? {}) as Record<string, unknown>;
   const payments = (s.payments_by_method ?? {}) as Record<string, unknown>;
+  const byCategory = (s.expenses_by_category ?? {}) as Record<string, unknown>;
   return {
     salesTotal: num(s.sales_total),
     salesCount: num(s.sales_count),
@@ -25,5 +26,8 @@ export async function fetchFinancialSummary(companyId: string, range: DateRange)
     purchasesCount: num(s.purchases_count),
     paymentsByMethod: Object.fromEntries(Object.entries(payments).map(([method, total]) => [method, num(total)])),
     inventoryValue: num(s.inventory_value),
+    expensesTotal: num(s.expenses_total),
+    expensesCount: num(s.expenses_count),
+    expensesByCategory: Object.fromEntries(Object.entries(byCategory).map(([k, v]) => [k, num(v)])),
   };
 }

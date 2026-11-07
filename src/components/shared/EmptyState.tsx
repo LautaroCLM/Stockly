@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowLeftRight, Construction, FileBarChart, ReceiptText, Sparkles, Tractor, UserCheck } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, Construction, FileBarChart, Sparkles, Tractor, UserCheck } from 'lucide-react';
 import type { RouteId } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -29,18 +29,6 @@ const PLANNED_MODULES: Partial<Record<RouteId, RouteMeta>> = {
       'Cuenta corriente de clientes, por ejemplo el municipio',
       'Pagos a proveedores con cualquier medio de pago',
       'Cheques: recibido, pendiente de acreditación, acreditado o rechazado',
-    ],
-  },
-  gastos: {
-    title: 'Gastos',
-    description:
-      'Registro de gastos operativos que no son compras de mercadería: limpieza, insumos, gastos cotidianos y otros.',
-    phase: 'Fase 6',
-    icon: <ReceiptText className="w-8 h-8 text-amber-400" />,
-    features: [
-      'Gastos por categoría y por fecha',
-      'Opción de pagar desde la caja abierta',
-      'Base para el resumen financiero',
     ],
   },
   informes: {

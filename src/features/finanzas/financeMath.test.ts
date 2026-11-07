@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { averageTicket, deltaPercent, grossMarginPercent, grossProfit, periodRange, previousRange } from './financeMath';
+import { averageTicket, deltaPercent, grossMarginPercent, grossProfit, operatingResult, periodRange, previousRange } from './financeMath';
 import type { FinancialSummary } from './types';
 
 const summary = (overrides: Partial<FinancialSummary> = {}): FinancialSummary => ({
@@ -12,6 +12,9 @@ const summary = (overrides: Partial<FinancialSummary> = {}): FinancialSummary =>
   purchasesCount: 0,
   paymentsByMethod: {},
   inventoryValue: 0,
+  expensesTotal: 0,
+  expensesCount: 0,
+  expensesByCategory: {},
   ...overrides,
 });
 
@@ -52,5 +55,15 @@ describe('cálculos de dinero', () => {
     expect(deltaPercent(150, 100)).toBe(50);
     expect(deltaPercent(50, 100)).toBe(-50);
     expect(deltaPercent(150, 0)).toBeNull();
+  });
+});
+
+describe('operatingResult', () => {
+  it('resta los gastos de la ganancia bruta en centavos exactos', () => {
+    expect(operatingResult(summary({ salesTotal: 100.3, cogsTotal: 40.1, expensesTotal: 20.2 }))).toBe(40);
+  });
+
+  it('puede ser negativo', () => {
+    expect(operatingResult(summary({ salesTotal: 10, cogsTotal: 5, expensesTotal: 8 }))).toBe(-3);
   });
 });

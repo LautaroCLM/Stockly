@@ -14,6 +14,7 @@ export const AUDIT_TABLE_LABELS: Record<string, string> = {
   purchases: 'Compra',
   cash_sessions: 'Caja',
   cash_movements: 'Movimiento de caja',
+  expenses: 'Gasto',
 };
 
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {

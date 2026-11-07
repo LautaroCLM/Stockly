@@ -20,4 +20,7 @@ export interface FinancialSummary {
   paymentsByMethod: Record<string, number>;
   /** Valor actual del inventario al costo (no depende del período). */
   inventoryValue: number;
+  expensesTotal: number;
+  expensesCount: number;
+  expensesByCategory: Record<string, number>;
 }
