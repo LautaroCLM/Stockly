@@ -23,4 +23,7 @@ export interface FinancialSummary {
   expensesTotal: number;
   expensesCount: number;
   expensesByCategory: Record<string, number>;
+  creditSalesTotal: number;
+  collectionsTotal: number;
+  receivableTotal: number;
 }

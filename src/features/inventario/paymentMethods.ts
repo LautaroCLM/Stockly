@@ -5,6 +5,7 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   debito: 'Tarjeta de débito',
   credito: 'Tarjeta de crédito',
   cheque: 'Cheque',
+  cuenta_corriente: 'Cuenta corriente',
 };
 
 export function paymentMethodLabel(method: string): string {

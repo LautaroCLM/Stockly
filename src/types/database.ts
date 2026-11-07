@@ -243,6 +243,44 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"customer_payments": {
+                  Row: {
+                    "amount": number,"cash_movement_id": string | null,"company_id": string,"created_at": string,"created_by": string,"customer_id": string,"id": string,"idempotency_key": string,"notes": string | null,"payments": NonNullable<Json>,"status": string,"void_cash_movement_id": string | null,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"cash_movement_id"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"customer_id": string,"id"?: string,"idempotency_key": string,"notes"?: string | null,"payments": NonNullable<Json>,"status"?: string,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Update: {
+                    "amount"?: number,"cash_movement_id"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"customer_id"?: string,"id"?: string,"idempotency_key"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"status"?: string,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "customer_payments_cash_movement_id_fkey"
+      columns: ["cash_movement_id"]
+isOneToOne: false
+      referencedRelation: "cash_movements"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "customer_payments_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "customer_payments_void_cash_movement_id_fkey"
+      columns: ["void_cash_movement_id"]
+isOneToOne: false
+      referencedRelation: "cash_movements"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fk_customer_payments_customer"
+      columns: ["company_id","customer_id"]
+isOneToOne: false
+      referencedRelation: "customers"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
                 },"customers": {
                   Row: {
                     "address": string | null,"company_id": string,"created_at": string,"created_by": string | null,"email": string | null,"id": string,"identification_type": string,"is_active": boolean,"name": string,"notes": string | null,"phone": string | null,"tax_id": string | null,"updated_at": string
@@ -736,6 +774,16 @@ isOneToOne: false
 "create_product":
 { Args: { "p_barcode"?: string,"p_category_id"?: string,"p_company_id": string,"p_cost_price"?: number,"p_description"?: string,"p_min_stock"?: number,"p_name": string,"p_selling_price"?: number,"p_sku": string,"p_supplier_id"?: string,"p_unit"?: string }; Returns: string
                            },
+"customer_balances":
+{ Args: { "p_company_id": string }; Returns: {
+              "balance": number,"charged_total": number,"collected_total": number,"customer_id": string,"customer_name": string,"last_activity": string,"oldest_open_since": string
+            }[]
+                           },
+"customer_statement":
+{ Args: { "p_company_id": string,"p_customer_id": string }; Returns: {
+              "amount": number,"document": string,"kind": string,"occurred_at": string,"reference_id": string
+            }[]
+                           },
 "dashboard_daily_sales":
 { Args: { "p_company_id": string,"p_days": number }; Returns: {
               "cost_total": number,"day": string,"sales_count": number,"sales_total": number
@@ -787,11 +835,34 @@ isOneToOne: false
 "register_cash_movement":
 { Args: { "p_amount": number,"p_company_id": string,"p_movement_type": string,"p_reason": string,"p_session_id": string }; Returns: Json
                            },
+"register_customer_payment":
+{ Args: { "p_company_id": string,"p_customer_id": string,"p_idempotency_key": string,"p_into_cash": boolean,"p_notes": string,"p_payments": Json }; Returns: Json
+                           },
 "register_physical_count":
 { Args: { "p_company_id": string,"p_counted_quantity": number,"p_idempotency_key": string,"p_notes"?: string,"p_product_id": string,"p_reference_doc"?: string }; Returns: Json
                            },
 "register_stock_adjustment":
 { Args: { "p_company_id": string,"p_direction": string,"p_idempotency_key": string,"p_notes"?: string,"p_product_id": string,"p_quantity": number,"p_reason": string,"p_reference_doc"?: string }; Returns: Json
+                           },
+"report_expenses":
+{ Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
+              "category": string,"expenses_count": number,"total": number
+            }[]
+                           },
+"report_inventory_valuation":
+{ Args: { "p_company_id": string }; Returns: {
+              "cost_price": number,"current_stock": number,"product_id": string,"product_name": string,"selling_price": number,"sku": string,"stock_value": number
+            }[]
+                           },
+"report_sales_by_day":
+{ Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
+              "credit_total": number,"discount_total": number,"sale_date": string,"sales_count": number,"total": number
+            }[]
+                           },
+"report_top_products":
+{ Args: { "p_company_id": string,"p_from": string,"p_limit": number,"p_to": string }; Returns: {
+              "cost": number,"product_id": string,"product_name": string,"quantity": number,"revenue": number,"sku": string
+            }[]
                            },
 "revoke_company_invitation":
 { Args: { "p_company_id": string,"p_invitation_id": string }; Returns: undefined
@@ -819,6 +890,9 @@ isOneToOne: false
                            },
 "validate_cuit":
 { Args: { "p_cuit": string }; Returns: boolean
+                           },
+"void_customer_payment":
+{ Args: { "p_company_id": string,"p_payment_id": string,"p_reason": string }; Returns: Json
                            },
 "void_expense":
 { Args: { "p_company_id": string,"p_expense_id": string,"p_reason": string }; Returns: Json

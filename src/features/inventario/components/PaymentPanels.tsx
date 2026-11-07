@@ -1,5 +1,5 @@
 import React from 'react';
-import { Banknote, Building, CreditCard, LucideIcon, Plus, Receipt, Trash2 } from 'lucide-react';
+import { Banknote, Building, CreditCard, LucideIcon, Plus, Receipt, Trash2, Wallet } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import type { PaymentEntry, PaymentMethod } from '../types';
 import { singlePaymentSummary, splitPaymentSummary } from '../checkoutPayments';
@@ -12,7 +12,13 @@ export const PAYMENT_OPTIONS: { id: PaymentMethod; label: string; icon: LucideIc
   { id: 'cheque', label: 'Cheque', icon: Receipt },
 ];
 
+const CREDIT_ACCOUNT_OPTION = { id: 'cuenta_corriente' as PaymentMethod, label: 'Cuenta corriente', icon: Wallet };
+
+/** La cuenta corriente solo se ofrece cuando la venta tiene un cliente identificado. */
+const optionsFor = (allowCreditAccount: boolean) => (allowCreditAccount ? [...PAYMENT_OPTIONS, CREDIT_ACCOUNT_OPTION] : PAYMENT_OPTIONS);
+
 interface SinglePaymentPanelProps {
+  allowCreditAccount: boolean;
   total: number;
   method: PaymentMethod;
   cashReceived: string;
@@ -21,12 +27,12 @@ interface SinglePaymentPanelProps {
 }
 
 /** Pago con un solo medio; en efectivo calcula el vuelto. */
-export const SinglePaymentPanel: React.FC<SinglePaymentPanelProps> = ({ total, method, cashReceived, onMethodChange, onCashReceivedChange }) => {
+export const SinglePaymentPanel: React.FC<SinglePaymentPanelProps> = ({ allowCreditAccount, total, method, cashReceived, onMethodChange, onCashReceivedChange }) => {
   const summary = singlePaymentSummary(total, method, cashReceived);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {PAYMENT_OPTIONS.map((opt) => {
+        {optionsFor(allowCreditAccount).map((opt) => {
           const Icon = opt.icon;
           const isSelected = method === opt.id;
           return (
@@ -66,6 +72,7 @@ export const SinglePaymentPanel: React.FC<SinglePaymentPanelProps> = ({ total, m
 };
 
 interface SplitPaymentPanelProps {
+  allowCreditAccount: boolean;
   total: number;
   splits: PaymentEntry[];
   onAdd: () => void;
@@ -74,7 +81,7 @@ interface SplitPaymentPanelProps {
 }
 
 /** Pago con varios medios: la suma debe cubrir exactamente el total. */
-export const SplitPaymentPanel: React.FC<SplitPaymentPanelProps> = ({ total, splits, onAdd, onRemove, onUpdate }) => {
+export const SplitPaymentPanel: React.FC<SplitPaymentPanelProps> = ({ allowCreditAccount, total, splits, onAdd, onRemove, onUpdate }) => {
   const summary = splitPaymentSummary(total, splits);
   const differenceClass = summary.isExact ? 'text-emerald-400' : summary.difference > 0 ? 'text-amber-400' : 'text-danger';
   return (
@@ -85,7 +92,7 @@ export const SplitPaymentPanel: React.FC<SplitPaymentPanelProps> = ({ total, spl
             <span className="text-[11px] font-mono text-text-muted w-5">#{idx + 1}</span>
             <select value={split.method} onChange={(e) => onUpdate(split.id, { method: e.target.value as PaymentMethod })}
               className="h-8 px-2 text-xs bg-surface-3 border border-border rounded-lg text-text-primary focus:outline-none flex-1">
-              {PAYMENT_OPTIONS.map((opt) => (
+              {optionsFor(allowCreditAccount).map((opt) => (
                 <option key={opt.id} value={opt.id}>{opt.label}</option>
               ))}
             </select>

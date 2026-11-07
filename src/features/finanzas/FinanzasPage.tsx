@@ -64,7 +64,7 @@ export const FinanzasPage: React.FC<FinanzasPageProps> = ({ company, isMasterAdm
       <div className="p-3 rounded-xl bg-surface-2/60 border border-border text-xs text-text-secondary flex items-start gap-2">
         <Info size={15} className="text-primary shrink-0 mt-0.5" />
         <span>
-          Este resumen todavía <strong>no incluye cuentas a cobrar y a pagar, sueldos liquidados ni la acreditación de cheques</strong>.
+          Este resumen todavía <strong>no incluye deudas a proveedores, sueldos liquidados ni la acreditación de cheques</strong>.
           El resultado es lo vendido menos el costo de la mercadería y menos los gastos registrados; las compras de mercadería no se restan porque ya entran por su costo al venderse.
         </span>
       </div>

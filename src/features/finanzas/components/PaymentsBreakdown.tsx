@@ -16,7 +16,7 @@ export const PaymentsBreakdown: React.FC<{ paymentsByMethod: Record<string, numb
   return (
     <Card className="border-border bg-surface">
       <CardContent className="p-5 text-xs space-y-3">
-        <h2 className="text-sm font-semibold text-text-primary">Cobrado por medio de pago</h2>
+        <h2 className="text-sm font-semibold text-text-primary">Cobrado por medio de pago (incluye cobros de cuenta corriente)</h2>
         {rows.length === 0 ? (
           <p className="text-text-muted">No hubo cobros en el período.</p>
         ) : (

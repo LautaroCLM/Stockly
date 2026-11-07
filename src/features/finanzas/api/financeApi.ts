@@ -28,6 +28,9 @@ export async function fetchFinancialSummary(companyId: string, range: DateRange)
     inventoryValue: num(s.inventory_value),
     expensesTotal: num(s.expenses_total),
     expensesCount: num(s.expenses_count),
+    creditSalesTotal: num(s.credit_sales_total),
+    collectionsTotal: num(s.collections_total),
+    receivableTotal: num(s.receivable_total),
     expensesByCategory: Object.fromEntries(Object.entries(byCategory).map(([k, v]) => [k, num(v)])),
   };
 }

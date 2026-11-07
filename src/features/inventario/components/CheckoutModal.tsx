@@ -42,6 +42,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, total, cus
     setClientName('Consumidor Final');
   }, [total, isOpen]);
 
+  // Sin cliente no hay cuenta corriente: si ya estaba elegida, vuelve a efectivo
+  useEffect(() => {
+    if (selectedCustomer) return;
+    setSingleMethod((m) => (m === 'cuenta_corriente' ? 'efectivo' : m));
+    setSplits((prev) => prev.map((p) => (p.method === 'cuenta_corriente' ? { ...p, method: 'efectivo' } : p)));
+  }, [selectedCustomer]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen && !isSubmitting) onClose();
@@ -140,10 +147,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, total, cus
           </div>
 
           {paymentMode === 'single' ? (
-            <SinglePaymentPanel total={total} method={singleMethod} cashReceived={cashReceived}
+            <SinglePaymentPanel allowCreditAccount={Boolean(selectedCustomer)} total={total} method={singleMethod} cashReceived={cashReceived}
               onMethodChange={setSingleMethod} onCashReceivedChange={setCashReceived} />
           ) : (
             <SplitPaymentPanel
+              allowCreditAccount={Boolean(selectedCustomer)}
               total={total}
               splits={splits}
               onAdd={() =>

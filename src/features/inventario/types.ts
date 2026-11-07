@@ -63,7 +63,8 @@ export type PaymentMethod =
   | 'transferencia'
   | 'debito'
   | 'credito'
-  | 'cheque';
+  | 'cheque'
+  | 'cuenta_corriente';
 
 export interface PaymentEntry {
   id: string;

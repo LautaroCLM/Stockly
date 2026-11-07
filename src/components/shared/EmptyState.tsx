@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowLeftRight, Construction, FileBarChart, Sparkles, Tractor, UserCheck } from 'lucide-react';
+import { ArrowLeft, Construction, Sparkles, Tractor, UserCheck } from 'lucide-react';
 import type { RouteId } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -19,30 +19,6 @@ interface RouteMeta {
 
 /** Módulos del menú que todavía no están construidos. */
 const PLANNED_MODULES: Partial<Record<RouteId, RouteMeta>> = {
-  'cobros-pagos': {
-    title: 'Cobros y Pagos',
-    description:
-      'Cuentas a cobrar y a pagar, cuenta corriente de clientes y proveedores, y seguimiento de cheques hasta su acreditación.',
-    phase: 'Fase 6',
-    icon: <ArrowLeftRight className="w-8 h-8 text-sky-400" />,
-    features: [
-      'Cuenta corriente de clientes, por ejemplo el municipio',
-      'Pagos a proveedores con cualquier medio de pago',
-      'Cheques: recibido, pendiente de acreditación, acreditado o rechazado',
-    ],
-  },
-  informes: {
-    title: 'Informes',
-    description:
-      'Reportes y estadísticas del negocio con filtros por período y exportación.',
-    phase: 'Fase 6',
-    icon: <FileBarChart className="w-8 h-8 text-violet-400" />,
-    features: [
-      'Ventas, compras, stock y gastos en un solo lugar',
-      'Comparativas por período',
-      'Exportación a PDF y Excel',
-    ],
-  },
   maquinas: {
     title: 'Máquinas',
     description:
