@@ -8,6 +8,8 @@ import { toBatchPayload, validateBatchDraft, type BatchDraftLine } from '../init
 import { InitialStockProductPicker } from './InitialStockProductPicker';
 import { InitialStockBatchList } from './InitialStockBatchList';
 import { InitialStockError, InitialStockExplanation, InitialStockRestricted, InitialStockSuccess } from './InitialStockNotices';
+import { ModalFrame } from '@/components/motion/ModalFrame';
+import { AnimatePresence } from 'motion/react';
 
 interface InitialStockModalProps {
   isOpen: boolean;
@@ -20,7 +22,7 @@ interface InitialStockModalProps {
 }
 
 /** Carga inicial de existencias y costos para productos en cero y sin movimientos. */
-export const InitialStockModal: React.FC<InitialStockModalProps> = ({
+const InitialStockModalBody: React.FC<InitialStockModalProps> = ({
   isOpen,
   onClose,
   companyId,
@@ -107,67 +109,69 @@ export const InitialStockModal: React.FC<InitialStockModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isSubmitting && onClose()} />
-      <div className="relative w-full max-w-2xl bg-surface border border-border rounded-2xl shadow-2xl shadow-black/90 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/50">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
-              <PackagePlus size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-text-primary">Carga Inicial de Inventario</h2>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-2 text-text-muted border border-border">{companyName}</span>
-              </div>
-              <p className="text-xs text-text-muted mt-0.5">Existencias y costos de apertura para productos nuevos sin movimientos previos.</p>
-            </div>
+    <ModalFrame ariaLabel="Stock inicial" onBackdropClick={() => !isSubmitting && onClose()} panelClassName="max-w-2xl">
+      <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/50">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
+            <PackagePlus size={20} />
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose} disabled={isSubmitting} aria-label="Cerrar" className="h-8 w-8 p-0 text-text-muted hover:text-text-primary">
-            <X size={16} />
-          </Button>
-        </div>
-
-        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          <InitialStockExplanation />
-          {!isMasterAdmin && <InitialStockRestricted />}
-          {successInfo ? (
-            <InitialStockSuccess count={successInfo.count} syncWarning={successInfo.syncWarning} onClose={onClose} />
-          ) : (
-            <>
-              <div>
-                <label className="block text-xs font-semibold text-text-primary mb-2">1. Seleccionar productos aptos del catálogo</label>
-                <InitialStockProductPicker products={products} productsWithMovements={productsWithMovements}
-                  selectedProductIds={selectedProductIds} isCheckingEligibility={isCheckingEligibility} onSelectProduct={handleSelectProduct} />
-              </div>
-              <div className="pt-2 border-t border-border">
-                <label className="block text-xs font-semibold text-text-primary mb-2">2. Lote a importar (cantidades y costos unitarios)</label>
-                <InitialStockBatchList items={items} productMap={productMap}
-                  onUpdateItem={(index, field, value) =>
-                    editBatch((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)))
-                  }
-                  onRemoveItem={(index) => editBatch((prev) => prev.filter((_, i) => i !== index))} />
-              </div>
-              {submitError && (
-                <InitialStockError message={submitError} isUncertain={isUncertain} isBusy={isSubmitting} onRetry={() => void handleSubmit()} />
-              )}
-            </>
-          )}
-        </div>
-
-        {!successInfo && (
-          <div className="p-4 px-6 border-t border-border flex items-center justify-between bg-surface-2/40">
-            <span className="text-[11px] text-text-muted">{items.length > 0 ? `${items.length} producto(s) en lote` : 'Sin productos'}</span>
+          <div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="md" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
-              <Button type="button" variant="primary" size="md" disabled={isSubmitting || items.length === 0 || !isMasterAdmin}
-                onClick={() => void handleSubmit()} className="gap-2 shadow-lg shadow-primary/20">
-                {isSubmitting ? (<><Loader2 size={15} className="animate-spin" /><span>Registrando...</span></>) : <span>Confirmar Carga Inicial</span>}
-              </Button>
+              <h2 className="text-base font-bold text-text-primary">Carga Inicial de Inventario</h2>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-2 text-text-muted border border-border">{companyName}</span>
             </div>
+            <p className="text-xs text-text-muted mt-0.5">Existencias y costos de apertura para productos nuevos sin movimientos previos.</p>
           </div>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onClose} disabled={isSubmitting} aria-label="Cerrar" className="h-8 w-8 p-0 text-text-muted hover:text-text-primary">
+          <X size={16} />
+        </Button>
+      </div>
+
+      <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <InitialStockExplanation />
+        {!isMasterAdmin && <InitialStockRestricted />}
+        {successInfo ? (
+          <InitialStockSuccess count={successInfo.count} syncWarning={successInfo.syncWarning} onClose={onClose} />
+        ) : (
+          <>
+            <div>
+              <label className="block text-xs font-semibold text-text-primary mb-2">1. Seleccionar productos aptos del catálogo</label>
+              <InitialStockProductPicker products={products} productsWithMovements={productsWithMovements}
+                selectedProductIds={selectedProductIds} isCheckingEligibility={isCheckingEligibility} onSelectProduct={handleSelectProduct} />
+            </div>
+            <div className="pt-2 border-t border-border">
+              <label className="block text-xs font-semibold text-text-primary mb-2">2. Lote a importar (cantidades y costos unitarios)</label>
+              <InitialStockBatchList items={items} productMap={productMap}
+                onUpdateItem={(index, field, value) =>
+                  editBatch((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)))
+                }
+                onRemoveItem={(index) => editBatch((prev) => prev.filter((_, i) => i !== index))} />
+            </div>
+            {submitError && (
+              <InitialStockError message={submitError} isUncertain={isUncertain} isBusy={isSubmitting} onRetry={() => void handleSubmit()} />
+            )}
+          </>
         )}
       </div>
-    </div>
+
+      {!successInfo && (
+        <div className="p-4 px-6 border-t border-border flex items-center justify-between bg-surface-2/40">
+          <span className="text-[11px] text-text-muted">{items.length > 0 ? `${items.length} producto(s) en lote` : 'Sin productos'}</span>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="md" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
+            <Button type="button" variant="primary" size="md" disabled={isSubmitting || items.length === 0 || !isMasterAdmin}
+              onClick={() => void handleSubmit()} className="gap-2 shadow-lg shadow-primary/20">
+              {isSubmitting ? (<><Loader2 size={15} className="animate-spin" /><span>Registrando...</span></>) : <span>Confirmar Carga Inicial</span>}
+            </Button>
+          </div>
+        </div>
+      )}
+    </ModalFrame>
   );
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const InitialStockModal: React.FC<InitialStockModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <InitialStockModalBody {...props} />}</AnimatePresence>
+);

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, ShieldCheck, Loader2, X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface NegativeStockModalProps {
   isOpen: boolean;
@@ -10,7 +12,7 @@ interface NegativeStockModalProps {
   onConfirm: (targetValue: boolean, reason: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const NegativeStockModal: React.FC<NegativeStockModalProps> = ({
+const NegativeStockModalBody: React.FC<NegativeStockModalProps> = ({
   isOpen,
   onClose,
   currentAllowNegative,
@@ -53,12 +55,12 @@ export const NegativeStockModal: React.FC<NegativeStockModalProps> = ({
   };
 
   return createPortal(
-    <div
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit"
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
     >
-      <div className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-surface-2/40">
           <div className="flex items-center gap-3">
@@ -172,8 +174,13 @@ export const NegativeStockModal: React.FC<NegativeStockModalProps> = ({
             </Button>
           </div>
         </form>
-      </div>
-    </div>,
+      </m.div>
+    </m.div>,
     document.body
   );
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const NegativeStockModal: React.FC<NegativeStockModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <NegativeStockModalBody {...props} />}</AnimatePresence>
+);

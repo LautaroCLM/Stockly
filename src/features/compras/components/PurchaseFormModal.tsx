@@ -10,6 +10,8 @@ import type { CreatePurchaseInput, PurchaseActionResult, PurchaseDraftItem } fro
 import { draftTotal, newDraftItem, validatePurchaseDraft, withQuantity, withUnitCost } from '../purchaseDraft';
 import { PurchaseDraftTable } from './PurchaseDraftTable';
 import { ProductAdder, PurchaseHeaderFields } from './PurchaseFormFields';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface PurchaseFormModalProps {
   isOpen: boolean;
@@ -21,7 +23,7 @@ interface PurchaseFormModalProps {
 }
 
 /** Registro de una compra a proveedor: datos del comprobante, productos, cantidades y costos. */
-export const PurchaseFormModal: React.FC<PurchaseFormModalProps> = ({ isOpen, onClose, suppliers, products, onSavePurchase, onSuccess }) => {
+const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClose, suppliers, products, onSavePurchase, onSuccess }) => {
   const [supplierId, setSupplierId] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
@@ -106,9 +108,9 @@ export const PurchaseFormModal: React.FC<PurchaseFormModalProps> = ({ isOpen, on
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
       <div className="fixed inset-0 -z-10" onClick={() => !isSubmitting && onClose()} aria-hidden="true" />
-      <div className="relative w-full max-w-3xl bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[92vh] my-auto overflow-hidden animate-in zoom-in-95 duration-150"
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-3xl bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[92vh] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}>
         <div className="shrink-0 p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-2/40">
           <div className="flex items-center gap-2.5">
@@ -170,9 +172,14 @@ export const PurchaseFormModal: React.FC<PurchaseFormModalProps> = ({ isOpen, on
             </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 
   return createPortal(modalContent, document.body);
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const PurchaseFormModal: React.FC<PurchaseFormModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <PurchaseFormModalBody {...props} />}</AnimatePresence>
+);

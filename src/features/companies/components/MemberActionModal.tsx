@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { ShieldAlert, Loader2, X, UserX, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { CompanyMember, CompanyRole } from '../types';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface MemberActionModalProps {
   isOpen: boolean;
@@ -17,7 +19,7 @@ interface MemberActionModalProps {
   ) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const MemberActionModal: React.FC<MemberActionModalProps> = ({
+const MemberActionModalBody: React.FC<MemberActionModalProps> = ({
   isOpen,
   onClose,
   member,
@@ -72,11 +74,11 @@ export const MemberActionModal: React.FC<MemberActionModalProps> = ({
   const isDeactivate = mode === 'deactivate';
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
       <div className="fixed inset-0 -z-10" onClick={() => !isSubmitting && onClose()} aria-hidden="true" />
 
-      <div
-        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col my-auto overflow-hidden animate-in zoom-in-95 duration-150"
+      <m.div variants={modalPanelVariants}
+        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-2/40">
@@ -180,9 +182,14 @@ export const MemberActionModal: React.FC<MemberActionModalProps> = ({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 
   return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const MemberActionModal: React.FC<MemberActionModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <MemberActionModalBody {...props} />}</AnimatePresence>
+);

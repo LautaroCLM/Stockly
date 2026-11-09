@@ -34,3 +34,10 @@ export const staggerContainerVariants = (stagger = 0.04, delayChildren = 0): Var
   hidden: {},
   visible: { transition: { staggerChildren: stagger, delayChildren } },
 });
+
+/** Panel lateral que entra desde la derecha y sale hacia el mismo lado. */
+export const drawerRightVariants: Variants = {
+  hidden: { x: '100%' },
+  visible: { x: 0, transition: { duration: DURATION.base, ease: EASE_OUT } },
+  exit: { x: '100%', transition: { duration: DURATION.fast, ease: EASE_OUT } },
+};

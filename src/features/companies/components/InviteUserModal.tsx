@@ -6,6 +6,8 @@ import { InviteRolePicker } from './InviteRolePicker';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import type { CompanyRole, InviteUserResult } from '../types';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface InviteUserModalProps {
   isOpen: boolean;
@@ -14,7 +16,7 @@ interface InviteUserModalProps {
   onInvite: (email: string, role: CompanyRole) => Promise<InviteUserResult>;
 }
 
-export const InviteUserModal: React.FC<InviteUserModalProps> = ({
+const InviteUserModalBody: React.FC<InviteUserModalProps> = ({
   isOpen,
   onClose,
   isOwner,
@@ -79,15 +81,15 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
       <div
         className="fixed inset-0 -z-10"
         onClick={() => !isSubmitting && onClose()}
         aria-hidden="true"
       />
 
-      <div
-        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden animate-in zoom-in-95 duration-150"
+      <m.div variants={modalPanelVariants}
+        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -169,9 +171,14 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
             </div>
           </form>
         )}
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 
   return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const InviteUserModal: React.FC<InviteUserModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <InviteUserModalBody {...props} />}</AnimatePresence>
+);

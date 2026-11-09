@@ -3,6 +3,8 @@ import { Product } from '../types';
 import { Button } from '@/components/ui/Button';
 import { AlertTriangle, X, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface ConfirmDeactivateModalProps {
   isOpen: boolean;
@@ -11,7 +13,7 @@ interface ConfirmDeactivateModalProps {
   onConfirm: () => void;
 }
 
-export const ConfirmDeactivateModal: React.FC<ConfirmDeactivateModalProps> = ({
+const ConfirmDeactivateModalBody: React.FC<ConfirmDeactivateModalProps> = ({
   isOpen,
   product,
   onClose,
@@ -31,15 +33,15 @@ export const ConfirmDeactivateModal: React.FC<ConfirmDeactivateModalProps> = ({
   if (!isOpen || !product) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity animate-in fade-in duration-150"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
       <div className="min-h-full flex items-center justify-center p-4">
-        <div className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+        <m.div variants={modalPanelVariants} className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="p-4 px-5 border-b border-border flex items-center justify-between bg-surface-2/50">
             <div className="flex items-center gap-2.5">
@@ -144,8 +146,13 @@ export const ConfirmDeactivateModal: React.FC<ConfirmDeactivateModalProps> = ({
               <span>Sí, desactivar producto</span>
             </Button>
           </div>
-        </div>
+        </m.div>
       </div>
-    </div>
+    </m.div>
   );
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const ConfirmDeactivateModal: React.FC<ConfirmDeactivateModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <ConfirmDeactivateModalBody {...props} />}</AnimatePresence>
+);

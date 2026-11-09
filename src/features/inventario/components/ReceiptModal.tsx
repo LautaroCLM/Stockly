@@ -8,6 +8,8 @@ import {
   Printer,
   CheckCircle,
 } from 'lucide-react';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -16,7 +18,7 @@ interface ReceiptModalProps {
   onClose: () => void;
 }
 
-export const ReceiptModal: React.FC<ReceiptModalProps> = ({
+const ReceiptModalBody: React.FC<ReceiptModalProps> = ({
   isOpen,
   sale,
   company,
@@ -40,14 +42,14 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/85 backdrop-blur-sm print:hidden"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl shadow-black/90 z-10 overflow-hidden print:border-none print:shadow-none print:p-0 print:bg-white print:text-black">
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl shadow-black/90 z-10 overflow-hidden print:border-none print:shadow-none print:p-0 print:bg-white print:text-black">
         {/* Modal Toolbar (hidden in print) */}
         <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/60 print:hidden">
           <div className="flex items-center gap-2">
@@ -87,7 +89,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             <span>Imprimir Ticket (80mm)</span>
           </Button>
         </div>
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const ReceiptModal: React.FC<ReceiptModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <ReceiptModalBody {...props} />}</AnimatePresence>
+);

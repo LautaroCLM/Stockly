@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { formatCuit } from '@/features/companies/utils/cuitValidator';
 import type { Customer, UpsertCustomerInput, CustomerActionResult, CustomerIdentificationType } from '../types';
 import { CustomerFormFields } from './CustomerFormFields';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface CustomerFormModalProps {
   isOpen: boolean;
@@ -13,7 +15,7 @@ interface CustomerFormModalProps {
   onSave: (input: Omit<UpsertCustomerInput, 'companyId'>) => Promise<CustomerActionResult>;
 }
 
-export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
+const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
   isOpen,
   onClose,
   customer,
@@ -107,8 +109,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="relative w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/80">
           <div className="flex items-center gap-3">
@@ -182,8 +184,13 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             </Button>
           </div>
         </form>
-      </div>
-    </div>,
+      </m.div>
+    </m.div>,
     document.body
   );
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const CustomerFormModal: React.FC<CustomerFormModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <CustomerFormModalBody {...props} />}</AnimatePresence>
+);

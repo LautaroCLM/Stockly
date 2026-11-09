@@ -12,6 +12,8 @@ import {
   type SupplierFormValues,
 } from '../supplierForm';
 import { SupplierFormFields } from './SupplierFormFields';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface SupplierFormModalProps {
   isOpen: boolean;
@@ -21,7 +23,7 @@ interface SupplierFormModalProps {
 }
 
 /** Alta y edición de un proveedor. */
-export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({ isOpen, onClose, supplier, onSave }) => {
+const SupplierFormModalBody: React.FC<SupplierFormModalProps> = ({ isOpen, onClose, supplier, onSave }) => {
   const [values, setValues] = useState<SupplierFormValues>(() => initialSupplierValues(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -69,9 +71,9 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({ isOpen, on
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
       <div className="fixed inset-0 -z-10" onClick={() => !isSubmitting && onClose()} aria-hidden="true" />
-      <div className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden animate-in zoom-in-95 duration-150"
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}>
         <div className="shrink-0 p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-2/40">
           <div className="flex items-center gap-2.5">
@@ -110,9 +112,14 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({ isOpen, on
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 
   return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const SupplierFormModal: React.FC<SupplierFormModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <SupplierFormModalBody {...props} />}</AnimatePresence>
+);

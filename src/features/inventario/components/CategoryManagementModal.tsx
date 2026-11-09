@@ -5,6 +5,8 @@ import type { Category, Product } from '../types';
 import { CategoryRow, countProductsByCategory } from './CategoryRow';
 import { CategoryCreateForm } from './CategoryCreateForm';
 import { CategoryFeedback, type CategoryAlert } from './CategoryFeedback';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 type Result = { success: boolean; error?: string; category?: Category };
 
@@ -23,7 +25,7 @@ interface CategoryManagementModalProps {
 
 
 /** Alta, renombre y baja de las categorías de la empresa. */
-export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = ({
+const CategoryManagementModalBody: React.FC<CategoryManagementModalProps> = ({
   isOpen,
   companyName,
   categories,
@@ -124,10 +126,10 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity animate-in fade-in duration-150" onClick={onClose} />
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       <div className="min-h-full flex items-center justify-center p-4">
-        <div className="relative w-full max-w-xl bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+        <m.div variants={modalPanelVariants} className="relative w-full max-w-xl bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
           <div className="p-4 px-5 border-b border-border flex items-center justify-between bg-surface-2/50">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
@@ -198,8 +200,13 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
             <span>Las categorías eliminadas no deben contener productos asociados.</span>
             <Button variant="secondary" size="sm" onClick={onClose}>Cerrar</Button>
           </div>
-        </div>
+        </m.div>
       </div>
-    </div>
+    </m.div>
   );
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <CategoryManagementModalBody {...props} />}</AnimatePresence>
+);

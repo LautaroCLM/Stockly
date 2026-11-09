@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
+import { AnimatePresence, m } from 'motion/react';
 import { ShoppingCart, X } from 'lucide-react';
+import { drawerRightVariants, overlayVariants } from '@/lib/motion';
 import type { CartItem, Product } from '../types';
 import { CartItemRow } from './CartItemRow';
 import { CartFooter } from './CartFooter';
@@ -21,7 +23,7 @@ interface CartDrawerProps {
 }
 
 /** Panel lateral del carrito: productos, descuento y paso al cobro. */
-export const CartDrawer: React.FC<CartDrawerProps> = (props) => {
+const CartDrawerBody: React.FC<CartDrawerProps> = (props) => {
   const { isOpen, onClose, items, products } = props;
 
   // Productos del carrito que fueron desactivados: bloquean el cobro
@@ -42,10 +44,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = (props) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 overflow-hidden">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <aside className="w-screen max-w-md bg-surface border-l border-border flex flex-col shadow-2xl shadow-black/80 animate-in slide-in-from-right duration-200">
+        <m.aside variants={drawerRightVariants} className="w-screen max-w-md bg-surface border-l border-border flex flex-col shadow-2xl shadow-black/80">
           <div className="p-4 px-5 border-b border-border flex items-center justify-between bg-surface-2/40">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
@@ -95,8 +97,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = (props) => {
               onProceedToCheckout={props.onProceedToCheckout}
             />
           )}
-        </aside>
+        </m.aside>
       </div>
-    </div>
+    </m.div>
   );
 };
+
+/** Mientras isOpen es true se monta el panel; al cerrarse, AnimatePresence deja terminar la salida. */
+export const CartDrawer: React.FC<CartDrawerProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <CartDrawerBody {...props} />}</AnimatePresence>
+);

@@ -8,6 +8,8 @@ import type { PaymentEntry, PaymentMethod } from '../types';
 import { buildSinglePayment, buildSplitPayments, singlePaymentSummary, splitPaymentSummary } from '../checkoutPayments';
 import { CustomerSelector } from './CustomerSelector';
 import { SinglePaymentPanel, SplitPaymentPanel } from './PaymentPanels';
+import { ModalFrame } from '@/components/motion/ModalFrame';
+import { AnimatePresence } from 'motion/react';
 
 type SaleResult = { success: boolean; error?: string };
 
@@ -22,7 +24,7 @@ interface CheckoutModalProps {
 const MODE_BUTTON = 'py-2 text-xs font-semibold rounded-lg transition-all';
 
 /** Cobro de la venta: cliente, medio de pago (único o dividido) y confirmación. */
-export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, total, customers = [], onClose, onConfirmSale }) => {
+const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, customers = [], onClose, onConfirmSale }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [clientName, setClientName] = useState('Consumidor Final');
   const [paymentMode, setPaymentMode] = useState<'single' | 'split'>('single');
@@ -101,91 +103,92 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, total, cus
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" onClick={() => !isSubmitting && onClose()} />
-
-      <div className="relative w-full max-w-xl bg-surface border border-border rounded-2xl shadow-2xl shadow-black/90 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/40">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
-              <Banknote size={20} />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-text-primary">Finalizar Venta y Cobro</h2>
-              <span className="text-xs text-text-muted">
-                Total a cobrar: <strong className="text-primary font-bold">{formatCurrency(total)}</strong>
-              </span>
-            </div>
+    <ModalFrame ariaLabel="Finalizar venta y cobro" onBackdropClick={() => !isSubmitting && onClose()} panelClassName="max-w-xl">
+      <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/40">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
+            <Banknote size={20} />
           </div>
-          <button onClick={onClose} disabled={isSubmitting} aria-label="Cerrar"
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors disabled:opacity-50">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-          <CustomerSelector
-            customers={customers}
-            selectedCustomerId={selectedCustomer ? selectedCustomer.id : null}
-            onSelectCustomer={(c) => {
-              setSelectedCustomer(c);
-              setClientName(c ? c.name : 'Consumidor Final');
-            }}
-            disabled={isSubmitting}
-          />
-
-          <div className="space-y-2">
-            <span className="text-xs font-semibold text-text-secondary">Modalidad de Pago:</span>
-            <div className="grid grid-cols-2 gap-2 bg-surface-2 p-1 rounded-xl border border-border">
-              {(['single', 'split'] as const).map((mode) => (
-                <button key={mode} type="button" onClick={() => switchMode(mode)}
-                  className={`${MODE_BUTTON} ${paymentMode === mode ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text-primary'}`}>
-                  {mode === 'single' ? 'Pago Único (1 medio)' : 'Pago Dividido (Múltiples)'}
-                </button>
-              ))}
-            </div>
+          <div>
+            <h2 className="text-base font-bold text-text-primary">Finalizar Venta y Cobro</h2>
+            <span className="text-xs text-text-muted">
+              Total a cobrar: <strong className="text-primary font-bold">{formatCurrency(total)}</strong>
+            </span>
           </div>
-
-          {paymentMode === 'single' ? (
-            <SinglePaymentPanel allowCreditAccount={Boolean(selectedCustomer)} total={total} method={singleMethod} cashReceived={cashReceived}
-              onMethodChange={setSingleMethod} onCashReceivedChange={setCashReceived} />
-          ) : (
-            <SplitPaymentPanel
-              allowCreditAccount={Boolean(selectedCustomer)}
-              total={total}
-              splits={splits}
-              onAdd={() =>
-                setSplits((prev) => [
-                  ...prev,
-                  { id: `split-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`, method: 'transferencia', amount: splitSummary.remaining },
-                ])
-              }
-              onRemove={(id) => setSplits((prev) => (prev.length <= 1 ? prev : prev.filter((s) => s.id !== id)))}
-              onUpdate={(id, updates) => setSplits((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)))}
-            />
-          )}
-
-          {errorMessage && (
-            <div className="bg-danger/10 border border-danger/30 rounded-xl p-3 flex items-start gap-2.5 text-danger text-xs">
-              <AlertCircle size={15} className="shrink-0 mt-0.5" />
-              <span>{errorMessage}</span>
-            </div>
-          )}
         </div>
-
-        <div className="p-4 px-6 border-t border-border bg-surface-2/40 flex items-center justify-between gap-3">
-          <Button variant="secondary" size="md" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
-          <Button
-            variant="primary"
-            size="md"
-            onClick={handleSubmit}
-            disabled={isSubmitting || (paymentMode === 'split' && !splitSummary.isExact) || (paymentMode === 'single' && cashInsufficient)}
-            className="shadow-lg shadow-primary/25 min-w-[170px]"
-          >
-            {isSubmitting ? <span>Procesando...</span> : (<><CheckCircle2 size={16} /><span>Confirmar Venta</span></>)}
-          </Button>
-        </div>
+        <button onClick={onClose} disabled={isSubmitting} aria-label="Cerrar"
+          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors disabled:opacity-50">
+          <X size={18} />
+        </button>
       </div>
-    </div>
+
+      <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+        <CustomerSelector
+          customers={customers}
+          selectedCustomerId={selectedCustomer ? selectedCustomer.id : null}
+          onSelectCustomer={(c) => {
+            setSelectedCustomer(c);
+            setClientName(c ? c.name : 'Consumidor Final');
+          }}
+          disabled={isSubmitting}
+        />
+
+        <div className="space-y-2">
+          <span className="text-xs font-semibold text-text-secondary">Modalidad de Pago:</span>
+          <div className="grid grid-cols-2 gap-2 bg-surface-2 p-1 rounded-xl border border-border">
+            {(['single', 'split'] as const).map((mode) => (
+              <button key={mode} type="button" onClick={() => switchMode(mode)}
+                className={`${MODE_BUTTON} ${paymentMode === mode ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text-primary'}`}>
+                {mode === 'single' ? 'Pago Único (1 medio)' : 'Pago Dividido (Múltiples)'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {paymentMode === 'single' ? (
+          <SinglePaymentPanel allowCreditAccount={Boolean(selectedCustomer)} total={total} method={singleMethod} cashReceived={cashReceived}
+            onMethodChange={setSingleMethod} onCashReceivedChange={setCashReceived} />
+        ) : (
+          <SplitPaymentPanel
+            allowCreditAccount={Boolean(selectedCustomer)}
+            total={total}
+            splits={splits}
+            onAdd={() =>
+              setSplits((prev) => [
+                ...prev,
+                { id: `split-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`, method: 'transferencia', amount: splitSummary.remaining },
+              ])
+            }
+            onRemove={(id) => setSplits((prev) => (prev.length <= 1 ? prev : prev.filter((s) => s.id !== id)))}
+            onUpdate={(id, updates) => setSplits((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)))}
+          />
+        )}
+
+        {errorMessage && (
+          <div className="bg-danger/10 border border-danger/30 rounded-xl p-3 flex items-start gap-2.5 text-danger text-xs">
+            <AlertCircle size={15} className="shrink-0 mt-0.5" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 px-6 border-t border-border bg-surface-2/40 flex items-center justify-between gap-3">
+        <Button variant="secondary" size="md" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
+        <Button
+          variant="primary"
+          size="md"
+          onClick={handleSubmit}
+          disabled={isSubmitting || (paymentMode === 'split' && !splitSummary.isExact) || (paymentMode === 'single' && cashInsufficient)}
+          className="shadow-lg shadow-primary/25 min-w-[170px]"
+        >
+          {isSubmitting ? <span>Procesando...</span> : (<><CheckCircle2 size={16} /><span>Confirmar Venta</span></>)}
+        </Button>
+      </div>
+    </ModalFrame>
   );
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const CheckoutModal: React.FC<CheckoutModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <CheckoutModalBody {...props} />}</AnimatePresence>
+);

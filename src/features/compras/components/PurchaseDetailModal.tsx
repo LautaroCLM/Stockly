@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/Badge';
 import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import { formatCuit } from '@/features/companies/utils/cuitValidator';
 import type { Purchase } from '../types';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface PurchaseDetailModalProps {
   isOpen: boolean;
@@ -13,7 +15,7 @@ interface PurchaseDetailModalProps {
   purchase: Purchase | null;
 }
 
-export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
+const PurchaseDetailModalBody: React.FC<PurchaseDetailModalProps> = ({
   isOpen,
   onClose,
   purchase,
@@ -34,15 +36,15 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
   const items = purchase.items || [];
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
       <div
         className="fixed inset-0 -z-10"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div
-        className="relative w-full max-w-2xl bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden animate-in zoom-in-95 duration-150"
+      <m.div variants={modalPanelVariants}
+        className="relative w-full max-w-2xl bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -172,9 +174,14 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
             Cerrar
           </Button>
         </div>
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 
   return createPortal(modalContent, document.body);
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <PurchaseDetailModalBody {...props} />}</AnimatePresence>
+);

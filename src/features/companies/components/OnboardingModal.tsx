@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, Building2, KeyRound, X } from 'lucide-react';
 import { CreateCompanyForm, JoinCompanyForm } from './OnboardingForms';
+import { AnimatePresence, m } from 'motion/react';
+import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -15,7 +17,7 @@ const TAB_CLASS = 'flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition-
 const TAB_IDLE = 'text-text-muted hover:text-text-secondary hover:bg-surface/50 border border-transparent';
 
 /** Crear una empresa nueva o sumarse a una existente con una invitación. */
-export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, initialTab = 'create' }) => {
+const OnboardingModalBody: React.FC<OnboardingModalProps> = ({ isOpen, onClose, initialTab = 'create' }) => {
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -51,9 +53,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
       <div className="fixed inset-0 -z-10" onClick={() => !isSubmitting && onClose()} aria-hidden="true" />
-      <div className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden animate-in zoom-in-95 duration-150"
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}>
         <div className="shrink-0 p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-2/40">
           <div className="flex items-center gap-2.5">
@@ -92,9 +94,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
         )}
 
         {activeTab === 'create' ? <CreateCompanyForm {...formProps} /> : <JoinCompanyForm {...formProps} />}
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 
   return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 };
+
+/** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
+export const OnboardingModal: React.FC<OnboardingModalProps> = (props) => (
+  <AnimatePresence>{props.isOpen && <OnboardingModalBody {...props} />}</AnimatePresence>
+);
