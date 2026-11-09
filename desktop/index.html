@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stockly</title>
+    <style>
+      html, body { height: 100%; margin: 0; background: #060A13; color: #E8EEFB; font-family: Inter, system-ui, sans-serif; }
+      main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; }
+      img { width: 72px; height: 72px; }
+      p { margin: 0; font-size: 13px; color: #8A96B2; max-width: 360px; line-height: 1.5; }
+      button { margin-top: 4px; padding: 8px 16px; border-radius: 8px; border: 0; background: #2F6BFF; color: #fff; font-size: 13px; cursor: pointer; }
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="logo.png" alt="Stockly" />
+      <p id="msg">Abriendo Stockly...</p>
+      <button id="retry" hidden>Reintentar</button>
+    </main>
+    <script>
+      var URL_APP = 'https://stockly-opal.vercel.app/';
+      var msg = document.getElementById('msg');
+      var retry = document.getElementById('retry');
+      function open() {
+        retry.hidden = true;
+        msg.textContent = 'Abriendo Stockly...';
+        fetch(URL_APP, { mode: 'no-cors', cache: 'no-store' })
+          .then(function () { window.location.replace(URL_APP); })
+          .catch(function () {
+            msg.textContent = 'Sin conexión. Stockly necesita internet para abrir. Revisá tu conexión y reintentá.';
+            retry.hidden = false;
+          });
+      }
+      retry.addEventListener('click', open);
+      window.addEventListener('online', open);
+      open();
+    </script>
+  </body>
+</html>

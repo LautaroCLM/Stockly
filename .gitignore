@@ -91,3 +91,7 @@ desktop.ini
 # ------------------------------------------------------------------------------
 .vercel/
 
+
+# Tauri (app de escritorio)
+src-tauri/target/
+src-tauri/gen/
