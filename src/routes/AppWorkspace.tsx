@@ -23,6 +23,8 @@ import { WorkspaceRoutes } from './WorkspaceRoutes';
 import { PageEnter } from '@/components/motion/PageEnter';
 
 const ADMIN_ONLY_ROUTES = new Set<RouteId>(['compras', 'finanzas', 'gastos', 'cobros-pagos', 'informes', 'maquinas', 'personal']);
+// El administrador ficha desde Empleados; esta pantalla simplificada es para las cuentas de empleado
+const EMPLOYEE_ONLY_ROUTES = new Set<RouteId>(['fichaje']);
 
 interface AppWorkspaceProps {
   user: User;
@@ -95,10 +97,10 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
 
   // Compras, Finanzas y Empleados muestran costos o datos sensibles: solo administradores
   const navSections = useMemo(() => {
-    if (isMasterAdmin) return NAV_SECTIONS;
+    const visible = (id: RouteId) => (isMasterAdmin ? !EMPLOYEE_ONLY_ROUTES.has(id) : !ADMIN_ONLY_ROUTES.has(id));
     return NAV_SECTIONS.map((section) => ({
       ...section,
-      items: section.items.filter((item) => !ADMIN_ONLY_ROUTES.has(item.id)),
+      items: section.items.filter((item) => visible(item.id)),
     })).filter((section) => section.items.length > 0);
   }, [isMasterAdmin]);
 

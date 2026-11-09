@@ -104,6 +104,12 @@ export const NAV_SECTIONS: NavSection[] = [
         path: '/personal',
         iconName: 'UserCheck',
       },
+      {
+        id: 'fichaje',
+        label: 'Fichaje',
+        path: '/fichaje',
+        iconName: 'Clock',
+      },
     ],
   },
   {

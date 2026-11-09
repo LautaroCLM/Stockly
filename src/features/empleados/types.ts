@@ -50,4 +50,11 @@ export interface AttendanceSummary {
   openCount: number;
 }
 
+/** Lista para fichar: activos, horario de hoy y registros de hoy. */
+export interface ClockRoster {
+  employees: Employee[];
+  schedules: Record<string, ScheduleBlock[]>;
+  today: AttendanceRecord[];
+}
+
 export type HrActionResult = { ok: true } | { ok: false; message: string; uncertain?: boolean };

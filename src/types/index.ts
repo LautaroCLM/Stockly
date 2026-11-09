@@ -28,6 +28,7 @@ export type RouteId =
   | 'informes'
   | 'maquinas'
   | 'personal'
+  | 'fichaje'
   | 'historial'
   | 'auditoria'
   | 'config-empresa'

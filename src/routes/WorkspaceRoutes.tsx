@@ -19,6 +19,7 @@ import { CobrosPagosPage } from '@/features/cobros/CobrosPagosPage';
 import { InformesPage } from '@/features/informes/InformesPage';
 import { MaquinasPage } from '@/features/maquinas/MaquinasPage';
 import { EmpleadosPage } from '@/features/empleados/EmpleadosPage';
+import { FichajePage } from '@/features/empleados/FichajePage';
 import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
 import { ClientesPage } from '@/features/clientes/components/ClientesPage';
 import { ComprasPage } from '@/features/compras/components/ComprasPage';
@@ -117,6 +118,8 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       return <MaquinasPage company={company} isMasterAdmin={isMasterAdmin} />;
     case 'personal':
       return <EmpleadosPage company={company} isMasterAdmin={isMasterAdmin} />;
+    case 'fichaje':
+      return <FichajePage company={company} />;
     case 'auditoria':
       return <AuditLogPage company={company} isMasterAdmin={isMasterAdmin} />;
     case 'proveedores':

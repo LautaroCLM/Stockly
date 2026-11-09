@@ -871,6 +871,11 @@ isOneToOne: false
 "clock_out":
 { Args: { "p_company_id": string,"p_employee_id": string }; Returns: string
                            },
+"clock_roster":
+{ Args: { "p_company_id": string,"p_since": string,"p_weekday": number }; Returns: {
+              "employee_id": string,"full_name": string,"job_title": string,"records": Json,"schedule": Json
+            }[]
+                           },
 "close_cash_session":
 { Args: { "p_company_id": string,"p_counted_amount": number,"p_notes"?: string,"p_session_id": string }; Returns: Json
                            },

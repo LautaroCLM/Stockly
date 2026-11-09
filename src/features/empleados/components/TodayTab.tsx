@@ -14,10 +14,12 @@ interface TodayTabProps {
   today: AttendanceRecord[];
   onClockIn: (employeeId: string) => Promise<HrActionResult>;
   onClockOut: (employeeId: string) => Promise<HrActionResult>;
+  /** Texto cuando no hay empleados activos. */
+  emptyMessage?: string;
 }
 
 /** Fichaje del día: quién está adentro, quién salió y quién todavía no llegó. */
-export const TodayTab: React.FC<TodayTabProps> = ({ employees, schedules, today, onClockIn, onClockOut }) => {
+export const TodayTab: React.FC<TodayTabProps> = ({ employees, schedules, today, onClockIn, onClockOut, emptyMessage }) => {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<{ message: string; uncertain?: boolean } | null>(null);
   const weekday = isoWeekday(new Date());
@@ -32,7 +34,7 @@ export const TodayTab: React.FC<TodayTabProps> = ({ employees, schedules, today,
   };
 
   if (active.length === 0) {
-    return <p className="py-12 text-center text-xs text-text-muted">No hay empleados activos. Cargalos en la pestaña "Personal".</p>;
+    return <p className="py-12 text-center text-xs text-text-muted">{emptyMessage ?? 'No hay empleados activos. Cargalos en la pestaña "Personal".'}</p>;
   }
 
   return (

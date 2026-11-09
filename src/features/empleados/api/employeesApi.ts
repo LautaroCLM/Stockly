@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { isNetworkOrUncertainError, toUserMessage } from '@/lib/errorMessages';
 import type {
-  AttendanceRecord, AttendanceSummary, Employee, EmployeeInput, EmployeeStatus, HrActionResult, ScheduleBlock,
+  AttendanceRecord, AttendanceSummary, ClockRoster, Employee, EmployeeInput, EmployeeStatus, HrActionResult, ScheduleBlock,
 } from '../types';
 
 const UNCERTAIN_MESSAGE =
@@ -116,6 +116,29 @@ export const saveEmployeeRpc = (companyId: string, input: EmployeeInput) =>
 
 export const setScheduleRpc = (companyId: string, employeeId: string, blocks: ScheduleBlock[]) =>
   run(() => supabase.rpc('set_employee_schedule', { p_company_id: companyId, p_employee_id: employeeId, p_blocks: blocks.map((b) => ({ weekday: b.weekday, start: b.start, end: b.end })) }));
+
+/** Lo mínimo para fichar (lo ve cualquier miembro de la empresa): activos, horario de hoy y registros de hoy. */
+export async function fetchClockRoster(companyId: string, weekday: number, sinceIso: string): Promise<ClockRoster> {
+  const { data, error } = await supabase.rpc('clock_roster', { p_company_id: companyId, p_weekday: weekday, p_since: sinceIso });
+  if (error) throw new Error(toUserMessage(error, 'No se pudo cargar el personal.'));
+  const roster: ClockRoster = { employees: [], schedules: {}, today: [] };
+  for (const row of data ?? []) {
+    roster.employees.push({
+      id: row.employee_id, fullName: row.full_name, documentNumber: null, jobTitle: row.job_title, phone: null,
+      hireDate: null, status: 'active', notes: null,
+    });
+    const blocks = Array.isArray(row.schedule) ? (row.schedule as { start: string; end: string }[]) : [];
+    roster.schedules[row.employee_id] = blocks.map((b) => ({ weekday, start: b.start, end: b.end }));
+    const records = Array.isArray(row.records) ? (row.records as { id: string; checkIn: string; checkOut: string | null }[]) : [];
+    for (const r of records) {
+      roster.today.push({
+        id: r.id, employeeId: row.employee_id, checkIn: r.checkIn, checkOut: r.checkOut, source: 'clock',
+        reason: null, isVoided: false, voidReason: null,
+      });
+    }
+  }
+  return roster;
+}
 
 export const clockInRpc = (companyId: string, employeeId: string) =>
   run(() => supabase.rpc('clock_in', { p_company_id: companyId, p_employee_id: employeeId }));
