@@ -4,6 +4,9 @@ import { Sale } from '../types';
 import { Company } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { ReceiptTicket } from './ReceiptTicket';
+import { useCompanyLogo } from '@/features/logo/hooks/useCompanyLogo';
+import { useDocumentSettings } from '@/features/documentos/hooks/useDocumentSettings';
+import type { DocumentSettings } from '@/features/documentos/types';
 import {
   X,
   Printer,
@@ -19,10 +22,17 @@ interface ReceiptModalProps {
   onClose: () => void;
 }
 
-const ReceiptModalBody: React.FC<ReceiptModalProps> = ({
+interface ReceiptModalBodyProps extends ReceiptModalProps {
+  settings: DocumentSettings;
+  logo: string | null;
+}
+
+const ReceiptModalBody: React.FC<ReceiptModalBodyProps> = ({
   isOpen,
   sale,
   company,
+  settings,
+  logo,
   onClose,
 }) => {
   // Handle escape key
@@ -72,7 +82,7 @@ const ReceiptModalBody: React.FC<ReceiptModalProps> = ({
 
         {/* Printable Ticket Content Container (80mm Thermal simulator) */}
         <div className="p-6 overflow-y-auto max-h-[75vh] print:max-h-none print:overflow-visible">
-          <ReceiptTicket sale={sale} company={company} />
+          <ReceiptTicket sale={sale} company={company} settings={settings} logo={logo} />
         </div>
 
         {/* Modal actions (hidden in print) */}
@@ -96,7 +106,7 @@ const ReceiptModalBody: React.FC<ReceiptModalProps> = ({
     {/* Copia que solo se ve al imprimir: fuera de #root para que salga solo el ticket, sin la pantalla de fondo */}
     {createPortal(
       <div id="print-root">
-        <ReceiptTicket sale={sale} company={company} />
+        <ReceiptTicket sale={sale} company={company} settings={settings} logo={logo} />
       </div>,
       document.body
     )}
@@ -105,6 +115,9 @@ const ReceiptModalBody: React.FC<ReceiptModalProps> = ({
 };
 
 /** Mientras `isOpen` es true se monta el contenido; al cerrarse, AnimatePresence deja terminar la animación de salida. */
-export const ReceiptModal: React.FC<ReceiptModalProps> = (props) => (
-  <AnimatePresence>{props.isOpen && <ReceiptModalBody {...props} />}</AnimatePresence>
-);
+export const ReceiptModal: React.FC<ReceiptModalProps> = (props) => {
+  // Se cargan aunque el ticket esté cerrado, para que al abrirlo ya salgan el logo y los datos
+  const { settings } = useDocumentSettings(props.company.id, true);
+  const { logo } = useCompanyLogo(props.company.id);
+  return <AnimatePresence>{props.isOpen && <ReceiptModalBody {...props} settings={settings} logo={logo} />}</AnimatePresence>;
+};

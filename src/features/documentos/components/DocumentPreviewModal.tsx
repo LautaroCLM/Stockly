@@ -5,6 +5,7 @@ import { Ban, Copy, Loader2, Printer, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 import type { Company } from '@/types';
+import { useCompanyLogo } from '@/features/logo/hooks/useCompanyLogo';
 import { useDocumentDetail } from '../hooks/useDocumentDetail';
 import { formatDocumentNumber } from '../documentMath';
 import { DOC_TYPE_LABELS, isThermal } from '../types';
@@ -25,6 +26,7 @@ interface DocumentPreviewModalProps {
 
 const Body: React.FC<DocumentPreviewModalProps> = ({ documentId, company, settings, canOperate, onClose, onDuplicate, onVoid }) => {
   const { doc, items, error } = useDocumentDetail(company.id, documentId);
+  const { logo } = useCompanyLogo(company.id);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -34,8 +36,8 @@ const Body: React.FC<DocumentPreviewModalProps> = ({ documentId, company, settin
 
   const thermal = doc ? isThermal(doc.type) : true;
   const layout = doc && (thermal
-    ? <DocumentTicket doc={doc} items={items} company={company} settings={settings} />
-    : <DocumentSheet doc={doc} items={items} company={company} settings={settings} />);
+    ? <DocumentTicket doc={doc} items={items} company={company} settings={settings} logo={logo} />
+    : <DocumentSheet doc={doc} items={items} company={company} settings={settings} logo={logo} />);
 
   return (
     <>

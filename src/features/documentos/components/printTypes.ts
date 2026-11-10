@@ -7,4 +7,6 @@ export interface PrintableDocument {
   items: DocumentItem[];
   company: Company;
   settings: DocumentSettings;
+  /** Logo de la empresa (imagen en base64) o null si no tiene. */
+  logo: string | null;
 }

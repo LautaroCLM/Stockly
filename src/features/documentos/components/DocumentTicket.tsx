@@ -7,13 +7,16 @@ import type { PrintableDocument } from './printTypes';
 const DIVIDER = 'border-b border-dashed border-zinc-400';
 
 /** Ticket de 80 mm (rollo térmico). Comprobante no fiscal: no es una venta ni una factura. */
-export const DocumentTicket: React.FC<PrintableDocument> = ({ doc, items, company, settings }) => (
+export const DocumentTicket: React.FC<PrintableDocument> = ({ doc, items, company, settings, logo }) => (
   <div id="thermal-receipt"
     className="bg-white text-zinc-900 font-mono text-[11px] p-6 rounded-xl border border-zinc-300 shadow-md max-w-[340px] mx-auto print:border-none print:shadow-none print:max-w-full print:p-0">
     <div className={`text-center pb-3 space-y-1 ${DIVIDER}`}>
+      {logo && <img src={logo} alt="" className="mx-auto max-h-20 max-w-[60%] object-contain grayscale contrast-125" />}
       <div className="text-sm font-extrabold uppercase">{company.name}</div>
-      <div className="text-[10px] text-zinc-600">
-        {[company.cuit ? `CUIT: ${company.cuit}` : null, settings.address || null, settings.phone || null].filter(Boolean).join(' • ')}
+      <div className="text-[10px] text-zinc-600 space-y-0.5">
+        {company.cuit && <div>CUIT: {company.cuit}</div>}
+        {settings.address && <div>{settings.address}</div>}
+        {(settings.phone || settings.email) && <div>{[settings.phone, settings.email].filter(Boolean).join(' • ')}</div>}
       </div>
       <div className="pt-1 text-[9px] uppercase font-bold text-rose-700 bg-rose-50 border border-rose-200 py-0.5 px-2 rounded">
         {DOC_TYPE_LABELS[doc.type]} - NO VÁLIDO COMO FACTURA

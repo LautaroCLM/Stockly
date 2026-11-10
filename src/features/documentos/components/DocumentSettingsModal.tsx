@@ -43,7 +43,7 @@ export const DocumentSettingsModal: React.FC<DocumentSettingsModalProps> = ({ in
   };
 
   return (
-    <CashModalShell title="Datos del emisor" subtitle="Salen en el encabezado de cada documento" icon={<Settings2 size={18} />} isBusy={isSubmitting} onClose={onClose}>
+    <CashModalShell title="Datos para comprobantes" subtitle="Salen en el ticket de venta y en los documentos" icon={<Settings2 size={18} />} isBusy={isSubmitting} onClose={onClose}>
       <form onSubmit={submit} className="p-6 space-y-3 text-xs">
         <Field id="set-address" label="Domicilio comercial">{text('set-address', 'address', 200)}</Field>
         <div className="grid grid-cols-2 gap-3">

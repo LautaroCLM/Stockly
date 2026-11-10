@@ -73,7 +73,7 @@ export const DocumentosPage: React.FC<DocumentosPageProps> = ({ company, canView
         </div>
         {isMasterAdmin && (
           <Button variant="secondary" size="sm" className="gap-1.5 h-9" onClick={() => setDialog({ kind: 'settings' })}>
-            <Settings2 size={14} /><span>Datos del emisor</span>
+            <Settings2 size={14} /><span>Datos para comprobantes</span>
           </Button>
         )}
       </div>

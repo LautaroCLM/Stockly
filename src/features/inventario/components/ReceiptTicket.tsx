@@ -3,21 +3,24 @@ import type { Company } from '@/types';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import type { Sale } from '../types';
 import { paymentMethodLabel } from '../paymentMethods';
+import { TAX_CONDITION_LABELS } from '@/features/documentos/types';
+import type { DocumentSettings } from '@/features/documentos/types';
 
 /** Ticket de venta imprimible (formato térmico de 80 mm). Comprobante no fiscal. */
-export const ReceiptTicket: React.FC<{ sale: Sale; company: Company }> = ({ sale, company }) => (
+export const ReceiptTicket: React.FC<{ sale: Sale; company: Company; settings: DocumentSettings; logo: string | null }> = ({ sale, company, settings, logo }) => (
     <div
       id="thermal-receipt"
       className="bg-white text-zinc-900 font-mono text-[11px] p-6 rounded-xl border border-zinc-300 shadow-md max-w-[340px] mx-auto print:border-none print:shadow-none print:max-w-full print:p-0"
     >
       {/* Header */}
       <div className="text-center pb-3 border-b border-dashed border-zinc-400 space-y-1">
-        <div className="text-base font-extrabold uppercase tracking-wider">
-          STOCKLY
-        </div>
-        <div className="text-xs font-bold uppercase">{company.name}</div>
-        <div className="text-[10px] text-zinc-600">
-          {[company.cuit ? `CUIT: ${company.cuit}` : null, company.industry].filter(Boolean).join(' • ')}
+        {logo && <img src={logo} alt="" className="mx-auto max-h-20 max-w-[60%] object-contain grayscale contrast-125" />}
+        <div className="text-sm font-extrabold uppercase">{company.name}</div>
+        <div className="text-[10px] text-zinc-600 space-y-0.5">
+          {company.cuit && <div>CUIT: {company.cuit}</div>}
+          <div>{TAX_CONDITION_LABELS[settings.taxCondition]}</div>
+          {settings.address && <div>{settings.address}</div>}
+          {(settings.phone || settings.email) && <div>{[settings.phone, settings.email].filter(Boolean).join(' • ')}</div>}
         </div>
         <div className="pt-1 text-[9px] uppercase font-bold text-rose-700 bg-rose-50 border border-rose-200 py-0.5 px-2 rounded">
           COMPROBANTE NO FISCAL - USO INTERNO
@@ -120,7 +123,7 @@ export const ReceiptTicket: React.FC<{ sale: Sale; company: Company }> = ({ sale
 
       {/* Footer barcode/greeting */}
       <div className="pt-3 text-center space-y-1 text-[9px] text-zinc-500">
-        <div>¡Gracias por su compra!</div>
+        <div>{settings.footerNote || '¡Gracias por su compra!'}</div>
         <div className="font-mono text-[8px] tracking-widest text-zinc-400">
           * {sale.id} *
         </div>

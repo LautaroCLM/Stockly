@@ -8,7 +8,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
-SELECT plan(34);
+SELECT plan(36);
 
 DO $$
 DECLARE
@@ -138,6 +138,13 @@ SELECT public.set_module_permissions(:'comp_a', '{"documentos":"operate"}'::JSON
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0032-0000-0000-0000-000000000002';
 SELECT is((public.create_document(:'comp_a', 'dddd0032-0000-0000-0000-000000000021',
   '{"doc_type":"ticket","items":[{"description":"X","quantity":1,"unit_price":5}]}'::JSONB) ->> 'doc_number')::INT, 2, 'T-33 con "ver y operar" el empleado emite documentos');
+
+-- 35-36. Los datos del emisor los lee todo el equipo (salen en el ticket de venta), pero solo el admin los edita
+SET LOCAL "request.jwt.claim.sub" = 'aaaa0032-0000-0000-0000-000000000001';
+SELECT public.set_module_permissions(:'comp_a', '{"documentos":"none"}'::JSONB);
+SET LOCAL "request.jwt.claim.sub" = 'aaaa0032-0000-0000-0000-000000000002';
+SELECT is((SELECT point_of_sale FROM public.document_settings WHERE company_id = :'comp_a'), 3, 'T-35 el empleado sin acceso a Documentos igual lee los datos del emisor');
+SELECT throws_like(format($q$SELECT public.save_document_settings(%L, 'x', 'x', 'x@x.com', 'monotributo', 1, 'x')$q$, :'comp_a'), '%master_admin%', 'T-36 el empleado no los edita');
 
 -- 34. Otra empresa no ve ni opera estos documentos
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0032-0000-0000-0000-000000000003';

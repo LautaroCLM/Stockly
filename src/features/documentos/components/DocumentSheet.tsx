@@ -8,7 +8,7 @@ const TH = 'p-2 text-left font-bold border-b-2 border-zinc-800';
 const TD = 'p-2 border-b border-zinc-300 align-top';
 
 /** Hoja A4 de presupuesto, remito X o garantía, con el formato de los comprobantes argentinos. */
-export const DocumentSheet: React.FC<PrintableDocument> = ({ doc, items, company, settings }) => {
+export const DocumentSheet: React.FC<PrintableDocument> = ({ doc, items, company, settings, logo }) => {
   const prices = doc.showPrices && doc.type !== 'garantia';
   const isRemito = doc.type === 'remito';
   const letter = doc.type === 'presupuesto' ? 'P' : doc.type === 'garantia' ? 'G' : 'X';
@@ -25,6 +25,7 @@ export const DocumentSheet: React.FC<PrintableDocument> = ({ doc, items, company
 
       <header className="grid grid-cols-[1fr_auto_1fr] border-2 border-zinc-800">
         <div className="p-3 space-y-0.5">
+          {logo && <img src={logo} alt="" className="max-h-20 max-w-[180px] object-contain mb-1" />}
           <div className="text-lg font-extrabold uppercase">{company.name}</div>
           {settings.address && <div>{settings.address}</div>}
           {(settings.phone || settings.email) && <div>{[settings.phone, settings.email].filter(Boolean).join(' • ')}</div>}
