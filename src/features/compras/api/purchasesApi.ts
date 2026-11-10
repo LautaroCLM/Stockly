@@ -112,7 +112,7 @@ export async function fetchPurchasesSummary(companyId: string): Promise<{ count:
 }
 
 /**
- * Invoca la RPC transaccional autoritativa public.process_purchase.
+ * Invoca la RPC transaccional autoritativa public.process_purchase (o process_credit_purchase si queda a pagar).
  * Los errores de red y de clave reutilizada se traducen a mensajes claros: ante un corte,
  * reintentar con la misma clave no duplica la compra.
  */
@@ -120,7 +120,7 @@ export async function processPurchaseRpc(
   companyId: string,
   input: CreatePurchaseInput
 ): Promise<{ purchaseId: string; purchaseNumber: string }> {
-  const { data, error } = await supabase.rpc('process_purchase', {
+  const args = {
     p_company_id: companyId,
     p_idempotency_key: input.idempotencyKey || crypto.randomUUID(),
     p_supplier_id: input.supplierId,
@@ -132,7 +132,10 @@ export async function processPurchaseRpc(
     p_invoice_number: input.invoiceNumber?.trim() || undefined,
     p_purchase_date: input.purchaseDate || undefined,
     p_notes: input.notes?.trim() || undefined,
-  });
+  };
+  const { data, error } = input.onCredit
+    ? await supabase.rpc('process_credit_purchase', args)
+    : await supabase.rpc('process_purchase', args);
 
   if (error) {
     if (isNetworkOrUncertainError(error.message)) {

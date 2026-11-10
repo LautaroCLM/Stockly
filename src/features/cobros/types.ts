@@ -9,23 +9,28 @@ export const COLLECTION_METHOD_LABELS: Record<CollectionMethod, string> = {
   cheque: 'Cheque',
 };
 
-/** Deuda de un cliente en cuenta corriente. Un saldo negativo es saldo a favor del cliente. */
-export interface CustomerBalance {
-  customerId: string;
-  customerName: string;
+/**
+ * Saldo de una cuenta corriente: de un cliente (lo que nos debe) o de un proveedor (lo que le debemos).
+ * Un saldo negativo es saldo a favor de la otra parte.
+ */
+export interface AccountBalance {
+  partyId: string;
+  partyName: string;
+  /** Total cargado a la cuenta: ventas a crédito (cliente) o compras a crédito (proveedor). */
   chargedTotal: number;
-  collectedTotal: number;
+  /** Total cobrado (cliente) o pagado (proveedor). */
+  settledTotal: number;
   balance: number;
   lastActivity: string | null;
   oldestOpenSince: string | null;
 }
 
 export interface StatementEntry {
-  kind: 'sale' | 'payment';
+  kind: 'charge' | 'payment';
   referenceId: string;
   document: string;
   occurredAt: string;
-  /** Positivo: venta a crédito. Negativo: cobro. */
+  /** Positivo: venta o compra a crédito. Negativo: cobro o pago. */
   amount: number;
 }
 
@@ -35,10 +40,11 @@ export interface CollectionPart {
 }
 
 export interface NewCollectionInput {
-  customerId: string;
+  partyId: string;
   parts: CollectionPart[];
   notes: string;
-  intoCash: boolean;
+  /** Cliente: el efectivo ingresa a la caja. Proveedor: el efectivo sale de la caja. */
+  withCash: boolean;
   idempotencyKey: string;
 }
 

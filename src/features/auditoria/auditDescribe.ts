@@ -16,6 +16,8 @@ export const AUDIT_TABLE_LABELS: Record<string, string> = {
   cash_movements: 'Movimiento de caja',
   expenses: 'Gasto',
   customer_payments: 'Cobro de cliente',
+  supplier_payments: 'Pago a proveedor',
+  credit_purchases: 'Compra a crédito',
   machines: 'Máquina',
   employees: 'Empleado',
   employee_schedules: 'Horario de empleado',

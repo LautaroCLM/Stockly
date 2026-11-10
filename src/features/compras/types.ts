@@ -56,6 +56,8 @@ export interface CreatePurchaseInput {
   invoiceNumber?: string;
   purchaseDate?: string;
   notes?: string;
+  /** Queda a pagar: suma a la deuda con el proveedor en Cobros y Pagos. */
+  onCredit?: boolean;
   items: Array<{
     productId: string;
     quantity: number;

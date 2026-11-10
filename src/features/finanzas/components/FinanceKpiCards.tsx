@@ -67,6 +67,10 @@ export const FinanceKpiCards: React.FC<FinanceKpiCardsProps> = ({ current, previ
         detail={`Parte de lo vendido que todavía no se cobró. Cobros de cuenta corriente del período: ${formatCurrency(current.collectionsTotal)}`} />
       <Kpi label="Total a cobrar a clientes" value={formatCurrency(current.receivableTotal)}
         detail="Saldo actual de todos los clientes con deuda (no depende del período)" tone={current.receivableTotal > 0 ? 'text-amber-400' : undefined} />
+      <Kpi label="Compras a crédito" value={formatCurrency(current.creditPurchasesTotal)}
+        detail={`Parte de las compras que quedó a pagar. Pagos a proveedores del período: ${formatCurrency(current.supplierPaymentsTotal)}`} />
+      <Kpi label="Deuda con proveedores" value={formatCurrency(current.payablesTotal)}
+        detail="Saldo actual de todo lo que se debe a proveedores (no depende del período)" tone={current.payablesTotal > 0 ? 'text-amber-400' : undefined} />
       <Kpi label="Valor del inventario" value={formatCurrency(current.inventoryValue)}
         detail="Existencias actuales valuadas al costo (no depende del período)" />
     </div>

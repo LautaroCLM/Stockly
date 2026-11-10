@@ -19,6 +19,8 @@ export const COMPANY_SCOPED_TABLES: readonly DataTable[] = [
   'cash_movements',
   'expenses',
   'customer_payments',
+  'supplier_payments',
+  'credit_purchases',
   'machines',
   'employees',
   'employee_schedules',

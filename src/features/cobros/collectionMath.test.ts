@@ -17,7 +17,7 @@ describe('cobros', () => {
   });
 
   it('calcula el saldo acumulado del estado de cuenta', () => {
-    const rows = withRunningBalance([entry('sale', 300.1), entry('sale', 150.2), entry('payment', -100.3)]);
+    const rows = withRunningBalance([entry('charge', 300.1), entry('charge', 150.2), entry('payment', -100.3)]);
     expect(rows.map((r) => r.balance)).toEqual([300.1, 450.3, 350]);
   });
 

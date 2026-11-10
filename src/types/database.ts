@@ -269,6 +269,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"credit_purchases": {
+                  Row: {
+                    "company_id": string,"created_at": string,"created_by": string,"purchase_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"created_by": string,"purchase_id": string
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"purchase_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "credit_purchases_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fk_credit_purchases_purchase"
+      columns: ["company_id","purchase_id"]
+isOneToOne: false
+      referencedRelation: "purchases"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
                 },"customer_payments": {
                   Row: {
                     "amount": number,"cash_movement_id": string | null,"company_id": string,"created_at": string,"created_by": string,"customer_id": string,"id": string,"idempotency_key": string,"notes": string | null,"payments": NonNullable<Json>,"status": string,"void_cash_movement_id": string | null,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
@@ -805,6 +831,44 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"supplier_payments": {
+                  Row: {
+                    "amount": number,"cash_movement_id": string | null,"company_id": string,"created_at": string,"created_by": string,"id": string,"idempotency_key": string,"notes": string | null,"payments": NonNullable<Json>,"status": string,"supplier_id": string,"void_cash_movement_id": string | null,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"cash_movement_id"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"id"?: string,"idempotency_key": string,"notes"?: string | null,"payments": NonNullable<Json>,"status"?: string,"supplier_id": string,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Update: {
+                    "amount"?: number,"cash_movement_id"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"id"?: string,"idempotency_key"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"status"?: string,"supplier_id"?: string,"void_cash_movement_id"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_supplier_payments_supplier"
+      columns: ["company_id","supplier_id"]
+isOneToOne: false
+      referencedRelation: "suppliers"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "supplier_payments_cash_movement_id_fkey"
+      columns: ["cash_movement_id"]
+isOneToOne: false
+      referencedRelation: "cash_movements"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "supplier_payments_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "supplier_payments_void_cash_movement_id_fkey"
+      columns: ["void_cash_movement_id"]
+isOneToOne: false
+      referencedRelation: "cash_movements"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"suppliers": {
                   Row: {
                     "address": string | null,"company_id": string,"contact_name": string | null,"created_at": string,"email": string | null,"id": string,"is_active": boolean,"name": string,"phone": string | null,"tax_id": string | null,"updated_at": string
@@ -932,6 +996,9 @@ isOneToOne: false
 "open_cash_session":
 { Args: { "p_company_id": string,"p_notes"?: string,"p_opening_amount": number }; Returns: Json
                            },
+"process_credit_purchase":
+{ Args: { "p_company_id": string,"p_idempotency_key": string,"p_invoice_number"?: string,"p_items": Json,"p_notes"?: string,"p_purchase_date"?: string,"p_supplier_id": string }; Returns: Json
+                           },
 "process_purchase":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_invoice_number"?: string,"p_items": Json,"p_notes"?: string,"p_purchase_date"?: string,"p_supplier_id": string }; Returns: Json
                            },
@@ -962,6 +1029,9 @@ isOneToOne: false
                            },
 "register_stock_adjustment":
 { Args: { "p_company_id": string,"p_direction": string,"p_idempotency_key": string,"p_notes"?: string,"p_product_id": string,"p_quantity": number,"p_reason": string,"p_reference_doc"?: string }; Returns: Json
+                           },
+"register_supplier_payment":
+{ Args: { "p_company_id": string,"p_from_cash": boolean,"p_idempotency_key": string,"p_notes": string,"p_payments": Json,"p_supplier_id": string }; Returns: Json
                            },
 "report_expenses":
 { Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
@@ -994,6 +1064,16 @@ isOneToOne: false
                            },
 "set_employee_schedule":
 { Args: { "p_blocks": Json,"p_company_id": string,"p_employee_id": string }; Returns: number
+                           },
+"supplier_balances":
+{ Args: { "p_company_id": string }; Returns: {
+              "balance": number,"charged_total": number,"last_activity": string,"oldest_open_since": string,"paid_total": number,"supplier_id": string,"supplier_name": string
+            }[]
+                           },
+"supplier_statement":
+{ Args: { "p_company_id": string,"p_supplier_id": string }; Returns: {
+              "amount": number,"document": string,"kind": string,"occurred_at": string,"reference_id": string
+            }[]
                            },
 "transfer_company_ownership":
 { Args: { "p_company_id": string,"p_new_owner_id": string }; Returns: undefined
@@ -1030,6 +1110,9 @@ isOneToOne: false
                            },
 "void_expense":
 { Args: { "p_company_id": string,"p_expense_id": string,"p_reason": string }; Returns: Json
+                           },
+"void_supplier_payment":
+{ Args: { "p_company_id": string,"p_payment_id": string,"p_reason": string }; Returns: Json
                            }
           }
           Enums: {

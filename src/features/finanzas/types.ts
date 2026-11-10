@@ -26,4 +26,10 @@ export interface FinancialSummary {
   creditSalesTotal: number;
   collectionsTotal: number;
   receivableTotal: number;
+  /** Compras del período que quedaron a pagar. */
+  creditPurchasesTotal: number;
+  /** Pagos a proveedores del período. */
+  supplierPaymentsTotal: number;
+  /** Deuda actual con todos los proveedores (no depende del período). */
+  payablesTotal: number;
 }

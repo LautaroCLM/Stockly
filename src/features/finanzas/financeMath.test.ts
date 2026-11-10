@@ -18,6 +18,9 @@ const summary = (overrides: Partial<FinancialSummary> = {}): FinancialSummary =>
   creditSalesTotal: 0,
   collectionsTotal: 0,
   receivableTotal: 0,
+  creditPurchasesTotal: 0,
+  supplierPaymentsTotal: 0,
+  payablesTotal: 0,
   ...overrides,
 });
 

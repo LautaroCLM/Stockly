@@ -5,8 +5,10 @@ import { formatCurrency } from '@/lib/formatters';
 import { fromHundredths, parseHundredths, toHundredths } from '@/lib/decimal';
 import { CASH_FIELD_CLASS, CashFormError, CashModalShell } from '@/features/caja/components/CashModalShell';
 import { cashPart, collectionTotal } from '../collectionMath';
+import { ACCOUNT_LABELS } from '../accountKinds';
+import type { AccountKind } from '../accountKinds';
 import { COLLECTION_METHODS, COLLECTION_METHOD_LABELS } from '../types';
-import type { CollectionActionResult, CollectionMethod, CustomerBalance, NewCollectionInput } from '../types';
+import type { AccountBalance, CollectionActionResult, CollectionMethod, NewCollectionInput } from '../types';
 
 interface Row {
   id: number;
@@ -15,18 +17,20 @@ interface Row {
 }
 
 interface CollectionModalProps {
-  customer: CustomerBalance;
+  kind: AccountKind;
+  party: AccountBalance;
   onClose: () => void;
   onSubmit: (input: NewCollectionInput) => Promise<CollectionActionResult>;
 }
 
-/** Registra un cobro de cuenta corriente, con uno o varios medios de pago. */
-export const CollectionModal: React.FC<CollectionModalProps> = ({ customer, onClose, onSubmit }) => {
+/** Registra un cobro (cliente) o un pago (proveedor) de cuenta corriente, con uno o varios medios de pago. */
+export const CollectionModal: React.FC<CollectionModalProps> = ({ kind, party, onClose, onSubmit }) => {
+  const labels = ACCOUNT_LABELS[kind];
   // La misma clave se reutiliza en los reintentos: así un cobro no se duplica
   const [idempotencyKey] = useState(() => crypto.randomUUID());
-  const [rows, setRows] = useState<Row[]>([{ id: 1, method: 'efectivo', amount: String(customer.balance).replace('.', ',') }]);
+  const [rows, setRows] = useState<Row[]>([{ id: 1, method: 'efectivo', amount: String(party.balance).replace('.', ',') }]);
   const [notes, setNotes] = useState('');
-  const [intoCash, setIntoCash] = useState(false);
+  const [withCash, setWithCash] = useState(false);
   const [error, setError] = useState<{ message: string; uncertain?: boolean } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,7 +38,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({ customer, onCl
   const parts = parsed.filter((p) => p.cents !== null && p.cents > 0).map((p) => ({ method: p.method, amount: fromHundredths(p.cents as number) }));
   const total = collectionTotal(parts);
   const hasCash = cashPart(parts) > 0;
-  const remainingCents = toHundredths(customer.balance) - toHundredths(total);
+  const remainingCents = toHundredths(party.balance) - toHundredths(total);
 
   const update = (id: number, changes: Partial<Row>) => setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...changes } : r)));
 
@@ -44,18 +48,18 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({ customer, onCl
       return setError({ message: 'Cada medio de pago necesita un importe mayor a 0, con hasta dos decimales.' });
     }
     if (remainingCents < 0) {
-      return setError({ message: `El cobro supera el saldo del cliente (${formatCurrency(customer.balance)}).` });
+      return setError({ message: `${labels.overBalance} (${formatCurrency(party.balance)}).` });
     }
     setIsSubmitting(true);
     setError(null);
-    const result = await onSubmit({ customerId: customer.customerId, parts, notes: notes.trim(), intoCash: hasCash && intoCash, idempotencyKey });
+    const result = await onSubmit({ partyId: party.partyId, parts, notes: notes.trim(), withCash: hasCash && withCash, idempotencyKey });
     setIsSubmitting(false);
     if (result.ok) onClose();
     else setError({ message: result.message, uncertain: result.uncertain });
   };
 
   return (
-    <CashModalShell title="Registrar cobro" subtitle={`${customer.customerName} · debe ${formatCurrency(customer.balance)}`}
+    <CashModalShell title={labels.settleTitle} subtitle={`${party.partyName} · ${labels.owes} ${formatCurrency(party.balance)}`}
       icon={<HandCoins size={18} />} isBusy={isSubmitting} onClose={onClose}>
       <form onSubmit={handleSubmit} className="p-6 space-y-3 text-xs">
         <div className="space-y-2">
@@ -79,26 +83,26 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({ customer, onCl
           </button>
         </div>
         <div className="flex justify-between p-2.5 rounded-lg bg-surface-2 border border-border">
-          <span className="text-text-secondary">Total del cobro</span>
+          <span className="text-text-secondary">{labels.settleTotal}</span>
           <span className="font-bold tabular-nums text-text-primary">{formatCurrency(total)}</span>
         </div>
         <p className="text-text-muted">
-          {remainingCents < 0 ? <span className="text-danger">Supera el saldo.</span> : `Saldo después del cobro: ${formatCurrency(fromHundredths(remainingCents))}`}
+          {remainingCents < 0 ? <span className="text-danger">Supera el saldo.</span> : `${labels.afterSettle}: ${formatCurrency(fromHundredths(remainingCents))}`}
         </p>
         {hasCash && (
           <label className="flex items-start gap-2 p-2.5 rounded-lg bg-surface-2 border border-border cursor-pointer">
-            <input type="checkbox" checked={intoCash} onChange={(e) => setIntoCash(e.target.checked)} disabled={isSubmitting} className="mt-0.5" />
-            <span className="text-text-secondary leading-relaxed">El efectivo ingresa a la caja abierta: suma al arqueo.</span>
+            <input type="checkbox" checked={withCash} onChange={(e) => setWithCash(e.target.checked)} disabled={isSubmitting} className="mt-0.5" />
+            <span className="text-text-secondary leading-relaxed">{labels.cashHelp}</span>
           </label>
         )}
-        <input aria-label="Nota (opcional)" maxLength={500} placeholder="Nota (opcional): recibo, referencia, etc." value={notes}
+        <input aria-label="Nota (opcional)" maxLength={500} placeholder={labels.noteHint} value={notes}
           onChange={(e) => setNotes(e.target.value)} disabled={isSubmitting} className={CASH_FIELD_CLASS} />
         <CashFormError message={error?.message ?? null} uncertain={error?.uncertain} />
         <div className="pt-3 border-t border-border flex justify-end gap-2.5">
           <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
           <Button type="submit" variant="primary" size="sm" disabled={isSubmitting || total <= 0} className="gap-1.5">
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}
-            <span>Registrar cobro</span>
+            <span>{labels.submitButton}</span>
           </Button>
         </div>
       </form>

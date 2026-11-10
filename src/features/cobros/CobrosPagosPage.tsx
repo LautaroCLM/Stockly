@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
 import { toHundredths, fromHundredths } from '@/lib/decimal';
 import type { Company } from '@/types';
-import { useCustomerAccounts } from './hooks/useCustomerAccounts';
-import type { CustomerBalance } from './types';
+import { ACCOUNT_LABELS } from './accountKinds';
+import type { AccountKind } from './accountKinds';
+import { useAccounts } from './hooks/useAccounts';
+import type { AccountBalance } from './types';
 import { BalancesTable } from './components/BalancesTable';
 import { CollectionModal } from './components/CollectionModal';
 import { StatementModal } from './components/StatementModal';
@@ -16,17 +18,27 @@ interface CobrosPagosPageProps {
   isMasterAdmin: boolean;
 }
 
-/** Cobros y Pagos. Hoy: cuenta corriente de clientes. Las deudas a proveedores llegan en la siguiente etapa. */
-export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMasterAdmin }) => {
-  const accounts = useCustomerAccounts(company.id);
-  const [collecting, setCollecting] = useState<CustomerBalance | null>(null);
-  const [statementOf, setStatementOf] = useState<CustomerBalance | null>(null);
+const KINDS: AccountKind[] = ['customer', 'supplier'];
 
-  const receivableCents = accounts.balances.reduce((sum, b) => (b.balance > 0 ? sum + toHundredths(b.balance) : sum), 0);
+/** Cobros y Pagos: cuenta corriente de clientes (lo que nos deben) y de proveedores (lo que debemos). */
+export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMasterAdmin }) => {
+  const [kind, setKind] = useState<AccountKind>('customer');
+  const labels = ACCOUNT_LABELS[kind];
+  const accounts = useAccounts(kind, company.id);
+  const [settling, setSettling] = useState<AccountBalance | null>(null);
+  const [statementOf, setStatementOf] = useState<AccountBalance | null>(null);
+
+  const changeKind = (next: AccountKind) => {
+    setKind(next);
+    setSettling(null);
+    setStatementOf(null);
+  };
+
+  const totalCents = accounts.balances.reduce((sum, b) => (b.balance > 0 ? sum + toHundredths(b.balance) : sum), 0);
   const debtors = accounts.balances.filter((b) => b.balance > 0).length;
-  // El modal usa el saldo más reciente del cliente, no el de cuando se abrió
-  const live = (c: CustomerBalance | null) => (c ? accounts.balances.find((b) => b.customerId === c.customerId) ?? c : null);
-  const collectingLive = live(collecting);
+  // El modal usa el saldo más reciente, no el de cuando se abrió
+  const live = (p: AccountBalance | null) => (p ? accounts.balances.find((b) => b.partyId === p.partyId) ?? p : null);
+  const settlingLive = live(settling);
   const statementLive = live(statementOf);
 
   return (
@@ -38,7 +50,7 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMas
           </div>
           <div>
             <h1 className="text-xl font-bold text-text-primary">Cobros y Pagos</h1>
-            <p className="text-xs text-text-muted">Cuenta corriente de clientes de {company.name}. Las deudas a proveedores llegan próximamente.</p>
+            <p className="text-xs text-text-muted">{labels.intro} de {company.name}.</p>
           </div>
         </div>
         <Button variant="secondary" size="sm" onClick={() => void accounts.reload()} disabled={accounts.isLoading} className="gap-1.5 h-9">
@@ -47,13 +59,22 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMas
         </Button>
       </div>
 
+      <div role="tablist" className="flex flex-wrap gap-1.5">
+        {KINDS.map((k) => (
+          <button key={k} role="tab" aria-selected={kind === k} onClick={() => changeKind(k)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              kind === k ? 'bg-primary/10 border-primary text-text-primary' : 'bg-surface-2 border-border text-text-secondary hover:text-text-primary'
+            }`}>{ACCOUNT_LABELS[k].tabLabel}</button>
+        ))}
+      </div>
+
       <div data-stagger className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="p-4 rounded-xl bg-surface border border-border">
-          <p className="text-[11px] text-text-muted">Total a cobrar</p>
-          <p className="text-xl font-bold tabular-nums text-text-primary">{formatCurrency(fromHundredths(receivableCents))}</p>
+          <p className="text-[11px] text-text-muted">{labels.totalCard}</p>
+          <p className="text-xl font-bold tabular-nums text-text-primary">{formatCurrency(fromHundredths(totalCents))}</p>
         </div>
         <div className="p-4 rounded-xl bg-surface border border-border">
-          <p className="text-[11px] text-text-muted">Clientes con deuda</p>
+          <p className="text-[11px] text-text-muted">{labels.debtorsCard}</p>
           <p className="text-xl font-bold tabular-nums text-text-primary">{debtors}</p>
         </div>
       </div>
@@ -72,26 +93,19 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMas
           Cargando cuentas corrientes...
         </p>
       ) : accounts.balances.length === 0 ? (
-        !accounts.error && (
-          <p className="py-12 text-center text-xs text-text-muted leading-relaxed">
-            Todavía no hay ventas en cuenta corriente.<br />
-            Al vender, elegí un cliente y usá el medio de pago "Cuenta corriente": la deuda aparece acá.
-          </p>
-        )
+        !accounts.error && <p className="py-12 text-center text-xs text-text-muted leading-relaxed">{labels.emptyList}</p>
       ) : (
-        <BalancesTable balances={accounts.balances} onCollect={setCollecting} onOpenStatement={setStatementOf} />
+        <BalancesTable kind={kind} balances={accounts.balances} onSettle={setSettling} onOpenStatement={setStatementOf} />
       )}
 
       <AnimatePresence>
-      {collectingLive && (
-        <CollectionModal customer={collectingLive} onClose={() => setCollecting(null)} onSubmit={accounts.registerCollection} />
-      )}
+        {settlingLive && <CollectionModal kind={kind} party={settlingLive} onClose={() => setSettling(null)} onSubmit={accounts.register} />}
       </AnimatePresence>
       <AnimatePresence>
-      {statementLive && (
-        <StatementModal companyId={company.id} customer={statementLive} isMasterAdmin={isMasterAdmin}
-          onClose={() => setStatementOf(null)} onVoid={accounts.voidCollection} />
-      )}
+        {statementLive && (
+          <StatementModal kind={kind} companyId={company.id} party={statementLive} isMasterAdmin={isMasterAdmin}
+            onClose={() => setStatementOf(null)} onVoid={accounts.voidPayment} />
+        )}
       </AnimatePresence>
     </div>
   );

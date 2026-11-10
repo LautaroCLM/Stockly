@@ -28,6 +28,7 @@ const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClo
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
   const [notes, setNotes] = useState('');
+  const [onCredit, setOnCredit] = useState(false);
   const [draftItems, setDraftItems] = useState<PurchaseDraftItem[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +46,7 @@ const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClo
     setInvoiceNumber('');
     setPurchaseDate(localDateInputValue());
     setNotes('');
+    setOnCredit(false);
     setDraftItems([]);
     setSelectedProductId('');
     setErrorMsg(null);
@@ -91,6 +93,7 @@ const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClo
         invoiceNumber: invoiceNumber.trim() || undefined,
         purchaseDate: purchaseDate || undefined,
         notes: notes.trim() || undefined,
+        onCredit,
         items: draftItems.map((it) => ({ productId: it.productId, quantity: it.quantity, unitCost: it.unitCost })),
         idempotencyKey: idempotencyKeyRef.current,
       });
@@ -150,6 +153,12 @@ const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClo
               onUpdateUnitCost={(id, unitCost) => updateItem(id, (item) => withUnitCost(item, unitCost))}
               onRemoveItem={(id) => setDraftItems((prev) => prev.filter((it) => it.productId !== id))} />
           </div>
+          <label htmlFor="purchase-on-credit" className="flex items-start gap-2 p-3 rounded-xl bg-surface-2 border border-border cursor-pointer">
+            <input id="purchase-on-credit" type="checkbox" checked={onCredit} onChange={(e) => setOnCredit(e.target.checked)} disabled={isSubmitting} className="mt-0.5" />
+            <span className="text-xs text-text-secondary leading-relaxed">
+              <strong className="text-text-primary">Queda a pagar.</strong> La compra suma a lo que se le debe al proveedor (Cobros y Pagos). Si no la marcás, se considera pagada.
+            </span>
+          </label>
           <div>
             <label htmlFor="purchase-notes" className="block text-xs font-semibold text-text-secondary mb-1">Observaciones / Notas</label>
             <textarea id="purchase-notes" value={notes} maxLength={1000} onChange={(e) => setNotes(e.target.value)} rows={2}
