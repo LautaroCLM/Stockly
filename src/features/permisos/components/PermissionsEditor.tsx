@@ -1,14 +1,9 @@
 import React from 'react';
 import { LEVEL_LABELS, MODULE_INFO, MODULE_KEYS, PERMISSION_TEMPLATES } from '../types';
-import type { ModuleKey, ModuleLevel, ModuleLevels } from '../types';
+import type { ModuleLevel, ModuleLevels } from '../types';
 
 const SELECT_CLASS =
   'h-9 px-2.5 text-xs bg-surface-2 border border-border rounded-lg text-text-primary focus:outline-none focus:border-primary disabled:opacity-50 cursor-pointer';
-
-const LEVELS: ModuleLevel[] = ['none', 'view', 'operate'];
-
-/** Los módulos de solo lectura no tienen "ver y operar": no hay nada que modificar en ellos. */
-const READ_ONLY_MODULES = new Set<ModuleKey>(['finanzas', 'informes']);
 
 const sameLevels = (a: ModuleLevels, b: ModuleLevels) => MODULE_KEYS.every((k) => a[k] === b[k]);
 
@@ -42,7 +37,6 @@ export const PermissionsEditor: React.FC<PermissionsEditorProps> = ({ levels, on
       <div className="rounded-xl border border-border divide-y divide-border/60 overflow-hidden">
         {MODULE_KEYS.map((key) => {
           const info = MODULE_INFO[key];
-          const options = READ_ONLY_MODULES.has(key) ? LEVELS.filter((l) => l !== 'operate') : LEVELS;
           return (
             <div key={key} className="p-3 flex flex-wrap items-center gap-3 bg-surface">
               <div className="flex-1 min-w-[200px]">
@@ -51,7 +45,7 @@ export const PermissionsEditor: React.FC<PermissionsEditorProps> = ({ levels, on
               </div>
               <select aria-label={`Acceso de los empleados a ${info.label}`} value={levels[key]} disabled={disabled} className={SELECT_CLASS}
                 onChange={(e) => onChange({ ...levels, [key]: e.target.value as ModuleLevel })}>
-                {options.map((l) => <option key={l} value={l}>{LEVEL_LABELS[l]}</option>)}
+                {info.options.map((l: ModuleLevel) => <option key={l} value={l}>{info.levelLabels?.[l] ?? LEVEL_LABELS[l]}</option>)}
               </select>
             </div>
           );

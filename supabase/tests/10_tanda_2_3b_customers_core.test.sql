@@ -311,7 +311,7 @@ SELECT throws_ok(
     'DNI',
     NULL
   ),
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'Test 10: Rechazo estricto de mutación (upsert_customer) cuando es intentada por un employee'
 );
 

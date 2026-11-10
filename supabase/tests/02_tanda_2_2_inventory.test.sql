@@ -185,7 +185,7 @@ SELECT throws_ok(
   format('SELECT public.register_stock_adjustment(''%s'', gen_random_uuid(), ''%s'', ''increase'', ''physical_count'', 1.00)',
     (SELECT id FROM test_context WHERE key = 'company_a'), (SELECT id FROM test_context WHERE key = 'prod_a1')),
   'P0001',
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'T-06: RPC register_stock_adjustment debe fallar si es invocada por employee.'
 );
 

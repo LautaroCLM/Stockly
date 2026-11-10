@@ -80,7 +80,7 @@ export const PermisosPage: React.FC<PermisosPageProps> = ({ company, isMasterAdm
           <PermissionsEditor levels={draft} onChange={(next) => { setDraft(next); setFeedback(null); }} disabled={isSaving} />
 
           <p className="text-[11px] text-text-muted leading-relaxed">
-            Ventas, inventario, caja, clientes y proveedores mantienen por ahora sus reglas actuales. Auditoría, Datos de Empresa y Miembros y Roles son siempre solo para administradores.
+            Vender, el catálogo de productos, el stock y los movimientos de stock están siempre disponibles para el equipo. Auditoría, Datos de Empresa y Miembros y Roles son siempre solo para administradores.
           </p>
 
           {feedback && (

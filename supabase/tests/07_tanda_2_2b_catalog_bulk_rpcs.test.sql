@@ -184,7 +184,7 @@ SELECT throws_ok(
     );
   $$,
   'P0001',
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'T-05: employee debe ser rechazado al invocar bulk_update_prices.'
 );
 
@@ -198,7 +198,7 @@ SELECT throws_ok(
     );
   $$,
   'P0001',
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'T-06: employee debe ser rechazado al invocar import_products.'
 );
 

@@ -89,7 +89,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
           onReloadProducts={catalog.reloadProducts}
           isCategoriesLoading={categories.isLoading}
           categoriesError={categories.error}
-          isMasterAdmin={isMasterAdmin}
+          isMasterAdmin={access('productos').canOperate}
           cartItemsCount={cart.totalItemsCount}
           cartTotal={cart.total}
           getItemQuantityInCart={cart.getQuantity}
@@ -108,14 +108,14 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       );
     case 'ventas':
       return (
-        <VentasPage company={company} customers={customers.customers} isMasterAdmin={isMasterAdmin}
+        <VentasPage company={company} customers={customers.customers} isMasterAdmin={access('anular_ventas').canOperate}
           onViewReceipt={props.onViewReceipt} onNavigateToInventario={goTo('inventario')}
           onSaleCancelled={reloadCatalog(catalog, 'tras anulación')} />
       );
     case 'historial':
       return <HistorialStockPage company={company} products={catalog.products} onNavigateToInventario={goTo('inventario')} />;
     case 'caja':
-      return <CajaPage company={company} />;
+      return <CajaPage company={company} canOperate={access('caja').canOperate} />;
     case 'finanzas':
       return <FinanzasPage company={company} canView={access('finanzas').canView} />;
     case 'gastos':
@@ -137,7 +137,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
     case 'proveedores':
       return (
         <ProveedoresPage company={company} suppliers={suppliers.suppliers} isLoading={suppliers.isLoading}
-          error={suppliers.error} isMasterAdmin={isMasterAdmin} onReload={suppliers.reloadSuppliers}
+          error={suppliers.error} isMasterAdmin={access('proveedores').canOperate} onReload={suppliers.reloadSuppliers}
           onSaveSupplier={suppliers.saveSupplier} onToggleStatus={suppliers.toggleStatus} />
       );
     case 'compras':
@@ -149,7 +149,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
     case 'clientes':
       return (
         <ClientesPage company={company} customers={customers.customers} isLoading={customers.isLoading}
-          error={customers.error} isMasterAdmin={isMasterAdmin} onReload={customers.reloadCustomers}
+          error={customers.error} isMasterAdmin={access('clientes').canOperate} onReload={customers.reloadCustomers}
           onSaveCustomer={customers.saveCustomer} onToggleStatus={customers.toggleStatus} />
       );
     case 'config-miembros':

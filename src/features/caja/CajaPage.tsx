@@ -18,7 +18,7 @@ import type { CashMovementType } from './types';
  * Caja Diaria: controla el efectivo físico del cajón por turno.
  * No registra ventas (las toma de Ventas) ni gastos (eso será Finanzas).
  */
-export const CajaPage: React.FC<{ company: Company }> = ({ company }) => {
+export const CajaPage: React.FC<{ company: Company; canOperate?: boolean }> = ({ company, canOperate = true }) => {
   const { session, summary, movements, isLoading, error, reload, openSession, registerMovement, closeSession } =
     useCashRegister(company.id);
   const [movementType, setMovementType] = useState<CashMovementType | null>(null);
@@ -66,6 +66,7 @@ export const CajaPage: React.FC<{ company: Company }> = ({ company }) => {
         </p>
       ) : session && summary ? (
         <>
+          {canOperate && (
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => setMovementType('in')}>
               <ArrowDownCircle size={14} /> Ingreso de efectivo
@@ -77,11 +78,14 @@ export const CajaPage: React.FC<{ company: Company }> = ({ company }) => {
               <Lock size={14} /> Cerrar caja
             </Button>
           </div>
+          )}
           <CashSummaryPanel summary={summary} />
           <CashMovementsList movements={movements} />
         </>
       ) : (
-        !error && <OpenCashPanel companyName={company.name} onOpen={openSession} />
+        !error && (canOperate
+          ? <OpenCashPanel companyName={company.name} onOpen={openSession} />
+          : <p className="py-12 text-center text-xs text-text-muted">La caja está cerrada. No tenés permiso para abrirla: pedile acceso al administrador.</p>)
       )}
 
       <CashHistoryTable companyId={company.id} />

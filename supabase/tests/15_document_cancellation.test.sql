@@ -94,7 +94,7 @@ SELECT has_function('public', 'cancel_purchase', ARRAY['uuid', 'uuid', 'text'], 
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0015-0000-0000-0000-000000000002';
 SELECT throws_like(
   format('SELECT public.cancel_sale(%L, %L, %L)', :'comp_a', :'sale_id', 'Error de cobro'),
-  '%master_admin%',
+  '%No tenés permiso%',
   'T-03: Un empleado no puede anular ventas.');
 
 -- T-04: El motivo es obligatorio

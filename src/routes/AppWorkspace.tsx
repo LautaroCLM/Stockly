@@ -22,7 +22,7 @@ import { ReceiptModal } from '@/features/inventario/components/ReceiptModal';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
 import { PageEnter } from '@/components/motion/PageEnter';
 import { useModulePermissions } from '@/features/permisos/hooks/useModulePermissions';
-import { isRouteVisible } from '@/features/permisos/access';
+import { atLeast, effectiveLevel, isRouteVisible } from '@/features/permisos/access';
 
 
 interface AppWorkspaceProps {
@@ -64,7 +64,9 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   // Cambios hechos por otros usuarios de la empresa: recarga los datos afectados
   useCompanyRealtime(companyId);
 
-  const catalog = useProducts(companyId, isMasterAdmin);
+  // Los costos de los productos se cargan solo para quien puede verlos o gestionarlos
+  const canSeeCosts = atLeast(effectiveLevel(isMasterAdmin, permissions.levels, 'productos'), 'view');
+  const catalog = useProducts(companyId, canSeeCosts);
   const categories = useCategories(companyId, catalog.renameCategoryInProducts);
   const cart = useCart(companyId);
   const suppliers = useSuppliers(companyId);

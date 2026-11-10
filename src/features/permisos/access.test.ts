@@ -11,9 +11,20 @@ describe('permisos por módulo', () => {
     expect(effectiveLevel(true, withLevels({ finanzas: 'none' }), 'finanzas')).toBe('operate');
   });
 
-  it('el empleado, sin configuración, solo ficha', () => {
+  it('el empleado, sin configuración, conserva lo de siempre', () => {
     expect(effectiveLevel(false, null, 'compras')).toBe('none');
     expect(effectiveLevel(false, null, 'fichaje')).toBe('operate');
+    expect(effectiveLevel(false, null, 'caja')).toBe('operate');
+    expect(effectiveLevel(false, null, 'clientes')).toBe('view');
+    expect(effectiveLevel(false, null, 'productos')).toBe('none');
+    expect(effectiveLevel(false, null, 'anular_ventas')).toBe('none');
+  });
+
+  it('la caja y los proveedores se pueden ocultar del menú', () => {
+    expect(isRouteVisible('caja', false, null)).toBe(true);
+    expect(isRouteVisible('caja', false, withLevels({ caja: 'none' }))).toBe(false);
+    expect(isRouteVisible('proveedores', false, withLevels({ proveedores: 'none' }))).toBe(false);
+    expect(isRouteVisible('clientes', false, null)).toBe(true);
   });
 
   it('compara niveles: ver no alcanza para operar', () => {
@@ -39,7 +50,7 @@ describe('permisos por módulo', () => {
   });
 
   it('las pantallas sin módulo configurable siguen visibles', () => {
-    expect(isRouteVisible('inventario', false, null)).toBe(true);
+    expect(isRouteVisible('inventario', false, withLevels({ productos: 'none' }))).toBe(true);
     expect(isRouteVisible('dashboard', false, null)).toBe(true);
   });
 

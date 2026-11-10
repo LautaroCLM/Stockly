@@ -174,7 +174,7 @@ SELECT throws_ok(
     );
   $$,
   'P0001',
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'T-04: employee no debe poder ejecutar upsert_category.'
 );
 
@@ -187,7 +187,7 @@ SELECT throws_ok(
     );
   $$,
   'P0001',
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'T-05: employee no debe poder ejecutar upsert_supplier.'
 );
 
@@ -201,7 +201,7 @@ SELECT throws_ok(
     );
   $$,
   'P0001',
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'T-06: employee no debe poder ejecutar create_product.'
 );
 
@@ -219,7 +219,7 @@ SELECT throws_ok(
     );
   $$,
   'P0001',
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'T-07: employee no debe poder ejecutar update_product.'
 );
 
@@ -233,7 +233,7 @@ SELECT throws_ok(
     );
   $$,
   'P0001',
-  'Operación restringida a usuarios con rol master_admin en esta empresa (rol actual: employee).',
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
   'T-08: employee no debe poder ejecutar update_product_cost.'
 );
 

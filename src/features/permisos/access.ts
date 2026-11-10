@@ -4,6 +4,8 @@ import type { ModuleKey, ModuleLevel, ModuleLevels } from './types';
 
 /** Pantalla que depende de un módulo configurable. Las demás pantallas tienen reglas fijas. */
 export const ROUTE_MODULE: Partial<Record<RouteId, ModuleKey>> = {
+  caja: 'caja',
+  proveedores: 'proveedores',
   compras: 'compras',
   'cobros-pagos': 'cobros_pagos',
   gastos: 'gastos',

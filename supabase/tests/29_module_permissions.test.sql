@@ -68,7 +68,7 @@ SELECT is((public.financial_summary(:'comp_a', current_date - 1, current_date + 
 -- 2-4. Valores por defecto del rol empleado
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0029-0000-0000-0000-000000000002';
 SELECT is((SELECT string_agg(module || ':' || employee_level, ',' ORDER BY module) FROM public.get_module_permissions(:'comp_a')),
-  'cobros_pagos:none,compras:none,fichaje:operate,finanzas:none,gastos:none,informes:none,maquinas:none,personal:none', 'T-02 por defecto el empleado solo ficha');
+  'anular_ventas:none,caja:operate,clientes:view,cobros_pagos:none,compras:none,fichaje:operate,finanzas:none,gastos:none,informes:none,maquinas:none,personal:none,productos:none,proveedores:view', 'T-02 por defecto el empleado solo ficha');
 SELECT throws_like(format($q$SELECT public.set_module_permissions(%L, '{"compras":"view"}'::JSONB)$q$, :'comp_a'), '%master_admin%', 'T-03 el empleado no cambia los permisos');
 SELECT is((SELECT count(*) FROM public.purchases) + (SELECT count(*) FROM public.expenses) + (SELECT count(*) FROM public.employees), 0::BIGINT, 'T-04 por defecto el empleado no lee compras, gastos ni personal');
 

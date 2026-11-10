@@ -185,7 +185,7 @@ SELECT throws_like(
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0013-0000-0000-0000-000000000002';
 SELECT throws_like(
   format('SELECT public.register_physical_count(%L, %L, %L, 1)', :'comp_pc_a', 'bbbb0013-0000-0000-0000-000000000009', :'prod_uni'),
-  '%master_admin%',
+  '%No tenés permiso%',
   'T-16: Un empleado no puede registrar conteos físicos.');
 
 RESET ROLE;
