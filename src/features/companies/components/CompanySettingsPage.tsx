@@ -7,6 +7,7 @@ import type { CompanySettings } from '../types';
 import { NegativeStockModal } from './NegativeStockModal';
 import { NegativeStockPolicyCard } from './NegativeStockPolicyCard';
 import { CompanyIdentityCard } from './CompanyIdentityCard';
+import { CompanyLogoCard } from '@/features/logo/components/CompanyLogoCard';
 
 export interface CompanySettingsPageProps {
   company: Company;
@@ -113,6 +114,8 @@ export const CompanySettingsPage: React.FC<CompanySettingsPageProps> = ({
 
       <NegativeStockPolicyCard allowNegative={currentAllowNegative} isMasterAdmin={isMasterAdmin} isLoading={isLoading}
         onChangePolicy={() => setIsModalOpen(true)} />
+
+      <CompanyLogoCard company={company} isMasterAdmin={isMasterAdmin} />
 
       <CompanyIdentityCard company={company} settings={settings} />
 

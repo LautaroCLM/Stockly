@@ -25,6 +25,7 @@ export type DataTable =
   | 'company_module_permissions'
   | 'machines'
   | 'documents'
+  | 'company_logos'
   | 'document_settings'
   | 'employees'
   | 'employee_schedules'

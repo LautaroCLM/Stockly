@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Company } from '@/types';
 import { ChevronDown, Check, Building2, Store, Plus, KeyRound } from 'lucide-react';
+import { CompanyLogo } from '@/features/logo/components/CompanyLogo';
+import { useCompanyLogo } from '@/features/logo/hooks/useCompanyLogo';
 import { OnboardingModal } from '@/features/companies/components/OnboardingModal';
 
 interface TenantSwitcherProps {
@@ -18,6 +20,7 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialTab, setModalInitialTab] = useState<'create' | 'join'>('create');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { logo } = useCompanyLogo(activeCompany.id);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -36,9 +39,7 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
         className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-surface-2/80 hover:bg-surface-2 border border-border/80 hover:border-border transition-all text-left group focus:outline-none focus:ring-1 focus:ring-primary/40"
         title="Cambiar empresa activa"
       >
-        <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary/30 to-accent/30 border border-primary/30 flex items-center justify-center text-xs font-bold text-accent shadow-inner">
-          {activeCompany.initials}
-        </div>
+        <CompanyLogo logo={logo} initials={activeCompany.initials} name={activeCompany.name} className="w-10 h-10" />
         <div className="flex flex-col min-w-0 pr-1">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-semibold text-text-primary truncate max-w-[170px]">

@@ -237,6 +237,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"company_logos": {
+                  Row: {
+                    "company_id": string,"image": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"image": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "company_id"?: string,"image"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "company_logos_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: true
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"company_members": {
                   Row: {
                     "company_id": string,"created_at": string,"id": string,"is_active": boolean,"joined_at": string,"role": string,"updated_at": string,"user_id": string
@@ -1156,6 +1176,9 @@ isOneToOne: false
 "register_supplier_payment":
 { Args: { "p_company_id": string,"p_from_cash": boolean,"p_idempotency_key": string,"p_notes": string,"p_payments": Json,"p_supplier_id": string }; Returns: Json
                            },
+"remove_company_logo":
+{ Args: { "p_company_id": string }; Returns: undefined
+                           },
 "report_expenses":
 { Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
               "category": string,"expenses_count": number,"total": number
@@ -1184,6 +1207,9 @@ isOneToOne: false
                            },
 "save_document_settings":
 { Args: { "p_address": string,"p_company_id": string,"p_email": string,"p_footer_note": string,"p_phone": string,"p_point_of_sale": number,"p_tax_condition": string }; Returns: undefined
+                           },
+"set_company_logo":
+{ Args: { "p_company_id": string,"p_image": string }; Returns: undefined
                            },
 "set_company_negative_stock_policy":
 { Args: { "p_allow_negative_stock": boolean,"p_company_id": string,"p_reason": string }; Returns: undefined
