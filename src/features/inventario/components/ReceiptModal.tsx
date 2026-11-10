@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Sale } from '../types';
 import { Company } from '@/types';
 import { Button } from '@/components/ui/Button';
@@ -42,6 +43,7 @@ const ReceiptModalBody: React.FC<ReceiptModalProps> = ({
   }
 
   return (
+    <>
     <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
@@ -91,6 +93,14 @@ const ReceiptModalBody: React.FC<ReceiptModalProps> = ({
         </div>
       </m.div>
     </m.div>
+    {/* Copia que solo se ve al imprimir: fuera de #root para que salga solo el ticket, sin la pantalla de fondo */}
+    {createPortal(
+      <div id="print-root">
+        <ReceiptTicket sale={sale} company={company} />
+      </div>,
+      document.body
+    )}
+    </>
   );
 };
 

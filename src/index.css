@@ -45,3 +45,50 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #2A3B63;
 }
+
+/* ---------------------------------------------------------------------------
+   Impresión del ticket de venta (impresora térmica de 80 mm)
+   Al imprimir solo sale el ticket: el resto de la pantalla se oculta y la hoja
+   es un rollo de 80 mm de ancho y alto automático, sin márgenes.
+   --------------------------------------------------------------------------- */
+#print-root {
+  display: none;
+}
+
+@page {
+  size: 80mm auto;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body > *:not(#print-root) {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block !important;
+    width: 80mm;
+    padding: 3mm 4mm;
+    box-sizing: border-box;
+    background: #fff;
+    color: #000;
+  }
+
+  #print-root #thermal-receipt {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
