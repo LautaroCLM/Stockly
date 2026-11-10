@@ -20,6 +20,7 @@ import { CartDrawer } from '@/features/inventario/components/CartDrawer';
 import { CheckoutModal } from '@/features/inventario/components/CheckoutModal';
 import { ReceiptModal } from '@/features/inventario/components/ReceiptModal';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PageEnter } from '@/components/motion/PageEnter';
 import { useModulePermissions } from '@/features/permisos/hooks/useModulePermissions';
 import { atLeast, effectiveLevel, isRouteVisible } from '@/features/permisos/access';
@@ -144,6 +145,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         notices={notices}
       >
         <PageEnter routeKey={activeRoute}>
+        <ErrorBoundary scope="page" resetKey={activeRoute}>
         <WorkspaceRoutes
           route={activeRoute}
           onNavigate={setActiveRoute}
@@ -167,6 +169,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           }}
           onViewReceipt={setReceiptSale}
         />
+        </ErrorBoundary>
         </PageEnter>
       </AppShell>
 
