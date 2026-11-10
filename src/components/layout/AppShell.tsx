@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { RouteId, Company, NavSection } from '@/types';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import type { Notice } from '@/features/avisos/types';
 import { withCartBadge } from './navSections';
 
 interface AppShellProps {
@@ -20,7 +21,7 @@ interface AppShellProps {
   userEmail?: string;
   onSignOut?: () => void;
   /** Productos activos en o bajo su stock mínimo (alerta del header). */
-  restockCount?: number;
+  notices?: Notice[];
   children: React.ReactNode;
 }
 
@@ -38,7 +39,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   userName,
   userEmail,
   onSignOut,
-  restockCount = 0,
+  notices = [],
   children,
 }) => {
   const [isOpenMobile, setIsOpenMobile] = useState(false);
@@ -69,8 +70,8 @@ export const AppShell: React.FC<AppShellProps> = ({
           cartItemsCount={cartItemsCount}
           cartTotal={cartTotal}
           onOpenCart={onOpenCart}
-          restockCount={restockCount}
-          onRestockAlertClick={() => onNavigate('inventario')}
+          notices={notices}
+          onNoticeSelect={onNavigate}
         />
 
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto">

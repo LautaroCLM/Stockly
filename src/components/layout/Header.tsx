@@ -1,9 +1,11 @@
 import React from 'react';
-import { Company } from '@/types';
+import { Company, RouteId } from '@/types';
 import { TenantSwitcher } from '@/components/shared/TenantSwitcher';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
-import { Menu, Bell, ShoppingCart } from 'lucide-react';
+import { Menu, ShoppingCart } from 'lucide-react';
+import { NoticesBell } from '@/features/avisos/components/NoticesBell';
+import type { Notice } from '@/features/avisos/types';
 import { HeaderSearch } from './HeaderSearch';
 import { ConnectionBadge } from './ConnectionBadge';
 
@@ -18,9 +20,9 @@ interface HeaderProps {
   /** Buscar productos desde el encabezado (abre Inventario filtrado). */
   onSearch: (query: string) => void;
   onOpenCart?: () => void;
-  /** Productos activos en o bajo su stock mínimo. */
-  restockCount?: number;
-  onRestockAlertClick?: () => void;
+  /** Avisos de la campana (stock bajo, deudas viejas, caja abierta, etc.). */
+  notices?: Notice[];
+  onNoticeSelect?: (route: RouteId) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -33,8 +35,8 @@ export const Header: React.FC<HeaderProps> = ({
   onQuickSaleClick,
   onSearch,
   onOpenCart,
-  restockCount = 0,
-  onRestockAlertClick,
+  notices = [],
+  onNoticeSelect,
 }) => {
   return (
     <header className="h-16 bg-surface/90 backdrop-blur-md border-b border-border sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between gap-4">
@@ -109,23 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block" />
 
-        <button
-          className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors"
-          title={
-            restockCount > 0
-              ? `${restockCount} ${restockCount === 1 ? 'producto' : 'productos'} a reponer`
-              : 'Sin productos a reponer'
-          }
-          aria-label={`Productos a reponer: ${restockCount}`}
-          onClick={onRestockAlertClick}
-        >
-          <Bell size={18} />
-          {restockCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-danger text-white text-[10px] font-bold leading-4 text-center tabular-nums">
-              {restockCount > 99 ? '99+' : restockCount}
-            </span>
-          )}
-        </button>
+        <NoticesBell notices={notices} onSelect={(route) => onNoticeSelect?.(route)} />
 
         <ConnectionBadge />
       </div>

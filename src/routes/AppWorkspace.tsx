@@ -6,7 +6,7 @@ import type { ProfileRow } from '@/features/auth/types';
 import type { Sale } from '@/features/inventario/types';
 import { NAV_SECTIONS } from '@/components/layout/navSections';
 import { AppShell } from '@/components/layout/AppShell';
-import { productsToRestock } from '@/features/dashboard/dashboardMetrics';
+import { useNotices } from '@/features/avisos/hooks/useNotices';
 import { useCart } from '@/features/inventario/hooks/useCart';
 import { useProducts } from '@/features/inventario/hooks/useProducts';
 import { useCategories } from '@/features/inventario/hooks/useCategories';
@@ -95,8 +95,17 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     [cart.items]
   );
 
-  // Alerta del header: productos activos en o bajo su stock mínimo
-  const restockCount = useMemo(() => productsToRestock(catalog.products).length, [catalog.products]);
+  // Campana del encabezado: stock bajo, deudas viejas, entradas sin salida y caja abierta de un día anterior.
+  // Cada fuente se consulta solo si la persona tiene acceso a ese módulo.
+  const levelOf = (module: Parameters<typeof effectiveLevel>[2]) => effectiveLevel(isMasterAdmin, permissions.levels, module);
+  const { notices } = useNotices({
+    companyId,
+    products: catalog.products,
+    canSeeDebts: atLeast(levelOf('cobros_pagos'), 'view'),
+    canSeeAttendance: atLeast(levelOf('fichaje'), 'view') || atLeast(levelOf('personal'), 'view'),
+    canSeeCash: atLeast(levelOf('caja'), 'view'),
+    attendanceRoute: atLeast(levelOf('personal'), 'view') ? 'personal' : 'fichaje',
+  });
 
   // Compras, Finanzas y Empleados muestran costos o datos sensibles: solo administradores
   const navSections = useMemo(
@@ -132,7 +141,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         userName={profile?.full_name || undefined}
         userEmail={user.email || undefined}
         onSignOut={onSignOut}
-        restockCount={restockCount}
+        notices={notices}
       >
         <PageEnter routeKey={activeRoute}>
         <WorkspaceRoutes
