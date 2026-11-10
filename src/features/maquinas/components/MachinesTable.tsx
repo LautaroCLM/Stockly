@@ -15,10 +15,12 @@ interface MachinesTableProps {
   machines: Machine[];
   costs: Record<string, MachineCost>;
   onEdit: (machine: Machine) => void;
+  /** Sin permiso para editar, no se muestra el botón. */
+  canEdit?: boolean;
 }
 
 /** Máquinas con su estado y lo gastado en el período (combustible, mantenimiento y otros). */
-export const MachinesTable: React.FC<MachinesTableProps> = ({ machines, costs, onEdit }) => (
+export const MachinesTable: React.FC<MachinesTableProps> = ({ machines, costs, onEdit, canEdit = true }) => (
   <Card className="border-border bg-surface overflow-x-auto">
     <table className="w-full text-xs min-w-[720px]">
       <thead>
@@ -53,8 +55,10 @@ export const MachinesTable: React.FC<MachinesTableProps> = ({ machines, costs, o
                 <span className="block text-[10px] font-normal text-text-muted">{c?.expensesCount ?? 0} {c?.expensesCount === 1 ? 'gasto' : 'gastos'}</span>
               </td>
               <td className="p-3 text-right">
-                <button onClick={() => onEdit(m)} aria-label={`Editar ${m.name}`} title="Editar"
-                  className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"><Pencil size={14} /></button>
+                {canEdit && (
+                  <button onClick={() => onEdit(m)} aria-label={`Editar ${m.name}`} title="Editar"
+                    className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"><Pencil size={14} /></button>
+                )}
               </td>
             </tr>
           );

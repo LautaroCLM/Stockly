@@ -20,19 +20,19 @@ import type { ReportKey } from './types';
 
 interface InformesPageProps {
   company: Company;
-  isMasterAdmin: boolean;
+  canView: boolean;
 }
 
 const REPORT_KEYS = Object.keys(REPORT_LABELS) as ReportKey[];
 
 /** Informes: ventas por día, productos vendidos, inventario valuado y gastos, con exportación a CSV. */
-export const InformesPage: React.FC<InformesPageProps> = ({ company, isMasterAdmin }) => {
+export const InformesPage: React.FC<InformesPageProps> = ({ company, canView }) => {
   const [report, setReport] = useState<ReportKey>('ventas');
   const [period, setPeriod] = useState<PeriodKey>('month');
   const range = periodRange(period, localDateInputValue());
   const { from, to } = range;
   const id = company.id;
-  const on = (key: ReportKey) => isMasterAdmin && report === key;
+  const on = (key: ReportKey) => canView && report === key;
 
   const sales = useReport(useCallback(() => fetchSalesByDay(id, { from, to }), [id, from, to]), on('ventas'));
   const products = useReport(useCallback(() => fetchProductSales(id, { from, to }), [id, from, to]), on('productos'));
@@ -42,11 +42,11 @@ export const InformesPage: React.FC<InformesPageProps> = ({ company, isMasterAdm
   const usesPeriod = report !== 'inventario';
   const stamp = `${company.name}-${report}-${usesPeriod ? `${from}_${to}` : localDateInputValue()}`.replace(/[^\w.-]+/g, '_');
 
-  if (!isMasterAdmin) {
+  if (!canView) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-2 text-text-muted">
         <ShieldAlert size={32} className="text-warning" />
-        <p className="text-sm font-semibold text-text-primary">Solo los administradores ven los informes</p>
+        <p className="text-sm font-semibold text-text-primary">No tenés acceso a este módulo. Pedile acceso al administrador.</p>
         <p className="text-xs">Incluyen costos y márgenes de {company.name}.</p>
       </div>
     );

@@ -29,13 +29,13 @@ export function matchSupplierIds(suppliers: Supplier[], search: string): string[
  * Compras paginadas en el servidor con búsqueda y resumen (cantidad y total de completadas).
  * Exclusivo master_admin: para otros roles no consulta nada.
  */
-export function usePurchases(companyId: string, isMasterAdmin: boolean, suppliers: Supplier[]) {
+export function usePurchases(companyId: string, canView: boolean, canOperate: boolean, suppliers: Supplier[]) {
   const [search, setSearch] = useState('');
   const [summary, setSummary] = useState<{ count: number; total: number } | null>(null);
   const isSubmittingRef = useRef<boolean>(false);
   const suppliersRef = useRef(suppliers);
   suppliersRef.current = suppliers;
-  const enabled = Boolean(companyId) && isMasterAdmin;
+  const enabled = Boolean(companyId) && canView;
 
   const fetchPage = useCallback(
     (offset: number, limit: number) =>
@@ -86,8 +86,8 @@ export function usePurchases(companyId: string, isMasterAdmin: boolean, supplier
 
   const createPurchase = useCallback(
     async (input: CreatePurchaseInput): Promise<PurchaseActionResult> => {
-      if (!isMasterAdmin) {
-        return { success: false, error: 'Operación denegada: solo master_admin puede registrar compras.' };
+      if (!canOperate) {
+        return { success: false, error: 'No tenés permiso para registrar compras. Pedile acceso al administrador.' };
       }
       if (isSubmittingRef.current) {
         return { success: false, error: 'Ya hay una compra procesándose. Por favor aguarde.' };
@@ -110,7 +110,7 @@ export function usePurchases(companyId: string, isMasterAdmin: boolean, supplier
         isSubmittingRef.current = false;
       }
     },
-    [companyId, isMasterAdmin, reloadPurchases]
+    [companyId, canOperate, reloadPurchases]
   );
 
   return {

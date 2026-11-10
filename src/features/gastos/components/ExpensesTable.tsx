@@ -8,10 +8,12 @@ import type { Expense } from '../types';
 interface ExpensesTableProps {
   expenses: Expense[];
   onVoid: (expense: Expense) => void;
+  /** Sin permiso para anular, no se muestra el botón. */
+  canVoid?: boolean;
 }
 
 /** Lista de gastos: fecha, categoría, descripción, medio de pago e importe. */
-export const ExpensesTable: React.FC<ExpensesTableProps> = ({ expenses, onVoid }) => (
+export const ExpensesTable: React.FC<ExpensesTableProps> = ({ expenses, onVoid, canVoid = true }) => (
   <Card className="border-border bg-surface overflow-x-auto">
     <table className="w-full text-xs min-w-[640px]">
       <thead>
@@ -43,7 +45,7 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({ expenses, onVoid }
               {formatCurrency(e.amount)}
             </td>
             <td className="p-3 text-right">
-              {!e.isVoided && (
+              {!e.isVoided && canVoid && (
                 <button onClick={() => onVoid(e)} aria-label={`Anular gasto ${e.description}`} title="Anular"
                   className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-surface-2">
                   <Ban size={14} />

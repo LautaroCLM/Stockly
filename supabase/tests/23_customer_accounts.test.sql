@@ -110,7 +110,7 @@ SELECT is((SELECT (public.cash_session_summary(:'comp_a', (SELECT id FROM public
 
 -- 10. El empleado no puede anular cobros
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0023-0000-0000-0000-000000000002';
-SELECT throws_like(format('SELECT public.void_customer_payment(%L, %L, %L)', :'comp_a', :'pay2', 'x'), '%master_admin%', 'T-10 el empleado no puede anular cobros');
+SELECT throws_like(format('SELECT public.void_customer_payment(%L, %L, %L)', :'comp_a', :'pay2', 'x'), '%No tenés permiso%', 'T-10 el empleado no puede anular cobros');
 
 -- 11/12. El admin anula: sale el efectivo de la caja y vuelve la deuda
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0023-0000-0000-0000-000000000001';

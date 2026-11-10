@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useCompany } from '../hooks/useCompany';
 import { validateCuit, formatCuit } from '../utils/cuitValidator';
+import { PermissionsEditor } from '@/features/permisos/components/PermissionsEditor';
+import { saveModulePermissions } from '@/features/permisos/api/permissionsApi';
+import { DEFAULT_LEVELS, MODULE_KEYS } from '@/features/permisos/types';
+import type { ModuleLevels } from '@/features/permisos/types';
 
 /** Un token de invitación es hexadecimal y largo: si lo pegan como nombre, se avisa. */
 export function isTokenLike(value: string): boolean {
@@ -37,6 +41,8 @@ export const CreateCompanyForm: React.FC<OnboardingFormProps> = ({ isSubmitting,
   const [companyName, setCompanyName] = useState('');
   const [cuit, setCuit] = useState('');
   const [cuitError, setCuitError] = useState<string | null>(null);
+  const [levels, setLevels] = useState<ModuleLevels>(DEFAULT_LEVELS);
+  const [showPermissions, setShowPermissions] = useState(false);
 
   const handleCuitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCuit(e.target.value);
@@ -57,8 +63,12 @@ export const CreateCompanyForm: React.FC<OnboardingFormProps> = ({ isSubmitting,
     setSubmitting(true);
     try {
       const result = await createCompany({ name, taxId: cuit ? cuit.replace(/-/g, '') : undefined });
-      if (result.success) onDone();
-      else setError(result.error || 'No se pudo crear la empresa.');
+      if (result.success) {
+        // Solo se guarda si el dueño cambió algo: sin configuración rige lo de siempre. Si falla, se edita después en Permisos.
+        const changed = MODULE_KEYS.some((k) => levels[k] !== DEFAULT_LEVELS[k]);
+        if (changed && result.companyId) await saveModulePermissions(result.companyId, levels);
+        onDone();
+      } else setError(result.error || 'No se pudo crear la empresa.');
     } catch {
       setError('Error inesperado de comunicación con el servidor.');
     } finally {
@@ -98,6 +108,18 @@ export const CreateCompanyForm: React.FC<OnboardingFormProps> = ({ isSubmitting,
           <span className="block text-[10px] uppercase font-mono text-text-muted">Zona Horaria</span>
           <span className="font-semibold text-text-secondary truncate block">Buenos Aires</span>
         </div>
+      </div>
+      <div className="space-y-2">
+        <button type="button" onClick={() => setShowPermissions((v) => !v)} aria-expanded={showPermissions}
+          className="text-xs font-semibold text-primary hover:underline">
+          {showPermissions ? 'Ocultar permisos del equipo' : 'Elegir qué puede usar tu equipo (opcional)'}
+        </button>
+        {showPermissions && (
+          <>
+            <PermissionsEditor levels={levels} onChange={setLevels} disabled={isSubmitting} />
+            <p className="text-[10px] text-text-muted">Los administradores siempre ven todo. Podés cambiarlo cuando quieras desde Permisos.</p>
+          </>
+        )}
       </div>
       <div className="pt-2 flex gap-2">
         {onCancel && <Button type="button" variant="outline" className="flex-1 text-xs h-9" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}

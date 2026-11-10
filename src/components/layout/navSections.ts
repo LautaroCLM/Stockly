@@ -133,6 +133,12 @@ export const NAV_SECTIONS: NavSection[] = [
         path: '/configuracion/miembros',
         iconName: 'ShieldCheck',
       },
+      {
+        id: 'config-permisos',
+        label: 'Permisos',
+        path: '/configuracion/permisos',
+        iconName: 'KeyRound',
+      },
     ],
   },
 ];

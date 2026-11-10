@@ -15,16 +15,17 @@ import { StatementModal } from './components/StatementModal';
 
 interface CobrosPagosPageProps {
   company: Company;
-  isMasterAdmin: boolean;
+  canView: boolean;
+  canOperate: boolean;
 }
 
 const KINDS: AccountKind[] = ['customer', 'supplier'];
 
 /** Cobros y Pagos: cuenta corriente de clientes (lo que nos deben) y de proveedores (lo que debemos). */
-export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMasterAdmin }) => {
+export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, canView, canOperate }) => {
   const [kind, setKind] = useState<AccountKind>('customer');
   const labels = ACCOUNT_LABELS[kind];
-  const accounts = useAccounts(kind, company.id);
+  const accounts = useAccounts(kind, company.id, canView);
   const [settling, setSettling] = useState<AccountBalance | null>(null);
   const [statementOf, setStatementOf] = useState<AccountBalance | null>(null);
 
@@ -95,7 +96,7 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMas
       ) : accounts.balances.length === 0 ? (
         !accounts.error && <p className="py-12 text-center text-xs text-text-muted leading-relaxed">{labels.emptyList}</p>
       ) : (
-        <BalancesTable kind={kind} balances={accounts.balances} onSettle={setSettling} onOpenStatement={setStatementOf} />
+        <BalancesTable kind={kind} balances={accounts.balances} onSettle={canOperate ? setSettling : undefined} onOpenStatement={setStatementOf} />
       )}
 
       <AnimatePresence>
@@ -103,7 +104,7 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, isMas
       </AnimatePresence>
       <AnimatePresence>
         {statementLive && (
-          <StatementModal kind={kind} companyId={company.id} party={statementLive} isMasterAdmin={isMasterAdmin}
+          <StatementModal kind={kind} companyId={company.id} party={statementLive} canVoid={canOperate}
             onClose={() => setStatementOf(null)} onVoid={accounts.voidPayment} />
         )}
       </AnimatePresence>

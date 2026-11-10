@@ -22,6 +22,7 @@ export type DataTable =
   | 'customer_payments'
   | 'supplier_payments'
   | 'credit_purchases'
+  | 'company_module_permissions'
   | 'machines'
   | 'employees'
   | 'employee_schedules'

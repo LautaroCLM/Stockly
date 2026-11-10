@@ -7,10 +7,12 @@ interface ComprasHeaderProps {
   isLoading: boolean;
   onReload: () => void;
   onNewPurchase: () => void;
+  /** Sin permiso para registrar compras, no se muestra el botón. */
+  canCreate?: boolean;
 }
 
 /** Título de Compras con recarga y alta de compra. */
-export const ComprasHeader: React.FC<ComprasHeaderProps> = ({ companyName, isLoading, onReload, onNewPurchase }) => (
+export const ComprasHeader: React.FC<ComprasHeaderProps> = ({ companyName, isLoading, onReload, onNewPurchase, canCreate = true }) => (
   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div>
       <h1 className="text-xl font-bold text-text-primary flex items-center gap-2">
@@ -23,10 +25,12 @@ export const ComprasHeader: React.FC<ComprasHeaderProps> = ({ companyName, isLoa
       <Button variant="secondary" size="sm" onClick={onReload} disabled={isLoading} aria-label="Actualizar compras">
         <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
       </Button>
-      <Button variant="primary" size="sm" onClick={onNewPurchase} className="flex items-center gap-1.5">
-        <Plus size={15} />
-        <span>Nueva Compra</span>
-      </Button>
+      {canCreate && (
+        <Button variant="primary" size="sm" onClick={onNewPurchase} className="flex items-center gap-1.5">
+          <Plus size={15} />
+          <span>Nueva Compra</span>
+        </Button>
+      )}
     </div>
   </div>
 );
@@ -51,7 +55,7 @@ export const ComprasSearchBar: React.FC<{ value: string; onChange: (value: strin
   </div>
 );
 
-/** Aviso para quienes no son administradores: Compras muestra costos. */
+/** Aviso para quienes no tienen acceso a Compras (muestra costos de adquisición). */
 export const ComprasAccessDenied: React.FC<{ companyName: string; onNavigateHome: () => void }> = ({ companyName, onNavigateHome }) => (
   <div className="flex-1 p-6 flex items-center justify-center">
     <div className="max-w-md w-full text-center space-y-4 p-8 bg-surface border border-border rounded-2xl shadow-xl">
@@ -60,7 +64,7 @@ export const ComprasAccessDenied: React.FC<{ companyName: string; onNavigateHome
       </div>
       <h2 className="text-lg font-bold text-text-primary">Acceso Restringido</h2>
       <p className="text-xs text-text-muted">
-        El módulo de Compras a Proveedores y la consulta de costos de adquisición son exclusivos para administradores de la empresa ({companyName}).
+        No tenés acceso al módulo de Compras a Proveedores en {companyName}. Pedile acceso al administrador.
       </p>
       <Button variant="secondary" size="sm" onClick={onNavigateHome}>Volver al Inicio</Button>
     </div>

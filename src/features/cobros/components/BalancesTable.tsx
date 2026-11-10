@@ -18,7 +18,8 @@ const AGE_STYLE: Record<DebtAge, string> = {
 interface BalancesTableProps {
   kind: AccountKind;
   balances: AccountBalance[];
-  onSettle: (party: AccountBalance) => void;
+  /** Sin permiso para cobrar o pagar, no se pasa y el botón no se muestra. */
+  onSettle?: (party: AccountBalance) => void;
   onOpenStatement: (party: AccountBalance) => void;
 }
 
@@ -58,9 +59,11 @@ export const BalancesTable: React.FC<BalancesTableProps> = ({ kind, balances, on
                     <Button variant="secondary" size="sm" onClick={() => onOpenStatement(b)} className="gap-1 h-8">
                       <FileText size={13} /><span>Estado de cuenta</span>
                     </Button>
-                    <Button variant="primary" size="sm" disabled={b.balance <= 0} onClick={() => onSettle(b)} className="gap-1 h-8">
-                      <HandCoins size={13} /><span>{labels.actionButton}</span>
-                    </Button>
+                    {onSettle && (
+                      <Button variant="primary" size="sm" disabled={b.balance <= 0} onClick={() => onSettle(b)} className="gap-1 h-8">
+                        <HandCoins size={13} /><span>{labels.actionButton}</span>
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>

@@ -55,7 +55,7 @@ SELECT public.create_company('Empresa EM Beta', NULL) AS comp_b \gset
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0026-0000-0000-0000-000000000002';
 SELECT throws_like(
   format($q$SELECT public.upsert_employee(%L, NULL, 'X', NULL, NULL, NULL, NULL, 'active', NULL)$q$, :'comp_a'),
-  '%master_admin%', 'T-01 el rol empleado no crea empleados');
+  '%No tenés permiso%', 'T-01 el rol empleado no crea empleados');
 
 -- 2. El admin crea empleados
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0026-0000-0000-0000-000000000001';
@@ -133,7 +133,7 @@ SELECT throws_ok(format($q$DELETE FROM public.employees WHERE id = %L$q$, :'emp'
 -- 21/22. El rol empleado no ve ni consulta nada de personal
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0026-0000-0000-0000-000000000002';
 SELECT is((SELECT count(*) FROM public.employees) + (SELECT count(*) FROM public.attendance_records) + (SELECT count(*) FROM public.employee_schedules), 0::BIGINT, 'T-21 el rol empleado no ve personal, horarios ni asistencia');
-SELECT throws_like(format($q$SELECT public.void_attendance(%L, %L, 'x')$q$, :'comp_a', :'rec'), '%master_admin%', 'T-22 el rol empleado no anula asistencia');
+SELECT throws_like(format($q$SELECT public.void_attendance(%L, %L, 'x')$q$, :'comp_a', :'rec'), '%No tenés permiso%', 'T-22 el rol empleado no anula asistencia');
 
 -- 23. Aislamiento entre empresas
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0026-0000-0000-0000-000000000003';

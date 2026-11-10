@@ -13,13 +13,14 @@ interface StatementModalProps {
   kind: AccountKind;
   companyId: string;
   party: AccountBalance;
-  isMasterAdmin: boolean;
+  /** Anular cobros o pagos requiere poder operar el módulo. */
+  canVoid: boolean;
   onClose: () => void;
   onVoid: (paymentId: string, reason: string) => Promise<CollectionActionResult>;
 }
 
 /** Estado de cuenta: cargos a crédito y cobros o pagos, con saldo acumulado. El admin puede anular cobros o pagos. */
-export const StatementModal: React.FC<StatementModalProps> = ({ kind, companyId, party, isMasterAdmin, onClose, onVoid }) => {
+export const StatementModal: React.FC<StatementModalProps> = ({ kind, companyId, party, canVoid, onClose, onVoid }) => {
   const labels = ACCOUNT_LABELS[kind];
   const { entries, isLoading, error } = useAccountStatement(kind, companyId, party.partyId);
   const [voidingId, setVoidingId] = useState<string | null>(null);
@@ -69,7 +70,7 @@ export const StatementModal: React.FC<StatementModalProps> = ({ kind, companyId,
                   <td className={`py-2 text-right tabular-nums ${entry.amount < 0 ? 'text-emerald-400' : 'text-text-primary'}`}>{formatCurrency(entry.amount)}</td>
                   <td className="py-2 text-right tabular-nums text-text-secondary">{formatCurrency(balance)}</td>
                   <td className="py-2 text-right">
-                    {isMasterAdmin && entry.kind === 'payment' && (
+                    {canVoid && entry.kind === 'payment' && (
                       <button onClick={() => { setVoidingId(entry.referenceId); setVoidError(null); }} aria-label={labels.voidButton} title={labels.voidButton}
                         className="p-1 rounded text-text-muted hover:text-danger hover:bg-surface-2"><Ban size={13} /></button>
                     )}

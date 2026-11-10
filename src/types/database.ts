@@ -269,6 +269,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"company_module_permissions": {
+                  Row: {
+                    "company_id": string,"employee_level": string,"id": string,"module": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"employee_level": string,"id"?: string,"module": string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "company_id"?: string,"employee_level"?: string,"id"?: string,"module"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "company_module_permissions_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"credit_purchases": {
                   Row: {
                     "company_id": string,"created_at": string,"created_by": string,"purchase_id": string
@@ -976,6 +996,11 @@ isOneToOne: false
 "financial_summary":
 { Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: Json
                            },
+"get_module_permissions":
+{ Args: { "p_company_id": string }; Returns: {
+              "employee_level": string,"module": string
+            }[]
+                           },
 "import_initial_stock":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_items": Json }; Returns: Json
                            },
@@ -1064,6 +1089,9 @@ isOneToOne: false
                            },
 "set_employee_schedule":
 { Args: { "p_blocks": Json,"p_company_id": string,"p_employee_id": string }; Returns: number
+                           },
+"set_module_permissions":
+{ Args: { "p_company_id": string,"p_levels": Json }; Returns: number
                            },
 "supplier_balances":
 { Args: { "p_company_id": string }; Returns: {

@@ -77,9 +77,9 @@ SELECT is((SELECT jsonb_array_length(records) FROM public.clock_roster(:'comp_a'
 
 -- 8-11. Lo que el rol empleado no puede hacer
 SELECT is((SELECT count(*) FROM public.employees) + (SELECT count(*) FROM public.attendance_records) + (SELECT count(*) FROM public.employee_schedules), 0::BIGINT, 'T-08 el rol empleado sigue sin leer las tablas');
-SELECT throws_like(format($q$SELECT public.save_attendance(%L, %L, NULL, now() - interval '2 days', NULL, 'x')$q$, :'comp_a', :'emp'), '%master_admin%', 'T-09 el rol empleado no carga ni corrige registros');
-SELECT throws_like(format($q$SELECT public.void_attendance(%L, %L, 'x')$q$, :'comp_a', :'rec'), '%master_admin%', 'T-10 el rol empleado no anula registros');
-SELECT throws_like(format($q$SELECT public.set_employee_schedule(%L, %L, '[]'::JSONB)$q$, :'comp_a', :'emp'), '%master_admin%', 'T-11 el rol empleado no cambia horarios');
+SELECT throws_like(format($q$SELECT public.save_attendance(%L, %L, NULL, now() - interval '2 days', NULL, 'x')$q$, :'comp_a', :'emp'), '%No tenés permiso%', 'T-09 el rol empleado no carga ni corrige registros');
+SELECT throws_like(format($q$SELECT public.void_attendance(%L, %L, 'x')$q$, :'comp_a', :'rec'), '%No tenés permiso%', 'T-10 el rol empleado no anula registros');
+SELECT throws_like(format($q$SELECT public.set_employee_schedule(%L, %L, '[]'::JSONB)$q$, :'comp_a', :'emp'), '%No tenés permiso%', 'T-11 el rol empleado no cambia horarios');
 
 -- 12-13. Validaciones
 SELECT throws_ok(format($q$SELECT * FROM public.clock_roster(%L, 9, now())$q$, :'comp_a'), NULL, 'Día de la semana inválido.', 'T-12 día de la semana inválido');

@@ -7,7 +7,7 @@ import { accountsApi } from '../api/accountsApi';
 import type { AccountBalance, CollectionActionResult, NewCollectionInput, StatementEntry } from '../types';
 
 /** Saldos de las cuentas corrientes (de clientes o de proveedores), en vivo, y las operaciones de cobro o pago. */
-export function useAccounts(kind: AccountKind, companyId: string) {
+export function useAccounts(kind: AccountKind, companyId: string, enabled = true) {
   const [balances, setBalances] = useState<AccountBalance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +15,10 @@ export function useAccounts(kind: AccountKind, companyId: string) {
 
   const load = useCallback(async () => {
     const requestId = ++requestIdRef.current;
-    if (!companyId) return;
+    if (!companyId || !enabled) {
+      setIsLoading(false);
+      return;
+    }
     setError(null);
     try {
       const rows = await accountsApi(kind).fetchBalances(companyId);
@@ -26,7 +29,7 @@ export function useAccounts(kind: AccountKind, companyId: string) {
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [kind, companyId]);
+  }, [kind, companyId, enabled]);
 
   useEffect(() => {
     setBalances([]);

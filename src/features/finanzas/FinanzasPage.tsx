@@ -11,22 +11,22 @@ import { PaymentsBreakdown } from './components/PaymentsBreakdown';
 
 interface FinanzasPageProps {
   company: Company;
-  isMasterAdmin: boolean;
+  canView: boolean;
 }
 
 /**
  * Resumen Financiero: lo vendido, su costo, las compras y lo cobrado en el período.
  * Todavía no incluye cuentas a cobrar y a pagar ni la acreditación de cheques.
  */
-export const FinanzasPage: React.FC<FinanzasPageProps> = ({ company, isMasterAdmin }) => {
+export const FinanzasPage: React.FC<FinanzasPageProps> = ({ company, canView }) => {
   const [period, setPeriod] = useState<PeriodKey>('month');
-  const { current, previous, range, isLoading, error, reload } = useFinancialSummary(company.id, isMasterAdmin, period);
+  const { current, previous, range, isLoading, error, reload } = useFinancialSummary(company.id, canView, period);
 
-  if (!isMasterAdmin) {
+  if (!canView) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-2 text-text-muted">
         <ShieldAlert size={32} className="text-warning" />
-        <p className="text-sm font-semibold text-text-primary">Solo los administradores ven el resumen financiero</p>
+        <p className="text-sm font-semibold text-text-primary">No tenés acceso a este módulo. Pedile acceso al administrador.</p>
         <p className="text-xs">Incluye costos y márgenes de {company.name}.</p>
       </div>
     );

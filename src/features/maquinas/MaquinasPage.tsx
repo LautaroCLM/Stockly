@@ -16,14 +16,15 @@ import { MachinesTable } from './components/MachinesTable';
 
 interface MaquinasPageProps {
   company: Company;
-  isMasterAdmin: boolean;
+  canView: boolean;
+  canOperate: boolean;
 }
 
 /** Máquinas y vehículos de la empresa, con lo gastado en cada una (combustible, repuestos, mantenimiento). */
-export const MaquinasPage: React.FC<MaquinasPageProps> = ({ company, isMasterAdmin }) => {
+export const MaquinasPage: React.FC<MaquinasPageProps> = ({ company, canView, canOperate }) => {
   const [period, setPeriod] = useState<PeriodKey>('month');
   const { from, to } = periodRange(period, localDateInputValue());
-  const data = useMachines(company.id, isMasterAdmin, from, to);
+  const data = useMachines(company.id, canView, from, to);
   const [editing, setEditing] = useState<MachineInput | null | undefined>(undefined);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -32,11 +33,11 @@ export const MaquinasPage: React.FC<MaquinasPageProps> = ({ company, isMasterAdm
   const totalCents = data.costs.reduce((sum, c) => sum + toHundredths(c.total), 0);
   const hiddenCount = (data.machines ?? []).length - visible.length;
 
-  if (!isMasterAdmin) {
+  if (!canView) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-2 text-text-muted">
         <ShieldAlert size={32} className="text-warning" />
-        <p className="text-sm font-semibold text-text-primary">Solo los administradores gestionan las máquinas</p>
+        <p className="text-sm font-semibold text-text-primary">No tenés acceso a este módulo. Pedile acceso al administrador.</p>
       </div>
     );
   }
@@ -62,10 +63,12 @@ export const MaquinasPage: React.FC<MaquinasPageProps> = ({ company, isMasterAdm
             <RotateCcw size={14} className={data.isLoading ? 'animate-spin' : ''} />
             <span>Actualizar</span>
           </Button>
-          <Button variant="primary" size="sm" onClick={() => setEditing(null)} className="gap-1.5 h-9">
-            <Plus size={14} />
-            <span>Nueva máquina</span>
-          </Button>
+          {canOperate && (
+            <Button variant="primary" size="sm" onClick={() => setEditing(null)} className="gap-1.5 h-9">
+              <Plus size={14} />
+              <span>Nueva máquina</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -97,7 +100,7 @@ export const MaquinasPage: React.FC<MaquinasPageProps> = ({ company, isMasterAdm
           {data.machines.length === 0 ? 'Todavía no cargaste máquinas. Usá "Nueva máquina" para agregar la primera.' : 'No hay máquinas operativas. Activá "Mostrar inactivas" para ver el resto.'}
         </p>
       ) : (
-        <MachinesTable machines={visible} costs={costById} onEdit={(m: Machine) => setEditing(machineToInput(m))} />
+        <MachinesTable machines={visible} costs={costById} onEdit={(m: Machine) => setEditing(machineToInput(m))} canEdit={canOperate} />
       )}
 
       <AnimatePresence>{editing !== undefined && <MachineFormModal initial={editing} onClose={() => setEditing(undefined)} onSubmit={data.saveMachine} />}</AnimatePresence>

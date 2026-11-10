@@ -14,22 +14,23 @@ import { VoidExpenseModal } from './components/VoidExpenseModal';
 
 interface GastosPageProps {
   company: Company;
-  isMasterAdmin: boolean;
+  canView: boolean;
+  canOperate: boolean;
   suppliers: Supplier[];
 }
 
 /** Gastos de la empresa: registrar, filtrar por categoría y anular con motivo. */
-export const GastosPage: React.FC<GastosPageProps> = ({ company, isMasterAdmin, suppliers }) => {
-  const exp = useExpenses(company.id, isMasterAdmin);
-  const machines = useMachineOptions(company.id, isMasterAdmin);
+export const GastosPage: React.FC<GastosPageProps> = ({ company, canView, canOperate, suppliers }) => {
+  const exp = useExpenses(company.id, canView);
+  const machines = useMachineOptions(company.id, canView);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [voiding, setVoiding] = useState<Expense | null>(null);
 
-  if (!isMasterAdmin) {
+  if (!canView) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-2 text-text-muted">
         <ShieldAlert size={32} className="text-warning" />
-        <p className="text-sm font-semibold text-text-primary">Solo los administradores gestionan los gastos</p>
+        <p className="text-sm font-semibold text-text-primary">No tenés acceso a este módulo. Pedile acceso al administrador.</p>
       </div>
     );
   }
@@ -53,10 +54,12 @@ export const GastosPage: React.FC<GastosPageProps> = ({ company, isMasterAdmin, 
             <RotateCcw size={14} className={exp.isLoading ? 'animate-spin' : ''} />
             <span>Actualizar</span>
           </Button>
-          <Button variant="primary" size="sm" onClick={() => setIsFormOpen(true)} className="gap-1.5 h-9">
-            <Plus size={14} />
-            <span>Registrar gasto</span>
-          </Button>
+          {canOperate && (
+            <Button variant="primary" size="sm" onClick={() => setIsFormOpen(true)} className="gap-1.5 h-9">
+              <Plus size={14} />
+              <span>Registrar gasto</span>
+            </Button>
+          )}
         </div>
       </div>
 

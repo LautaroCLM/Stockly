@@ -56,7 +56,7 @@ SELECT public.upsert_machine(:'comp_b', NULL, 'Camión de B', 'camion', NULL, NU
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0025-0000-0000-0000-000000000002';
 SELECT throws_like(
   format($q$SELECT public.upsert_machine(%L, NULL, 'X', 'camion', NULL, NULL, NULL, NULL, 'active', NULL)$q$, :'comp_a'),
-  '%master_admin%', 'T-01 el empleado no crea máquinas');
+  '%No tenés permiso%', 'T-01 el empleado no crea máquinas');
 
 -- 2. El admin crea y edita
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0025-0000-0000-0000-000000000001';
@@ -112,7 +112,7 @@ SELECT is((SELECT count(*) FROM public.expenses WHERE machine_id = :'mach'), 4::
 -- 12. El empleado no ve máquinas ni sus costos
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0025-0000-0000-0000-000000000002';
 SELECT is((SELECT count(*) FROM public.machines), 0::BIGINT, 'T-12 el empleado no ve las máquinas');
-SELECT throws_like(format('SELECT * FROM public.machine_costs(%L, CURRENT_DATE - 1, CURRENT_DATE)', :'comp_a'), '%master_admin%', 'T-13 el empleado no ve costos');
+SELECT throws_like(format('SELECT * FROM public.machine_costs(%L, CURRENT_DATE - 1, CURRENT_DATE)', :'comp_a'), '%No tenés permiso%', 'T-13 el empleado no ve costos');
 
 -- 14. Aislamiento: el admin de B no ve las máquinas de A
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0025-0000-0000-0000-000000000003';

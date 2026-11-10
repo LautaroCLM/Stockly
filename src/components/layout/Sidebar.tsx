@@ -13,6 +13,7 @@ import {
   BarChart3,
   UserCheck,
   Clock,
+  KeyRound,
   History,
   Building2,
   ShieldCheck,
@@ -55,6 +56,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileBarChart,
   Tractor,
   Clock,
+  KeyRound,
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({

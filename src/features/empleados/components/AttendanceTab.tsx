@@ -16,12 +16,14 @@ import { ReasonModal } from './ReasonModal';
 interface AttendanceTabProps {
   companyId: string;
   employees: Employee[];
+  /** Sin permiso para operar, no se puede cargar, corregir ni anular registros. */
+  canEdit?: boolean;
 }
 
 const PERIODS = (Object.keys(PERIOD_LABELS) as PeriodKey[]).filter((k) => k !== 'today');
 
 /** Resumen por empleado y detalle de entradas y salidas de un período, con corrección y anulación. */
-export const AttendanceTab: React.FC<AttendanceTabProps> = ({ companyId, employees }) => {
+export const AttendanceTab: React.FC<AttendanceTabProps> = ({ companyId, employees, canEdit = true }) => {
   const [period, setPeriod] = useState<PeriodKey>('7d');
   const { from, to } = periodRange(period, localDateInputValue());
   const att = useAttendancePeriod(companyId, true, from, to);
@@ -36,7 +38,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ companyId, employe
           className="h-9 px-3 text-xs bg-surface-2 border border-border rounded-lg text-text-primary focus:outline-none cursor-pointer">
           {PERIODS.map((k) => <option key={k} value={k}>{PERIOD_LABELS[k]} ({formatDateShort(periodRange(k, localDateInputValue()).from)})</option>)}
         </select>
-        <Button variant="secondary" size="sm" onClick={() => setEditing(null)} className="gap-1.5 h-9"><Plus size={14} /><span>Cargar registro a mano</span></Button>
+        {canEdit && <Button variant="secondary" size="sm" onClick={() => setEditing(null)} className="gap-1.5 h-9"><Plus size={14} /><span>Cargar registro a mano</span></Button>}
       </div>
 
       {att.error && (
@@ -91,7 +93,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({ companyId, employe
                       {r.isVoided && ` · Anulado: ${r.voidReason ?? ''}`}
                     </p>
                   </div>
-                  {!r.isVoided && (
+                  {!r.isVoided && canEdit && (
                     <div className="flex gap-1">
                       <button onClick={() => setEditing(r)} aria-label="Corregir registro" title="Corregir" className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"><Pencil size={14} /></button>
                       <button onClick={() => setVoiding(r)} aria-label="Anular registro" title="Anular" className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-surface-2"><Ban size={14} /></button>

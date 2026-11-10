@@ -32,7 +32,8 @@ export type RouteId =
   | 'historial'
   | 'auditoria'
   | 'config-empresa'
-  | 'config-miembros';
+  | 'config-miembros'
+  | 'config-permisos';
 
 export interface NavItem {
   id: RouteId;

@@ -20,6 +20,9 @@ import { InformesPage } from '@/features/informes/InformesPage';
 import { MaquinasPage } from '@/features/maquinas/MaquinasPage';
 import { EmpleadosPage } from '@/features/empleados/EmpleadosPage';
 import { FichajePage } from '@/features/empleados/FichajePage';
+import { PermisosPage } from '@/features/permisos/PermisosPage';
+import { atLeast, effectiveLevel } from '@/features/permisos/access';
+import type { ModuleKey, ModuleLevels } from '@/features/permisos/types';
 import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
 import { ClientesPage } from '@/features/clientes/components/ClientesPage';
 import { ComprasPage } from '@/features/compras/components/ComprasPage';
@@ -33,6 +36,8 @@ interface WorkspaceRoutesProps {
   company: Company;
   currentUserId: string;
   isMasterAdmin: boolean;
+  /** Permisos del rol empleado (null mientras cargan). */
+  permissionLevels: ModuleLevels | null;
   inventorySearch: { query: string; id: number } | null;
   catalog: ReturnType<typeof useProducts>;
   categories: ReturnType<typeof useCategories>;
@@ -59,6 +64,11 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
   const { route, onNavigate, company, isMasterAdmin, catalog, categories, suppliers, customers, members, settings, cart } =
     props;
   const goTo = (target: RouteId) => () => onNavigate(target);
+  // Acceso a un módulo configurable: ver (cargar la pantalla) y operar (modificar)
+  const access = (module: ModuleKey) => {
+    const level = effectiveLevel(isMasterAdmin, props.permissionLevels, module);
+    return { canView: atLeast(level, 'view'), canOperate: atLeast(level, 'operate') };
+  };
 
   switch (route) {
     case 'dashboard':
@@ -107,19 +117,21 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
     case 'caja':
       return <CajaPage company={company} />;
     case 'finanzas':
-      return <FinanzasPage company={company} isMasterAdmin={isMasterAdmin} />;
+      return <FinanzasPage company={company} canView={access('finanzas').canView} />;
     case 'gastos':
-      return <GastosPage company={company} isMasterAdmin={isMasterAdmin} suppliers={suppliers.suppliers} />;
+      return <GastosPage company={company} {...access('gastos')} suppliers={suppliers.suppliers} />;
     case 'cobros-pagos':
-      return <CobrosPagosPage company={company} isMasterAdmin={isMasterAdmin} />;
+      return <CobrosPagosPage company={company} {...access('cobros_pagos')} />;
     case 'informes':
-      return <InformesPage company={company} isMasterAdmin={isMasterAdmin} />;
+      return <InformesPage company={company} canView={access('informes').canView} />;
     case 'maquinas':
-      return <MaquinasPage company={company} isMasterAdmin={isMasterAdmin} />;
+      return <MaquinasPage company={company} {...access('maquinas')} />;
     case 'personal':
-      return <EmpleadosPage company={company} isMasterAdmin={isMasterAdmin} />;
+      return <EmpleadosPage company={company} {...access('personal')} />;
     case 'fichaje':
       return <FichajePage company={company} />;
+    case 'config-permisos':
+      return <PermisosPage company={company} isMasterAdmin={isMasterAdmin} />;
     case 'auditoria':
       return <AuditLogPage company={company} isMasterAdmin={isMasterAdmin} />;
     case 'proveedores':
@@ -131,7 +143,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
     case 'compras':
       return (
         <ComprasPage company={company} suppliers={suppliers.suppliers} products={catalog.products}
-          isMasterAdmin={isMasterAdmin} onStockChanged={reloadCatalog(catalog, 'tras compra')}
+          {...access('compras')} onStockChanged={reloadCatalog(catalog, 'tras compra')}
           onNavigateHome={goTo('dashboard')} />
       );
     case 'clientes':

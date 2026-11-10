@@ -576,8 +576,8 @@ SELECT throws_matching(
   (SELECT id FROM test_context WHERE key = 'company_a'),
   (SELECT id FROM test_context WHERE key = 'supp_active_a'),
   (SELECT id FROM test_context WHERE key = 'prod_1')),
-  'Operación restringida a usuarios con rol master_admin',
-  'T-19: Empleado no puede registrar compras (requiere master_admin)'
+  'No tenés permiso para esta operación. Pedile acceso al administrador.',
+  'T-19: Empleado sin acceso al módulo compras no puede registrar compras'
 );
 
 -- ----------------------------------------------------------------------------

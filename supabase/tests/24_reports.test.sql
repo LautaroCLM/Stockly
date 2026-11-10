@@ -106,8 +106,8 @@ SELECT is((SELECT count(*) FROM public.report_top_products(:'comp_a', CURRENT_DA
 
 -- 8. El empleado no accede a ningún informe
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0024-0000-0000-0000-000000000002';
-SELECT throws_like(format('SELECT * FROM public.report_sales_by_day(%L, CURRENT_DATE - 1, CURRENT_DATE)', :'comp_a'), '%master_admin%', 'T-08 el empleado no ve ventas por día');
-SELECT throws_like(format('SELECT * FROM public.report_inventory_valuation(%L)', :'comp_a'), '%master_admin%', 'T-09 el empleado no ve el inventario valuado');
+SELECT throws_like(format('SELECT * FROM public.report_sales_by_day(%L, CURRENT_DATE - 1, CURRENT_DATE)', :'comp_a'), '%No tenés permiso%', 'T-08 el empleado no ve ventas por día');
+SELECT throws_like(format('SELECT * FROM public.report_inventory_valuation(%L)', :'comp_a'), '%No tenés permiso%', 'T-09 el empleado no ve el inventario valuado');
 
 -- 10. Aislamiento entre empresas
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0024-0000-0000-0000-000000000003';

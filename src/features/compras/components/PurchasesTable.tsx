@@ -13,6 +13,8 @@ interface PurchasesTableProps {
   onLoadMore: () => void;
   onViewDetail: (purchase: Purchase) => void;
   onCancel: (purchase: Purchase) => void;
+  /** Sin permiso para anular, no se muestra el botón. */
+  canCancel?: boolean;
 }
 
 /** Listado de compras con detalle, anulación y "cargar más". */
@@ -24,6 +26,7 @@ export const PurchasesTable: React.FC<PurchasesTableProps> = ({
   onLoadMore,
   onViewDetail,
   onCancel,
+  canCancel = true,
 }) => (
   <div className="border border-border rounded-xl bg-surface overflow-hidden shadow-sm">
     <div className="overflow-x-auto">
@@ -69,7 +72,7 @@ export const PurchasesTable: React.FC<PurchasesTableProps> = ({
                   <Button variant="secondary" size="sm" onClick={() => onViewDetail(p)} className="h-7 px-2.5 text-[11px]">
                     <Eye size={13} className="mr-1" /> Detalle
                   </Button>
-                  {p.status === 'completed' && (
+                  {p.status === 'completed' && canCancel && (
                     <Button variant="secondary" size="sm" onClick={() => onCancel(p)} className="h-7 px-2.5 text-[11px] hover:text-danger" title="Anular compra">
                       <Ban size={13} className="mr-1" /> Anular
                     </Button>

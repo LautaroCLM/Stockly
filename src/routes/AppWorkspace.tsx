@@ -21,10 +21,9 @@ import { CheckoutModal } from '@/features/inventario/components/CheckoutModal';
 import { ReceiptModal } from '@/features/inventario/components/ReceiptModal';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
 import { PageEnter } from '@/components/motion/PageEnter';
+import { useModulePermissions } from '@/features/permisos/hooks/useModulePermissions';
+import { isRouteVisible } from '@/features/permisos/access';
 
-const ADMIN_ONLY_ROUTES = new Set<RouteId>(['compras', 'finanzas', 'gastos', 'cobros-pagos', 'informes', 'maquinas', 'personal']);
-// El administrador ficha desde Empleados; esta pantalla simplificada es para las cuentas de empleado
-const EMPLOYEE_ONLY_ROUTES = new Set<RouteId>(['fichaje']);
 
 interface AppWorkspaceProps {
   user: User;
@@ -49,6 +48,8 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   const companyId = activeCompany.id;
   const isMasterAdmin = userRole === 'master_admin';
   const [activeRoute, setActiveRoute] = useState<RouteId>('dashboard');
+  // Qué módulos puede usar el rol empleado (los configura el administrador, en vivo)
+  const permissions = useModulePermissions(companyId);
 
   // Búsqueda del encabezado: abre Inventario filtrado. Se descarta al salir de Inventario.
   const [inventorySearch, setInventorySearch] = useState<{ query: string; id: number } | null>(null);
@@ -96,13 +97,19 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   const restockCount = useMemo(() => productsToRestock(catalog.products).length, [catalog.products]);
 
   // Compras, Finanzas y Empleados muestran costos o datos sensibles: solo administradores
-  const navSections = useMemo(() => {
-    const visible = (id: RouteId) => (isMasterAdmin ? !EMPLOYEE_ONLY_ROUTES.has(id) : !ADMIN_ONLY_ROUTES.has(id));
-    return NAV_SECTIONS.map((section) => ({
-      ...section,
-      items: section.items.filter((item) => visible(item.id)),
-    })).filter((section) => section.items.length > 0);
-  }, [isMasterAdmin]);
+  const navSections = useMemo(
+    () =>
+      NAV_SECTIONS.map((section) => ({
+        ...section,
+        items: section.items.filter((item) => isRouteVisible(item.id, isMasterAdmin, permissions.levels)),
+      })).filter((section) => section.items.length > 0),
+    [isMasterAdmin, permissions.levels]
+  );
+
+  // Si le quitan el acceso a la pantalla en la que está, vuelve al inicio
+  useEffect(() => {
+    if (!isRouteVisible(activeRoute, isMasterAdmin, permissions.levels)) setActiveRoute('dashboard');
+  }, [activeRoute, isMasterAdmin, permissions.levels]);
 
   return (
     <>
@@ -132,6 +139,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           company={activeCompany}
           currentUserId={user.id}
           isMasterAdmin={isMasterAdmin}
+          permissionLevels={permissions.levels}
           inventorySearch={inventorySearch}
           catalog={catalog}
           categories={categories}

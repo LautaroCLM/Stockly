@@ -139,7 +139,7 @@ SELECT throws_like(
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0021-0000-0000-0000-000000000002';
 SELECT throws_like(
   format('SELECT public.financial_summary(%L, CURRENT_DATE - 7, CURRENT_DATE)', :'comp_a'),
-  '%master_admin%',
+  '%No tenés permiso%',
   'T-10: un empleado no puede ver el resumen financiero.');
 
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0021-0000-0000-0000-000000000003';

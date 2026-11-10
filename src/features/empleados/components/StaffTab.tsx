@@ -10,10 +10,12 @@ interface StaffTabProps {
   schedules: Record<string, ScheduleBlock[]>;
   onEdit: (employee: Employee) => void;
   onSchedule: (employee: Employee) => void;
+  /** Sin permiso para operar, no se muestran los botones de horario y edición. */
+  canEdit?: boolean;
 }
 
 /** Personal de la empresa con su horario semanal. */
-export const StaffTab: React.FC<StaffTabProps> = ({ employees, schedules, onEdit, onSchedule }) => (
+export const StaffTab: React.FC<StaffTabProps> = ({ employees, schedules, onEdit, onSchedule, canEdit = true }) => (
   <Card className="border-border bg-surface overflow-x-auto">
     <table className="w-full text-xs min-w-[620px]">
       <thead>
@@ -39,10 +41,12 @@ export const StaffTab: React.FC<StaffTabProps> = ({ employees, schedules, onEdit
               <td className="p-3 text-text-secondary">{minutes === 0 ? 'Sin horario' : formatDuration(minutes)}</td>
               <td className="p-3">
                 <div className="flex justify-end gap-1">
+                  {canEdit && <>
                   <button onClick={() => onSchedule(e)} aria-label={`Horario de ${e.fullName}`} title="Horario"
                     className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"><CalendarClock size={14} /></button>
                   <button onClick={() => onEdit(e)} aria-label={`Editar ${e.fullName}`} title="Editar"
                     className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"><Pencil size={14} /></button>
+                  </>}
                 </div>
               </td>
             </tr>

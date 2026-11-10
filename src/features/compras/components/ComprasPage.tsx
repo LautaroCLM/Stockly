@@ -20,7 +20,8 @@ interface ComprasPageProps {
   /** Catálogo completo de proveedores: la búsqueda por nombre o CUIT se resuelve contra él. */
   suppliers: Supplier[];
   products: Product[];
-  isMasterAdmin: boolean;
+  canView: boolean;
+  canOperate: boolean;
   /** Se invoca al registrar o anular una compra (el stock cambió). */
   onStockChanged: () => void;
   onNavigateHome: () => void;
@@ -32,7 +33,8 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
   company,
   suppliers,
   products,
-  isMasterAdmin,
+  canView,
+  canOperate,
   onStockChanged,
   onNavigateHome,
 }) => {
@@ -49,7 +51,7 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
     loadMore,
     reloadPurchases,
     createPurchase,
-  } = usePurchases(company.id, isMasterAdmin, suppliers);
+  } = usePurchases(company.id, canView, canOperate, suppliers);
   const onReload = reloadPurchases;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,13 +75,13 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
     return result;
   };
 
-  if (!isMasterAdmin) {
+  if (!canView) {
     return <ComprasAccessDenied companyName={company.name} onNavigateHome={onNavigateHome} />;
   }
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-12">
-      <ComprasHeader companyName={company.name} isLoading={isLoading} onReload={() => void onReload()} onNewPurchase={() => setIsFormOpen(true)} />
+      <ComprasHeader companyName={company.name} isLoading={isLoading} onReload={() => void onReload()} onNewPurchase={() => setIsFormOpen(true)} canCreate={canOperate} />
 
       <PurchasesSummaryCards summary={summary} activeSuppliers={suppliers.filter((s) => s.isActive).length} />
 
@@ -120,7 +122,7 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
                 : 'Registre la primera compra para ingresar stock formal a su inventario.'}
             </p>
           </div>
-          {!searchQuery && (
+          {!searchQuery && canOperate && (
             <Button variant="primary" size="sm" onClick={() => setIsFormOpen(true)}>
               <Plus size={14} className="mr-1.5" /> Registrar Primera Compra
             </Button>
@@ -138,6 +140,7 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
             setIsDetailOpen(true);
           }}
           onCancel={setPurchaseToCancel}
+          canCancel={canOperate}
         />
       )}
 

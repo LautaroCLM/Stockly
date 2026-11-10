@@ -126,8 +126,8 @@ SELECT throws_like(format($q$DELETE FROM public.credit_purchases WHERE purchase_
 -- 23-25. El rol empleado queda afuera
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'aaaa0028-0000-0000-0000-000000000002';
-SELECT throws_like(format($q$SELECT * FROM public.supplier_balances(%L)$q$, :'comp_a'), '%master_admin%', 'T-23 el rol empleado no ve las deudas');
-SELECT throws_like(format($q$SELECT public.register_supplier_payment(%L, %L, '[{"method":"transferencia","amount":10}]'::JSONB, NULL, false, 'cccc0028-0000-0000-0000-000000000020')$q$, :'comp_a', :'sup'), '%master_admin%', 'T-24 el rol empleado no registra pagos');
+SELECT throws_like(format($q$SELECT * FROM public.supplier_balances(%L)$q$, :'comp_a'), '%No tenés permiso%', 'T-23 el rol empleado no ve las deudas');
+SELECT throws_like(format($q$SELECT public.register_supplier_payment(%L, %L, '[{"method":"transferencia","amount":10}]'::JSONB, NULL, false, 'cccc0028-0000-0000-0000-000000000020')$q$, :'comp_a', :'sup'), '%No tenés permiso%', 'T-24 el rol empleado no registra pagos');
 SELECT is((SELECT count(*) FROM public.supplier_payments) + (SELECT count(*) FROM public.credit_purchases), 0::BIGINT, 'T-25 el rol empleado no lee las tablas');
 
 -- 26. Otra empresa

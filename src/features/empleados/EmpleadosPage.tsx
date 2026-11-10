@@ -20,21 +20,22 @@ const TABS: { id: Tab; label: string }[] = [
 
 interface EmpleadosPageProps {
   company: Company;
-  isMasterAdmin: boolean;
+  canView: boolean;
+  canOperate: boolean;
 }
 
 /** Empleados: personal, horarios semanales y registro de entrada y salida. */
-export const EmpleadosPage: React.FC<EmpleadosPageProps> = ({ company, isMasterAdmin }) => {
-  const staff = useStaff(company.id, isMasterAdmin);
+export const EmpleadosPage: React.FC<EmpleadosPageProps> = ({ company, canView, canOperate }) => {
+  const staff = useStaff(company.id, canView);
   const [tab, setTab] = useState<Tab>('today');
   const [editing, setEditing] = useState<EmployeeInput | null | undefined>(undefined);
   const [scheduling, setScheduling] = useState<Employee | null>(null);
 
-  if (!isMasterAdmin) {
+  if (!canView) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-2 text-text-muted">
         <ShieldAlert size={32} className="text-warning" />
-        <p className="text-sm font-semibold text-text-primary">Solo los administradores gestionan el personal</p>
+        <p className="text-sm font-semibold text-text-primary">No tenés acceso a este módulo. Pedile acceso al administrador.</p>
       </div>
     );
   }
@@ -58,9 +59,11 @@ export const EmpleadosPage: React.FC<EmpleadosPageProps> = ({ company, isMasterA
           <Button variant="secondary" size="sm" onClick={() => void staff.reload()} disabled={staff.isLoading} className="gap-1.5 h-9">
             <RotateCcw size={14} className={staff.isLoading ? 'animate-spin' : ''} /><span>Actualizar</span>
           </Button>
-          <Button variant="primary" size="sm" onClick={() => { setTab('staff'); setEditing(null); }} className="gap-1.5 h-9">
-            <Plus size={14} /><span>Nuevo empleado</span>
-          </Button>
+          {canOperate && (
+            <Button variant="primary" size="sm" onClick={() => { setTab('staff'); setEditing(null); }} className="gap-1.5 h-9">
+              <Plus size={14} /><span>Nuevo empleado</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -88,10 +91,10 @@ export const EmpleadosPage: React.FC<EmpleadosPageProps> = ({ company, isMasterA
         employees.length === 0 ? (
           <p className="py-12 text-center text-xs text-text-muted">Todavía no cargaste empleados. Usá "Nuevo empleado" para agregar el primero.</p>
         ) : (
-          <StaffTab employees={employees} schedules={staff.schedules} onEdit={(e) => setEditing(employeeToInput(e))} onSchedule={setScheduling} />
+          <StaffTab employees={employees} schedules={staff.schedules} onEdit={(e) => setEditing(employeeToInput(e))} onSchedule={setScheduling} canEdit={canOperate} />
         )
       ) : (
-        <AttendanceTab companyId={company.id} employees={employees} />
+        <AttendanceTab companyId={company.id} employees={employees} canEdit={canOperate} />
       )}
 
       <AnimatePresence>{editing !== undefined && <EmployeeFormModal initial={editing} onClose={() => setEditing(undefined)} onSubmit={staff.saveEmployee} />}</AnimatePresence>
