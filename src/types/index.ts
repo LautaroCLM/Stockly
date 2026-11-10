@@ -18,6 +18,7 @@ export type RouteId =
   | 'dashboard'
   | 'inventario'
   | 'ventas'
+  | 'documentos'
   | 'caja'
   | 'compras'
   | 'proveedores'

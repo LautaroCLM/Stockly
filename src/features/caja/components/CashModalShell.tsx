@@ -8,11 +8,13 @@ interface CashModalShellProps {
   icon: React.ReactNode;
   isBusy: boolean;
   onClose: () => void;
+  /** Clases del panel, por ejemplo un ancho mayor para formularios largos. */
+  panelClassName?: string;
   children: React.ReactNode;
 }
 
 /** Marco común de los diálogos de caja: fondo, encabezado y cierre con Escape. */
-export const CashModalShell: React.FC<CashModalShellProps> = ({ title, subtitle, icon, isBusy, onClose, children }) => {
+export const CashModalShell: React.FC<CashModalShellProps> = ({ title, subtitle, icon, isBusy, onClose, panelClassName, children }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !isBusy) onClose();
@@ -22,7 +24,7 @@ export const CashModalShell: React.FC<CashModalShellProps> = ({ title, subtitle,
   }, [isBusy, onClose]);
 
   return (
-    <ModalFrame ariaLabel={title} onBackdropClick={() => !isBusy && onClose()}>
+    <ModalFrame ariaLabel={title} onBackdropClick={() => !isBusy && onClose()} panelClassName={panelClassName}>
       <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">

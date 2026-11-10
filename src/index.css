@@ -60,6 +60,12 @@
   margin: 0;
 }
 
+/* Hoja A4 (remitos, presupuestos, garantías): página con nombre para no afectar al ticket de 80 mm */
+@page a4sheet {
+  size: A4;
+  margin: 12mm;
+}
+
 @media print {
   html,
   body {
@@ -81,6 +87,18 @@
     box-sizing: border-box;
     background: #fff;
     color: #000;
+  }
+
+  /* Con un documento A4 se anula el ancho de 80 mm */
+  html:has(#print-root.print-a4),
+  body:has(#print-root.print-a4) {
+    width: auto !important;
+  }
+
+  #print-root.print-a4 {
+    page: a4sheet;
+    width: auto;
+    padding: 0;
   }
 
   #print-root #thermal-receipt {

@@ -30,6 +30,12 @@ export const NAV_SECTIONS: NavSection[] = [
         iconName: 'Receipt',
       },
       {
+        id: 'documentos',
+        label: 'Documentos',
+        path: '/documentos',
+        iconName: 'FileText',
+      },
+      {
         id: 'caja',
         label: 'Caja Diaria',
         path: '/caja',

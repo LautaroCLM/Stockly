@@ -10,6 +10,7 @@ import type { useCompanySettings } from '@/features/companies/hooks/useCompanySe
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { InventarioPage } from '@/features/inventario/InventarioPage';
 import { VentasPage } from '@/features/ventas/VentasPage';
+import { DocumentosPage } from '@/features/documentos/DocumentosPage';
 import { HistorialStockPage } from '@/features/historial/HistorialStockPage';
 import { AuditLogPage } from '@/features/auditoria/AuditLogPage';
 import { CajaPage } from '@/features/caja/CajaPage';
@@ -112,6 +113,8 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
           onViewReceipt={props.onViewReceipt} onNavigateToInventario={goTo('inventario')}
           onSaleCancelled={reloadCatalog(catalog, 'tras anulación')} />
       );
+    case 'documentos':
+      return <DocumentosPage company={company} {...access('documentos')} isMasterAdmin={isMasterAdmin} products={catalog.products} customers={customers.customers} />;
     case 'historial':
       return <HistorialStockPage company={company} products={catalog.products} onNavigateToInventario={goTo('inventario')} />;
     case 'caja':

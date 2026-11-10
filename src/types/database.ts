@@ -385,6 +385,98 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"document_counters": {
+                  Row: {
+                    "company_id": string,"doc_type": string,"last_number": number,"point_of_sale": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"doc_type": string,"last_number"?: number,"point_of_sale": number
+                  }
+                  Update: {
+                    "company_id"?: string,"doc_type"?: string,"last_number"?: number,"point_of_sale"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "document_counters_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"document_items": {
+                  Row: {
+                    "company_id": string,"description": string,"document_id": string,"id": string,"line_total": number,"position": number,"product_id": string | null,"quantity": number,"serial_number": string | null,"unit_price": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"description": string,"document_id": string,"id"?: string,"line_total": number,"position": number,"product_id"?: string | null,"quantity": number,"serial_number"?: string | null,"unit_price": number
+                  }
+                  Update: {
+                    "company_id"?: string,"description"?: string,"document_id"?: string,"id"?: string,"line_total"?: number,"position"?: number,"product_id"?: string | null,"quantity"?: number,"serial_number"?: string | null,"unit_price"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_document_items_document"
+      columns: ["company_id","document_id"]
+isOneToOne: false
+      referencedRelation: "documents"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_document_items_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"document_settings": {
+                  Row: {
+                    "address": string | null,"company_id": string,"email": string | null,"footer_note": string | null,"phone": string | null,"point_of_sale": number,"tax_condition": string,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "address"?: string | null,"company_id": string,"email"?: string | null,"footer_note"?: string | null,"phone"?: string | null,"point_of_sale"?: number,"tax_condition"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "address"?: string | null,"company_id"?: string,"email"?: string | null,"footer_note"?: string | null,"phone"?: string | null,"point_of_sale"?: number,"tax_condition"?: string,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "document_settings_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: true
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"documents": {
+                  Row: {
+                    "company_id": string,"created_at": string,"created_by": string,"customer_address": string | null,"customer_id": string | null,"customer_name": string,"customer_phone": string | null,"customer_tax_id": string | null,"discount": number,"doc_number": number,"doc_type": string,"id": string,"issue_date": string,"notes": string | null,"point_of_sale": number,"show_prices": boolean,"status": string,"subtotal": number,"total": number,"valid_until": string | null,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null,"warranty_months": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"created_by": string,"customer_address"?: string | null,"customer_id"?: string | null,"customer_name": string,"customer_phone"?: string | null,"customer_tax_id"?: string | null,"discount"?: number,"doc_number": number,"doc_type": string,"id"?: string,"issue_date": string,"notes"?: string | null,"point_of_sale": number,"show_prices"?: boolean,"status"?: string,"subtotal": number,"total": number,"valid_until"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null,"warranty_months"?: number | null
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"customer_address"?: string | null,"customer_id"?: string | null,"customer_name"?: string,"customer_phone"?: string | null,"customer_tax_id"?: string | null,"discount"?: number,"doc_number"?: number,"doc_type"?: string,"id"?: string,"issue_date"?: string,"notes"?: string | null,"point_of_sale"?: number,"show_prices"?: boolean,"status"?: string,"subtotal"?: number,"total"?: number,"valid_until"?: string | null,"void_reason"?: string | null,"voided_at"?: string | null,"voided_by"?: string | null,"warranty_months"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "documents_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fk_documents_customer"
+      columns: ["company_id","customer_id"]
+isOneToOne: false
+      referencedRelation: "customers"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
                 },"employee_schedules": {
                   Row: {
                     "company_id": string,"employee_id": string,"end_time": string,"id": string,"start_time": string,"weekday": number
@@ -966,6 +1058,9 @@ isOneToOne: false
 "create_company":
 { Args: { "p_currency"?: string,"p_name": string,"p_tax_id": string,"p_timezone"?: string }; Returns: string
                            },
+"create_document":
+{ Args: { "p_company_id": string,"p_data": Json,"p_idempotency_key": string }; Returns: Json
+                           },
 "create_expense":
 { Args: { "p_amount": number,"p_category": string,"p_company_id": string,"p_description": string,"p_expense_date": string,"p_machine_id"?: string,"p_pay_from_cash": boolean,"p_payment_method": string,"p_supplier_id": string }; Returns: Json
                            },
@@ -1087,6 +1182,9 @@ isOneToOne: false
 "save_attendance":
 { Args: { "p_check_in": string,"p_check_out": string,"p_company_id": string,"p_employee_id": string,"p_reason": string,"p_record_id": string }; Returns: string
                            },
+"save_document_settings":
+{ Args: { "p_address": string,"p_company_id": string,"p_email": string,"p_footer_note": string,"p_phone": string,"p_point_of_sale": number,"p_tax_condition": string }; Returns: undefined
+                           },
 "set_company_negative_stock_policy":
 { Args: { "p_allow_negative_stock": boolean,"p_company_id": string,"p_reason": string }; Returns: undefined
                            },
@@ -1138,6 +1236,9 @@ isOneToOne: false
                            },
 "void_customer_payment":
 { Args: { "p_company_id": string,"p_payment_id": string,"p_reason": string }; Returns: Json
+                           },
+"void_document":
+{ Args: { "p_company_id": string,"p_document_id": string,"p_reason": string }; Returns: undefined
                            },
 "void_expense":
 { Args: { "p_company_id": string,"p_expense_id": string,"p_reason": string }; Returns: Json

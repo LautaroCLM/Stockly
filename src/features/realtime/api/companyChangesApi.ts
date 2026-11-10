@@ -23,6 +23,8 @@ export const COMPANY_SCOPED_TABLES: readonly DataTable[] = [
   'credit_purchases',
   'company_module_permissions',
   'machines',
+  'documents',
+  'document_settings',
   'employees',
   'employee_schedules',
   'attendance_records',

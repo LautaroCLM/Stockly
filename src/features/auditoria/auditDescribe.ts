@@ -20,6 +20,8 @@ export const AUDIT_TABLE_LABELS: Record<string, string> = {
   credit_purchases: 'Compra a crédito',
   company_module_permissions: 'Permiso de módulo',
   machines: 'Máquina',
+  documents: 'Documento',
+  document_settings: 'Datos del emisor',
   employees: 'Empleado',
   employee_schedules: 'Horario de empleado',
   attendance_records: 'Asistencia',

@@ -22,6 +22,7 @@ import {
   ArrowLeftRight,
   FileBarChart,
   Tractor,
+  FileText,
   X,
   LogOut,
 } from 'lucide-react';
@@ -55,6 +56,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   ArrowLeftRight,
   FileBarChart,
   Tractor,
+  FileText,
   Clock,
   KeyRound,
 };
