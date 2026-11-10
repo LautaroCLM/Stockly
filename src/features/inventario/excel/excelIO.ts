@@ -44,8 +44,39 @@ export async function readSpreadsheet(file: File): Promise<unknown[][]> {
   return table;
 }
 
-/** Genera el .xlsx y lo descarga. El encabezado va en negrita y las columnas con un ancho cómodo. */
-export async function downloadSpreadsheet(table: ExportTable, fileName: string): Promise<void> {
+interface SaveHandle {
+  createWritable(): Promise<{ write(data: Blob): Promise<void>; close(): Promise<void> }>;
+}
+type SavePicker = (options: {
+  suggestedName: string;
+  types: { description: string; accept: Record<string, string[]> }[];
+}) => Promise<SaveHandle>;
+
+/** 'saved': se eligió dónde guardarlo. 'downloaded': bajó a la carpeta de Descargas. 'cancelled': no se guardó nada. */
+export type SaveOutcome = 'saved' | 'downloaded' | 'cancelled';
+
+const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+/** Descarga clásica con un enlace temporal. El enlace se libera con demora: si se destruye al instante, algunos navegadores cancelan la descarga. */
+function downloadWithLink(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 60_000);
+}
+
+/**
+ * Genera el .xlsx y lo guarda. Donde el navegador lo permite (Chrome, Edge, la app de escritorio) abre
+ * el cuadro "Guardar como"; si no, lo descarga. El encabezado va en negrita y las columnas con un ancho cómodo.
+ */
+export async function downloadSpreadsheet(table: ExportTable, fileName: string): Promise<SaveOutcome> {
   const { default: writeXlsxFile } = await import('write-excel-file/universal');
   const data = [
     table.headers.map((header) => ({ value: header, fontWeight: 'bold' as const })),
@@ -55,14 +86,21 @@ export async function downloadSpreadsheet(table: ExportTable, fileName: string):
     const longest = table.rows.reduce((max, row) => Math.max(max, String(row[index] ?? '').length), header.length);
     return { width: Math.min(Math.max(longest + 2, 12), 50) };
   });
-
   const blob = await writeXlsxFile(data, { columns }).toBlob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+
+  const picker = (window as unknown as { showSaveFilePicker?: SavePicker }).showSaveFilePicker;
+  if (picker) {
+    try {
+      const handle = await picker({ suggestedName: fileName, types: [{ description: 'Excel (.xlsx)', accept: { [XLSX_TYPE]: ['.xlsx'] } }] });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return 'saved';
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return 'cancelled';
+      // Sin permiso para el cuadro de guardado (o no disponible): se baja con el método clásico
+    }
+  }
+  downloadWithLink(blob, fileName);
+  return 'downloaded';
 }

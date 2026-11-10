@@ -59,13 +59,18 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
   const openCreate = () => setDialog({ kind: 'create' });
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [exportInfo, setExportInfo] = useState<string | null>(null);
 
   // Exporta todos los productos (no solo la página que se ve), con el costo solo si se puede ver
   const exportExcel = async () => {
     setIsExporting(true);
     setExportError(null);
+    setExportInfo(null);
     try {
-      await downloadSpreadsheet(buildExportTable(products, { includeCosts: isMasterAdmin }), exportFileName(company.name, new Date()));
+      const fileName = exportFileName(company.name, new Date());
+      const outcome = await downloadSpreadsheet(buildExportTable(products, { includeCosts: isMasterAdmin }), fileName);
+      if (outcome === 'saved') setExportInfo(`Listo: se guardó el archivo con ${products.length} productos.`);
+      else if (outcome === 'downloaded') setExportInfo(`Listo: se descargó ${fileName} con ${products.length} productos. Buscalo en tu carpeta de Descargas.`);
     } catch {
       setExportError('No se pudo generar el archivo de Excel. Intentá de nuevo.');
     } finally {
@@ -89,6 +94,13 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         onExportExcel={() => void exportExcel()}
         isExporting={isExporting}
       />
+
+      {exportInfo && (
+        <p role="status" className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between gap-2">
+          <span>{exportInfo}</span>
+          <button type="button" onClick={() => setExportInfo(null)} className="underline shrink-0">Cerrar</button>
+        </p>
+      )}
 
       {exportError && <p role="alert" className="p-3 rounded-xl bg-danger/10 border border-danger/30 text-danger text-xs">{exportError}</p>}
 
