@@ -8,6 +8,7 @@ type BadgeVariant = 'success' | 'danger' | 'warning' | 'primary' | 'neutral';
 
 export const REASON_LABELS: Record<string, { label: string; badge: BadgeVariant }> = {
   initial_load: { label: 'Carga Inicial', badge: 'primary' },
+  import: { label: 'Importación Excel', badge: 'primary' },
   purchase: { label: 'Entrada / Compra', badge: 'success' },
   physical_count: { label: 'Conteo Físico', badge: 'warning' },
   loss_damage: { label: 'Merma / Rotura', badge: 'danger' },

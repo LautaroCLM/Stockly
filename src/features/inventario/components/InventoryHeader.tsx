@@ -1,5 +1,5 @@
 import React from 'react';
-import { Boxes, FolderTree, PackagePlus, Plus, ShoppingCart } from 'lucide-react';
+import { Boxes, FileDown, FileUp, FolderTree, Loader2, PackagePlus, Plus, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
 
@@ -13,6 +13,9 @@ interface InventoryHeaderProps {
   onNewProduct: () => void;
   onInitialStock: () => void;
   onOpenCart: () => void;
+  onImportExcel: () => void;
+  onExportExcel: () => void;
+  isExporting: boolean;
 }
 
 const ACTION_CLASS = 'gap-1.5 font-medium border-border hover:bg-surface-2';
@@ -28,6 +31,9 @@ export const InventoryHeader: React.FC<InventoryHeaderProps> = ({
   onNewProduct,
   onInitialStock,
   onOpenCart,
+  onImportExcel,
+  onExportExcel,
+  isExporting,
 }) => (
   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
     <div className="flex items-center gap-3">
@@ -47,7 +53,7 @@ export const InventoryHeader: React.FC<InventoryHeaderProps> = ({
       </div>
     </div>
 
-    <div className="flex items-center gap-2.5">
+    <div className="flex flex-wrap items-center justify-end gap-2.5">
       {isMasterAdmin && (
         <>
           <Button variant="secondary" size="md" onClick={onManageCategories} className={ACTION_CLASS}
@@ -60,6 +66,11 @@ export const InventoryHeader: React.FC<InventoryHeaderProps> = ({
             <Plus size={16} className="text-primary" />
             <span>Nuevo Producto</span>
           </Button>
+          <Button variant="secondary" size="md" onClick={onImportExcel} className={ACTION_CLASS}
+            title="Importar muchos productos desde un archivo de Excel o CSV">
+            <FileUp size={16} className="text-primary" />
+            <span>Importar Excel</span>
+          </Button>
           {canImportInitialStock && (
             <Button variant="secondary" size="md" onClick={onInitialStock} className={ACTION_CLASS}
               title="Cargar existencias de apertura y costos iniciales para productos sin movimientos">
@@ -69,6 +80,12 @@ export const InventoryHeader: React.FC<InventoryHeaderProps> = ({
           )}
         </>
       )}
+
+      <Button variant="secondary" size="md" onClick={onExportExcel} disabled={isExporting} className={ACTION_CLASS}
+        title="Descargar el inventario en un archivo de Excel">
+        {isExporting ? <Loader2 size={16} className="animate-spin text-primary" /> : <FileDown size={16} className="text-primary" />}
+        <span>Exportar Excel</span>
+      </Button>
 
       <Button variant="primary" size="md" onClick={onOpenCart} className="shadow-lg shadow-primary/20 relative">
         <ShoppingCart size={16} />

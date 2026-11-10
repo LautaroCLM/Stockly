@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import { ProductFormModal } from './ProductFormModal';
 import { StockAdjustmentModal } from './StockAdjustmentModal';
+import { ImportInventoryModal } from './ImportInventoryModal';
 import { InitialStockModal } from './InitialStockModal';
 import { ConfirmDeactivateModal } from './ConfirmDeactivateModal';
 import { CategoryManagementModal } from './CategoryManagementModal';
@@ -24,6 +25,7 @@ export type InventoryDialog =
   | { kind: 'edit'; product: Product }
   | { kind: 'adjust'; product: Product }
   | { kind: 'initialStock' }
+  | { kind: 'importExcel' }
   | { kind: 'deactivate'; product: Product }
   | { kind: 'categories' };
 
@@ -41,6 +43,8 @@ interface InventoryDialogsProps {
   onDeactivateProduct: (id: string) => Promise<SimpleResult> | SimpleResult;
   onAdjustStock: (data: StockAdjustmentData) => Promise<StockAdjustmentResult> | StockAdjustmentResult;
   onImportInitialStock?: (data: InitialStockBatchData) => Promise<InitialStockResult>;
+  /** Se llama al terminar una importación desde Excel, para recargar el inventario. */
+  onProductsImported?: () => void;
   onCreateCategory: (name: string, description?: string) => Promise<CategoryResult>;
   onRenameCategory: (id: string, newName: string) => Promise<CategoryResult>;
   onDeleteCategory: (id: string, productCount: number) => Promise<SimpleResult>;
@@ -92,6 +96,15 @@ export const InventoryDialogs: React.FC<InventoryDialogsProps> = (props) => {
           onSubmit={props.onImportInitialStock}
         />
       )}
+
+      <ImportInventoryModal
+        isOpen={dialog.kind === 'importExcel'}
+        onClose={onClose}
+        companyId={company.id}
+        products={products}
+        categoryNames={categoryNames}
+        onImported={() => props.onProductsImported?.()}
+      />
 
       <ConfirmDeactivateModal
         isOpen={dialog.kind === 'deactivate'}

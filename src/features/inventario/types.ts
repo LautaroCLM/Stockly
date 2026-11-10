@@ -98,6 +98,7 @@ export type StockMovementDirection = 'increase' | 'decrease';
 
 export type StockMovementReason =
   | 'initial_load'
+  | 'import'
   | 'purchase'
   | 'physical_count'
   | 'loss_damage'

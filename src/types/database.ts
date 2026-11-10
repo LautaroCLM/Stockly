@@ -1004,6 +1004,9 @@ isOneToOne: false
 "import_initial_stock":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_items": Json }; Returns: Json
                            },
+"import_inventory":
+{ Args: { "p_company_id": string,"p_idempotency_key": string,"p_options": Json,"p_rows": Json }; Returns: Json
+                           },
 "import_products":
 { Args: { "p_company_id": string,"p_on_duplicate"?: string,"p_products": Json }; Returns: number
                            },

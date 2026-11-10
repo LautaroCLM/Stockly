@@ -15,6 +15,8 @@ import { CatalogAlerts } from './components/CatalogAlerts';
 import { ProductsTable } from './components/ProductsTable';
 import { InventoryDialogs, type InventoryDialog } from './components/InventoryDialogs';
 import { useProductFilters } from './hooks/useProductFilters';
+import { downloadSpreadsheet } from './excel/excelIO';
+import { buildExportTable, exportFileName } from './excel/exportRows';
 
 type SimpleResult = { success: boolean; error?: string };
 type CategoryResult = { success: boolean; error?: string; category?: Category };
@@ -55,6 +57,21 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
   const filters = useProductFilters(products, categoryNames, company.id, props.searchRequest ?? null);
   const openCreate = () => setDialog({ kind: 'create' });
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // Exporta todos los productos (no solo la página que se ve), con el costo solo si se puede ver
+  const exportExcel = async () => {
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      await downloadSpreadsheet(buildExportTable(products, { includeCosts: isMasterAdmin }), exportFileName(company.name, new Date()));
+    } catch {
+      setExportError('No se pudo generar el archivo de Excel. Intentá de nuevo.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-12">
@@ -68,7 +85,12 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         onNewProduct={openCreate}
         onInitialStock={() => setDialog({ kind: 'initialStock' })}
         onOpenCart={props.onOpenCart}
+        onImportExcel={() => setDialog({ kind: 'importExcel' })}
+        onExportExcel={() => void exportExcel()}
+        isExporting={isExporting}
       />
+
+      {exportError && <p role="alert" className="p-3 rounded-xl bg-danger/10 border border-danger/30 text-danger text-xs">{exportError}</p>}
 
       <CatalogAlerts error={productsError} syncWarning={props.productsSyncWarning ?? null} onReload={props.onReloadProducts} />
 
@@ -121,6 +143,7 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         onDeactivateProduct={props.onDeactivateProduct}
         onAdjustStock={props.onAdjustStock}
         onImportInitialStock={props.onImportInitialStock}
+        onProductsImported={props.onReloadProducts}
         onCreateCategory={props.onCreateCategory}
         onRenameCategory={props.onRenameCategory}
         onDeleteCategory={props.onDeleteCategory}

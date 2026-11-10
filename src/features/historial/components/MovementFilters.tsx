@@ -9,6 +9,7 @@ const REASON_OPTIONS: [string, string][] = [
   ['loss_damage', 'Mermas y roturas'],
   ['internal_use', 'Consumo interno'],
   ['initial_load', 'Cargas iniciales'],
+  ['import', 'Importaciones de Excel'],
   ['purchase', 'Entradas / Compras'],
   ['sale', 'Ventas mostrador'],
   ['cancellation', 'Anulaciones de venta'],

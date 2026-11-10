@@ -128,6 +128,7 @@ export function buildCriticalStock(products: Product[], limit = 8): CriticalProd
 
 const REASON_LABELS: Record<string, string> = {
   initial_load: 'Carga inicial',
+  import: 'Importación de Excel',
   purchase: 'Compra',
   physical_count: 'Conteo físico',
   loss_damage: 'Merma',
