@@ -4,7 +4,19 @@ import type { ExportTable } from './exportRows';
 /** Tamaño máximo del archivo a importar. */
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-const extensionOf = (name: string): string => name.slice(name.lastIndexOf('.') + 1).toLowerCase();
+const READ_TIMEOUT_MS = 30_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(
+      (value) => { window.clearTimeout(timer); resolve(value); },
+      (error: unknown) => { window.clearTimeout(timer); reject(error); }
+    );
+  });
+}
+
+const extensionOf =(name: string): string => name.slice(name.lastIndexOf('.') + 1).toLowerCase();
 
 /** Un CSV de Excel en español suele estar en Windows-1252: si no es UTF-8 válido, se prueba con ese. */
 async function readText(file: File): Promise<string> {
@@ -30,8 +42,12 @@ export async function readSpreadsheet(file: File): Promise<unknown[][]> {
   } else if (extension === 'xlsx') {
     try {
       const { readSheet } = await import('read-excel-file/universal');
-      table = (await readSheet(file)) as unknown[][];
-    } catch {
+      // Con hojas grandes la librería descomprime en un worker; si algo lo bloquea no responde nunca: se corta con un error
+      table = (await withTimeout(readSheet(file), READ_TIMEOUT_MS)) as unknown[][];
+    } catch (err) {
+      if (err instanceof Error && err.message === 'timeout') {
+        throw new Error('El archivo tardó demasiado en leerse. Probá de nuevo; si sigue igual, guardalo como .csv desde Excel e importá ese.');
+      }
       throw new Error('No se pudo leer el archivo. Verificá que sea un Excel (.xlsx) válido y que no esté protegido con contraseña.');
     }
   } else if (extension === 'xls') {
