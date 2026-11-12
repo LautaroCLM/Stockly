@@ -6,74 +6,80 @@ import { paymentMethodLabel } from '../paymentMethods';
 import { TAX_CONDITION_LABELS } from '@/features/documentos/types';
 import type { DocumentSettings } from '@/features/documentos/types';
 
-/** Ticket de venta imprimible (formato térmico de 80 mm). Comprobante no fiscal. */
+const DIVIDER = 'border-b border-dashed border-black';
+
+/**
+ * Ticket de venta imprimible (formato térmico de 80 mm). Comprobante no fiscal.
+ * Pensado para impresoras de poca potencia: todo en negro puro, en negrita y desde 11 px
+ * (los grises y las letras finas casi no se ven en papel térmico).
+ */
 export const ReceiptTicket: React.FC<{ sale: Sale; company: Company; settings: DocumentSettings; logo: string | null }> = ({ sale, company, settings, logo }) => (
     <div
       id="thermal-receipt"
-      className="bg-white text-zinc-900 font-mono text-[11px] p-6 rounded-xl border border-zinc-300 shadow-md max-w-[340px] mx-auto print:border-none print:shadow-none print:max-w-full print:p-0"
+      className="bg-white text-black font-mono font-bold text-[11px] leading-snug p-6 rounded-xl border border-zinc-300 shadow-md max-w-[340px] mx-auto print:border-none print:shadow-none print:max-w-full print:p-0"
     >
       {/* Header */}
-      <div className="text-center pb-3 border-b border-dashed border-zinc-400 space-y-1">
+      <div className={`text-center pb-3 space-y-1.5 ${DIVIDER}`}>
         {logo && <img src={logo} alt="" className="mx-auto max-h-20 max-w-[60%] object-contain grayscale contrast-125" />}
-        <div className="text-sm font-extrabold uppercase">{company.name}</div>
-        <div className="text-[10px] text-zinc-600 space-y-0.5">
+        <div className="text-base font-extrabold uppercase">{company.name}</div>
+        <div className="space-y-0.5">
           {company.cuit && <div>CUIT: {company.cuit}</div>}
-          <div>{TAX_CONDITION_LABELS[settings.taxCondition]}</div>
+          <div className="uppercase">{TAX_CONDITION_LABELS[settings.taxCondition]}</div>
           {settings.address && <div>{settings.address}</div>}
-          {(settings.phone || settings.email) && <div>{[settings.phone, settings.email].filter(Boolean).join(' • ')}</div>}
+          {(settings.phone || settings.email) && <div className="break-words">{[settings.phone, settings.email].filter(Boolean).join(' • ')}</div>}
         </div>
-        <div className="pt-1 text-[9px] uppercase font-bold text-rose-700 bg-rose-50 border border-rose-200 py-0.5 px-2 rounded">
+        <div className="mt-1 border-2 border-black py-1 px-2 uppercase">
           COMPROBANTE NO FISCAL - USO INTERNO
         </div>
         {sale.status === 'anulada' && (
-          <div className="mt-1.5 py-1 border-2 border-red-700 text-red-700 font-extrabold text-[11px] tracking-widest">
+          <div className="mt-1.5 py-1 border-4 border-black font-extrabold text-sm tracking-widest">
             VENTA ANULADA
             {sale.cancelReason && (
-              <span className="block text-[9px] font-medium tracking-normal">Motivo: {sale.cancelReason}</span>
+              <span className="block text-[11px] tracking-normal">MOTIVO: {sale.cancelReason}</span>
             )}
           </div>
         )}
       </div>
 
       {/* Sale Meta */}
-      <div className="py-2.5 border-b border-dashed border-zinc-400 text-[10px] space-y-1">
-        <div className="flex justify-between">
-          <span className="font-bold">NRO VENTA:</span>
-          <span className="font-bold text-zinc-900">{sale.saleNumber}</span>
+      <div className={`py-3 space-y-1.5 ${DIVIDER}`}>
+        <div className="flex justify-between gap-2">
+          <span>NRO VENTA:</span>
+          <span>{sale.saleNumber}</span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between gap-2">
           <span>FECHA:</span>
           <span>{formatDateTime(sale.createdAt)}</span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between gap-2">
           <span>CLIENTE:</span>
-          <span className="font-medium truncate max-w-[170px]">{sale.clientName}</span>
+          <span className="uppercase text-right break-words max-w-[170px]">{sale.clientName}</span>
         </div>
         {sale.customerDoc && (
-          <div className="flex justify-between text-[9px] text-zinc-600">
+          <div className="flex justify-between gap-2">
             <span>IDENTIFICACIÓN:</span>
-            <span className="font-medium">{sale.customerDoc}</span>
+            <span>{sale.customerDoc}</span>
           </div>
         )}
       </div>
 
       {/* Items Table */}
-      <div className="py-2.5 border-b border-dashed border-zinc-400">
-        <div className="grid grid-cols-12 text-[10px] font-bold pb-1 text-zinc-700">
+      <div className={`py-3 ${DIVIDER}`}>
+        <div className="grid grid-cols-12 pb-1.5">
           <span className="col-span-2">CANT</span>
           <span className="col-span-6">DETALLE</span>
           <span className="col-span-4 text-right">TOTAL</span>
         </div>
 
-        <div className="space-y-1.5 pt-1">
+        <div className="space-y-2 pt-1">
           {sale.items.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-12 text-[10px] leading-tight">
-              <span className="col-span-2 font-bold">{item.quantity}</span>
+            <div key={idx} className="grid grid-cols-12">
+              <span className="col-span-2">{item.quantity}</span>
               <div className="col-span-6 pr-1">
-                <div className="truncate font-medium">{item.name}</div>
-                <div className="text-[9px] text-zinc-500">@{formatCurrency(item.unitPrice)}</div>
+                <div className="uppercase break-words">{item.name}</div>
+                <div>@{formatCurrency(item.unitPrice)}</div>
               </div>
-              <span className="col-span-4 text-right font-bold tabular-nums">
+              <span className="col-span-4 text-right tabular-nums">
                 {formatCurrency(item.subtotal)}
               </span>
             </div>
@@ -82,38 +88,38 @@ export const ReceiptTicket: React.FC<{ sale: Sale; company: Company; settings: D
       </div>
 
       {/* Totals & Payments */}
-      <div className="py-2.5 border-b border-dashed border-zinc-400 space-y-1 text-[11px]">
-        <div className="flex justify-between">
-          <span>Subtotal:</span>
+      <div className={`py-3 space-y-1.5 ${DIVIDER}`}>
+        <div className="flex justify-between gap-2">
+          <span>SUBTOTAL:</span>
           <span className="tabular-nums">{formatCurrency(sale.subtotal)}</span>
         </div>
 
         {sale.discountAmount > 0 && (
-          <div className="flex justify-between text-zinc-700">
-            <span>Descuento ({sale.discountPercent}%):</span>
+          <div className="flex justify-between gap-2">
+            <span>DESCUENTO ({sale.discountPercent}%):</span>
             <span className="tabular-nums">-{formatCurrency(sale.discountAmount)}</span>
           </div>
         )}
 
-        <div className="flex justify-between text-sm font-extrabold pt-1 border-t border-zinc-300">
+        <div className="flex justify-between gap-2 text-base font-extrabold pt-1.5 border-t-2 border-black">
           <span>TOTAL:</span>
           <span className="tabular-nums">{formatCurrency(sale.total)}</span>
         </div>
       </div>
 
       {/* Payment breakdown */}
-      <div className="py-2.5 border-b border-dashed border-zinc-400 text-[10px] space-y-1">
-        <span className="font-bold uppercase">Medios de Pago:</span>
+      <div className={`py-3 space-y-1.5 ${DIVIDER}`}>
+        <span>MEDIOS DE PAGO:</span>
         {sale.payments.map((p, idx) => (
-          <div key={idx} className="flex justify-between text-zinc-700">
-            <span>{paymentMethodLabel(p.method)}:</span>
-            <span className="font-bold tabular-nums">{formatCurrency(p.amount)}</span>
+          <div key={idx} className="flex justify-between gap-2">
+            <span className="uppercase">{paymentMethodLabel(p.method)}:</span>
+            <span className="tabular-nums">{formatCurrency(p.amount)}</span>
           </div>
         ))}
 
         {sale.payments.some((p) => p.cashChange && p.cashChange > 0) && (
-          <div className="flex justify-between text-zinc-600 pt-1 text-[9px]">
-            <span>Vuelto entregado:</span>
+          <div className="flex justify-between gap-2 pt-1">
+            <span>VUELTO ENTREGADO:</span>
             <span className="tabular-nums">
               {formatCurrency(sale.payments.find((p) => p.cashChange)?.cashChange || 0)}
             </span>
@@ -121,10 +127,10 @@ export const ReceiptTicket: React.FC<{ sale: Sale; company: Company; settings: D
         )}
       </div>
 
-      {/* Footer barcode/greeting */}
-      <div className="pt-3 text-center space-y-1 text-[9px] text-zinc-500">
-        <div>{settings.footerNote || '¡Gracias por su compra!'}</div>
-        <div className="font-mono text-[8px] tracking-widest text-zinc-400">
+      {/* Footer */}
+      <div className="pt-3 text-center space-y-1">
+        <div className="break-words">{settings.footerNote || '¡Gracias por su compra!'}</div>
+        <div className="tracking-widest break-all">
           * {sale.id} *
         </div>
       </div>

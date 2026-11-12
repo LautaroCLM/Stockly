@@ -1,8 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { StockStatus } from '../types';
-import { Search, X, Filter } from 'lucide-react';
+import type { Product, StockStatus } from '../types';
+import { X, Filter } from 'lucide-react';
+import { ProductSearchBox } from './ProductSearchBox';
 
 interface ProductFiltersProps {
+  /** Productos entre los que se sugiere al escribir (según el filtro de activos). */
+  suggestionProducts: Product[];
   searchQuery: string;
   onSearchChange: (query: string) => void;
   categories: string[];
@@ -16,6 +19,7 @@ interface ProductFiltersProps {
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
+  suggestionProducts,
   searchQuery,
   onSearchChange,
   categories,
@@ -54,21 +58,17 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       {/* Top row: Omnibar search & Category select */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
         {/* Instant Search Bar */}
-        <div className="relative flex-1">
-          <Search
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
-          />
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Buscar por Nombre, SKU o Código de Barras... (Presiona '/' o Ctrl+K)"
-            className="w-full h-9 pl-9 pr-16 text-xs bg-surface-2 border border-border/80 focus:border-primary focus:bg-surface-2 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
-          />
-          {searchQuery ? (
+        <ProductSearchBox
+          value={searchQuery}
+          onChange={onSearchChange}
+          products={suggestionProducts}
+          inputRef={searchInputRef}
+          ariaLabel="Buscar productos"
+          placeholder="Buscar por Nombre, SKU o Código de Barras... (Presiona '/' o Ctrl+K)"
+          inputClassName="w-full h-9 pl-9 pr-16 text-xs bg-surface-2 border border-border/80 focus:border-primary focus:bg-surface-2 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
+          trailing={searchQuery ? (
             <button
+              type="button"
               onClick={() => onSearchChange('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-0.5"
               title="Borrar búsqueda"
@@ -80,7 +80,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
               /
             </kbd>
           )}
-        </div>
+        />
 
         {/* Category Filter */}
         <div className="flex items-center gap-2">

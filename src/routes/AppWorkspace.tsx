@@ -139,6 +139,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         cartTotal={cart.total}
         onOpenCart={() => setIsCartOpen(true)}
         onSearch={handleHeaderSearch}
+        searchProducts={catalog.products}
         userName={profile?.full_name || undefined}
         userEmail={user.email || undefined}
         onSignOut={onSignOut}

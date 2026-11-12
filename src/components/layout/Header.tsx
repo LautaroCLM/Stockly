@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/formatters';
 import { Menu, ShoppingCart } from 'lucide-react';
 import { NoticesBell } from '@/features/avisos/components/NoticesBell';
 import type { Notice } from '@/features/avisos/types';
+import type { Product } from '@/features/inventario/types';
 import { HeaderSearch } from './HeaderSearch';
 import { ConnectionBadge } from './ConnectionBadge';
 
@@ -19,6 +20,8 @@ interface HeaderProps {
   onQuickSaleClick: () => void;
   /** Buscar productos desde el encabezado (abre Inventario filtrado). */
   onSearch: (query: string) => void;
+  /** Catálogo para las sugerencias del buscador. */
+  searchProducts: readonly Product[];
   onOpenCart?: () => void;
   /** Avisos de la campana (stock bajo, deudas viejas, caja abierta, etc.). */
   notices?: Notice[];
@@ -34,6 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMobileSidebar,
   onQuickSaleClick,
   onSearch,
+  searchProducts,
   onOpenCart,
   notices = [],
   onNoticeSelect,
@@ -68,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Middle: búsqueda de productos */}
       <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
-        <HeaderSearch onSearch={onSearch} />
+        <HeaderSearch onSearch={onSearch} products={searchProducts} />
       </div>
 
       {/* Right: Quick actions, cart badge, notifications, status */}

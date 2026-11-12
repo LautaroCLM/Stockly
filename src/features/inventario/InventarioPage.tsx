@@ -56,6 +56,11 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
   const [dialog, setDialog] = useState<InventoryDialog>({ kind: 'none' });
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
   const filters = useProductFilters(products, categoryNames, company.id, props.searchRequest ?? null);
+  // Las sugerencias respetan el filtro Activos / Inactivos / Todos
+  const suggestionProducts = useMemo(
+    () => products.filter((p) => filters.activeFilter === 'all' || (p.isActive !== false) === (filters.activeFilter === 'active')),
+    [products, filters.activeFilter]
+  );
   const openCreate = () => setDialog({ kind: 'create' });
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -107,6 +112,7 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
       <CatalogAlerts error={productsError} syncWarning={props.productsSyncWarning ?? null} onReload={props.onReloadProducts} />
 
       <ProductFilters
+        suggestionProducts={suggestionProducts}
         searchQuery={filters.searchQuery}
         onSearchChange={filters.setSearchQuery}
         categories={categoryNames}
