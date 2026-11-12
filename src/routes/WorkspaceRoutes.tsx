@@ -11,6 +11,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { InventarioPage } from '@/features/inventario/InventarioPage';
 import { VentasPage } from '@/features/ventas/VentasPage';
 import { DocumentosPage } from '@/features/documentos/DocumentosPage';
+import { PreciosPage } from '@/features/precios/PreciosPage';
 import { HistorialStockPage } from '@/features/historial/HistorialStockPage';
 import { AuditLogPage } from '@/features/auditoria/AuditLogPage';
 import { CajaPage } from '@/features/caja/CajaPage';
@@ -115,6 +116,8 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       );
     case 'documentos':
       return <DocumentosPage company={company} {...access('documentos')} isMasterAdmin={isMasterAdmin} products={catalog.products} customers={customers.customers} />;
+    case 'precios':
+      return <PreciosPage company={company} {...access('precios')} categories={categories.categories} suppliers={suppliers.suppliers} onPricesChanged={reloadCatalog(catalog, 'tras cambio de precios')} />;
     case 'historial':
       return <HistorialStockPage company={company} products={catalog.products} onNavigateToInventario={goTo('inventario')} />;
     case 'caja':

@@ -1,6 +1,6 @@
 export const MODULE_KEYS = [
   'productos', 'caja', 'clientes', 'proveedores', 'anular_ventas',
-  'compras', 'cobros_pagos', 'gastos', 'finanzas', 'informes', 'maquinas', 'personal', 'fichaje', 'documentos',
+  'compras', 'cobros_pagos', 'gastos', 'finanzas', 'informes', 'maquinas', 'personal', 'fichaje', 'documentos', 'precios',
 ] as const;
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 
@@ -62,13 +62,19 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
   personal: { label: 'Empleados', description: 'Datos del personal, horarios y asistencia (incluye datos personales).', options: ALL },
   fichaje: { label: 'Fichaje', description: 'Marcar la entrada y la salida del personal.', options: ALL },
   documentos: { label: 'Documentos', description: 'Tickets, presupuestos, remitos y garantías. No cuentan como venta ni mueven el stock.', options: ALL },
+  precios: {
+    label: 'Cambio de precios',
+    description: 'Subir o bajar los precios de venta de muchos productos por porcentaje, y revertir el cambio. Cambia lo que se cobra desde ese momento.',
+    options: ['none', 'operate'],
+    levelLabels: { none: 'No puede cambiar precios', operate: 'Puede cambiar precios' },
+  },
 };
 
 /** Lo que puede hacer un empleado cuando nadie configuró nada: lo de siempre. */
 export const DEFAULT_LEVELS: ModuleLevels = {
   productos: 'none', caja: 'operate', clientes: 'view', proveedores: 'view', anular_ventas: 'none',
   compras: 'none', cobros_pagos: 'none', gastos: 'none', finanzas: 'none',
-  informes: 'none', maquinas: 'none', personal: 'none', fichaje: 'operate', documentos: 'none',
+  informes: 'none', maquinas: 'none', personal: 'none', fichaje: 'operate', documentos: 'none', precios: 'none',
 };
 
 export interface PermissionTemplate {
@@ -102,7 +108,7 @@ export const PERMISSION_TEMPLATES: PermissionTemplate[] = [
     levels: {
       productos: 'none', caja: 'view', clientes: 'view', proveedores: 'view', anular_ventas: 'none',
       compras: 'view', cobros_pagos: 'view', gastos: 'view', finanzas: 'view',
-      informes: 'view', maquinas: 'view', personal: 'view', fichaje: 'operate', documentos: 'view',
+      informes: 'view', maquinas: 'view', personal: 'view', fichaje: 'operate', documentos: 'view', precios: 'none',
     },
   },
 ];

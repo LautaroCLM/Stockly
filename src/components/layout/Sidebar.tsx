@@ -23,6 +23,7 @@ import {
   FileBarChart,
   Tractor,
   FileText,
+  Percent,
   X,
   LogOut,
 } from 'lucide-react';
@@ -57,6 +58,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FileBarChart,
   Tractor,
   FileText,
+  Percent,
   Clock,
   KeyRound,
 };

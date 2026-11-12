@@ -665,6 +665,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"price_change_batches": {
+                  Row: {
+                    "category_ids": (string)[],"company_id": string,"created_at": string,"created_by": string,"id": string,"items_count": number,"note": string | null,"percent": number,"reverted_at": string | null,"reverted_by": string | null,"reverted_items": number | null,"rounding_step": number,"status": string,"supplier_ids": (string)[]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category_ids"?: (string)[],"company_id": string,"created_at"?: string,"created_by": string,"id": string,"items_count": number,"note"?: string | null,"percent": number,"reverted_at"?: string | null,"reverted_by"?: string | null,"reverted_items"?: number | null,"rounding_step": number,"status"?: string,"supplier_ids"?: (string)[]
+                  }
+                  Update: {
+                    "category_ids"?: (string)[],"company_id"?: string,"created_at"?: string,"created_by"?: string,"id"?: string,"items_count"?: number,"note"?: string | null,"percent"?: number,"reverted_at"?: string | null,"reverted_by"?: string | null,"reverted_items"?: number | null,"rounding_step"?: number,"status"?: string,"supplier_ids"?: (string)[]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "price_change_batches_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"price_change_items": {
+                  Row: {
+                    "batch_id": string,"company_id": string,"id": string,"new_price": number,"old_price": number,"product_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "batch_id": string,"company_id": string,"id"?: string,"new_price": number,"old_price": number,"product_id": string
+                  }
+                  Update: {
+                    "batch_id"?: string,"company_id"?: string,"id"?: string,"new_price"?: number,"old_price"?: number,"product_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_price_change_items_batch"
+      columns: ["company_id","batch_id"]
+isOneToOne: false
+      referencedRelation: "price_change_batches"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_price_change_items_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
                 },"product_costs": {
                   Row: {
                     "company_id": string,"cost_price": number,"product_id": string,"updated_at": string,"updated_by": string
@@ -1044,6 +1090,9 @@ isOneToOne: false
             "accept_company_invitation":
 { Args: { "p_token": string }; Returns: string
                            },
+"apply_price_change":
+{ Args: { "p_batch_id": string,"p_category_ids"?: (string)[],"p_company_id": string,"p_excluded_ids"?: (string)[],"p_note"?: string,"p_percent": number,"p_step": number,"p_supplier_ids"?: (string)[] }; Returns: Json
+                           },
 "attendance_report":
 { Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
               "days_worked": number,"employee_id": string,"employee_name": string,"late_count": number,"open_count": number,"scheduled_minutes": number,"worked_minutes": number
@@ -1139,6 +1188,9 @@ isOneToOne: false
 "open_cash_session":
 { Args: { "p_company_id": string,"p_notes"?: string,"p_opening_amount": number }; Returns: Json
                            },
+"preview_price_change":
+{ Args: { "p_category_ids"?: (string)[],"p_company_id": string,"p_percent": number,"p_step": number,"p_supplier_ids"?: (string)[] }; Returns: Json
+                           },
 "process_credit_purchase":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_invoice_number"?: string,"p_items": Json,"p_notes"?: string,"p_purchase_date"?: string,"p_supplier_id": string }; Returns: Json
                            },
@@ -1198,6 +1250,9 @@ isOneToOne: false
 { Args: { "p_company_id": string,"p_from": string,"p_limit": number,"p_to": string }; Returns: {
               "cost": number,"product_id": string,"product_name": string,"quantity": number,"revenue": number,"sku": string
             }[]
+                           },
+"revert_price_change":
+{ Args: { "p_batch_id": string,"p_company_id": string }; Returns: Json
                            },
 "revoke_company_invitation":
 { Args: { "p_company_id": string,"p_invitation_id": string }; Returns: undefined

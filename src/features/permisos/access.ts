@@ -6,6 +6,7 @@ import type { ModuleKey, ModuleLevel, ModuleLevels } from './types';
 export const ROUTE_MODULE: Partial<Record<RouteId, ModuleKey>> = {
   caja: 'caja',
   documentos: 'documentos',
+  precios: 'precios',
   proveedores: 'proveedores',
   compras: 'compras',
   'cobros-pagos': 'cobros_pagos',

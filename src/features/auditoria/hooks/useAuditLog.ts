@@ -26,6 +26,7 @@ const REALTIME_TABLES: readonly DataTable[] = [
   'company_module_permissions',
   'machines',
   'documents',
+  'price_change_batches',
   'document_settings',
   'employees',
   'employee_schedules',

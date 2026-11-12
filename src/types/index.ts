@@ -19,6 +19,7 @@ export type RouteId =
   | 'inventario'
   | 'ventas'
   | 'documentos'
+  | 'precios'
   | 'caja'
   | 'compras'
   | 'proveedores'

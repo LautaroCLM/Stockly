@@ -30,6 +30,12 @@ export const NAV_SECTIONS: NavSection[] = [
         iconName: 'Receipt',
       },
       {
+        id: 'precios',
+        label: 'Cambio de Precios',
+        path: '/precios',
+        iconName: 'Percent',
+      },
+      {
         id: 'documentos',
         label: 'Documentos',
         path: '/documentos',

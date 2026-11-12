@@ -21,6 +21,7 @@ export const AUDIT_TABLE_LABELS: Record<string, string> = {
   company_module_permissions: 'Permiso de módulo',
   machines: 'Máquina',
   documents: 'Documento',
+  price_change_batches: 'Cambio de precios',
   document_settings: 'Datos del emisor',
   employees: 'Empleado',
   employee_schedules: 'Horario de empleado',
