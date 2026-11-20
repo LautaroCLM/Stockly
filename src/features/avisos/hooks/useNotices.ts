@@ -9,6 +9,7 @@ import { isoWeekday } from '@/features/empleados/timeMath';
 import { productsToRestock } from '@/features/dashboard/dashboardMetrics';
 import type { Product } from '@/features/inventario/types';
 import { buildNotices } from '../buildNotices';
+import { useNewNoticeSound } from './useNewNoticeSound';
 import type { Notice, NoticeSources } from '../types';
 
 const REALTIME_TABLES: readonly DataTable[] = [
@@ -112,6 +113,8 @@ export function useNotices(options: UseNoticesOptions): { notices: Notice[]; isL
       ),
     [products, remote, attendanceRoute, now]
   );
+
+  useNewNoticeSound(notices, isLoading, companyId);
 
   return { notices, isLoading };
 }

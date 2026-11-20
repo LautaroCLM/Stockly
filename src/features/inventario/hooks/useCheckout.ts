@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { Customer } from '@/features/clientes/types';
 import { toUserMessage } from '@/lib/errorMessages';
+import { playSaleSound } from '@/lib/sounds/sale';
 import { buildSaleRequest, executeSaleTransaction } from '../api/checkoutTransaction';
 import type { CartItem, PaymentEntry, Product, Sale } from '../types';
 import { useSaleIntent } from './useSaleIntent';
@@ -85,6 +86,7 @@ export function useCheckout({ companyId, cart, products, customers, reloadProduc
         }
 
         reset();
+        playSaleSound();
         reloadProducts().catch((err) => console.warn('Error al recargar productos:', err));
         cart.clearCart();
         setIsCheckoutOpen(false);
