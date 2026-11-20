@@ -9,6 +9,7 @@ import type { Notice } from '@/features/avisos/types';
 import type { Product } from '@/features/inventario/types';
 import { HeaderSearch } from './HeaderSearch';
 import { ConnectionBadge } from './ConnectionBadge';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   companies: Company[];
@@ -114,6 +115,8 @@ export const Header: React.FC<HeaderProps> = ({
         </Button>
 
         <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block" />
+
+        <ThemeToggle />
 
         <NoticesBell notices={notices} onSelect={(route) => onNoticeSelect?.(route)} />
 

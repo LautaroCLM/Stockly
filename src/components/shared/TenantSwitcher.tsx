@@ -148,7 +148,7 @@ export const TenantSwitcher: React.FC<TenantSwitcherProps> = ({
                 setIsOpen(false);
                 setIsModalOpen(true);
               }}
-              className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-medium text-accent hover:text-white bg-accent/10 hover:bg-accent/20 border border-accent/20 hover:border-accent/40 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-medium text-accent hover:text-text-primary bg-accent/10 hover:bg-accent/20 border border-accent/20 hover:border-accent/40 transition-colors"
             >
               <KeyRound size={13} />
               <span>Aceptar invitación</span>

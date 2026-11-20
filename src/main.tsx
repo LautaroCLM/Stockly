@@ -2,7 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { applyTheme, getInitialTheme } from './lib/theme';
 import './index.css';
+
+// Se aplica antes de renderizar para que no parpadee el tema equivocado.
+applyTheme(getInitialTheme());
 
 const rootElement = document.getElementById('root');
 

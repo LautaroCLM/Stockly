@@ -69,31 +69,31 @@ export const RevenueAreaChart: React.FC<RevenueAreaChartProps> = ({ data, showCo
             >
               <defs>
                 <linearGradient id="ventasGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2F6BFF" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#2F6BFF" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="rgb(var(--c-primary))" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="rgb(var(--c-primary))" stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient id="costoGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#27D3F5" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#27D3F5" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="rgb(var(--c-accent))" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="rgb(var(--c-accent))" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
 
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#162032"
+                stroke="rgb(var(--c-chart-grid))"
                 vertical={false}
               />
 
               <XAxis
                 dataKey="date"
-                stroke="#475569"
+                stroke="rgb(var(--c-chart-axis))"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: '#162032' }}
+                axisLine={{ stroke: 'rgb(var(--c-chart-grid))' }}
               />
 
               <YAxis
-                stroke="#475569"
+                stroke="rgb(var(--c-chart-axis))"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -142,7 +142,7 @@ export const RevenueAreaChart: React.FC<RevenueAreaChartProps> = ({ data, showCo
               <Area
                 type="monotone"
                 dataKey="ventas"
-                stroke="#2F6BFF"
+                stroke="rgb(var(--c-primary))"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#ventasGradient)"
@@ -152,7 +152,7 @@ export const RevenueAreaChart: React.FC<RevenueAreaChartProps> = ({ data, showCo
                 <Area
                   type="monotone"
                   dataKey="costo"
-                  stroke="#27D3F5"
+                  stroke="rgb(var(--c-accent))"
                   strokeWidth={1.5}
                   strokeDasharray="4 4"
                   fillOpacity={1}

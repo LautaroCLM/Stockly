@@ -3,23 +3,65 @@
 @tailwind utilities;
 
 @layer base {
+  /* Colores como canales RGB para que Tailwind pueda aplicar opacidad (bg-primary/15).
+     Oscuro es el valor por defecto; .light lo reemplaza. */
   :root {
-    --bg: #060A13;
-    --surface: #0B1220;
-    --surface-2: #101A2E;
-    --border: #1C2742;
-    --text: #E8EEFB;
-    --text-muted: #7C8AA8;
-    --primary: #2F6BFF;
-    --accent: #27D3F5;
-    --success: #34D399;
-    --warning: #F5B942;
-    --danger: #F2576B;
+    color-scheme: dark;
+    --c-bg: 6 10 19;
+    --c-surface: 11 18 32;
+    --c-surface-2: 16 26 46;
+    --c-surface-3: 23 35 59;
+    --c-border: 28 39 66;
+    --c-border-light: 42 59 99;
+    --c-border-active: 58 78 122;
+    --c-text: 232 238 251;
+    --c-text-secondary: 161 177 209;
+    --c-text-muted: 124 138 168;
+    --c-text-dim: 79 94 123;
+    --c-primary: 47 107 255;
+    --c-primary-hover: 30 86 224;
+    --c-primary-light: 97 144 255;
+    --c-accent: 39 211 245;
+    --c-accent-hover: 24 183 216;
+    --c-success: 52 211 153;
+    --c-warning: 245 185 66;
+    --c-danger: 242 87 107;
+    --c-chart-grid: 22 32 50;
+    --c-chart-axis: 71 85 105;
+    --c-scroll-thumb: 28 39 66;
+    --c-scroll-thumb-hover: 42 59 99;
+  }
+
+  :root.light {
+    color-scheme: light;
+    --c-bg: 244 246 251;
+    --c-surface: 255 255 255;
+    --c-surface-2: 241 244 250;
+    --c-surface-3: 230 235 245;
+    --c-border: 220 226 238;
+    --c-border-light: 200 209 227;
+    --c-border-active: 169 182 208;
+    --c-text: 15 26 51;
+    --c-text-secondary: 67 81 111;
+    --c-text-muted: 95 110 140;
+    --c-text-dim: 138 151 178;
+    --c-primary: 47 107 255;
+    --c-primary-hover: 30 86 224;
+    --c-primary-light: 30 86 224;
+    --c-accent: 8 145 178;
+    --c-accent-hover: 14 116 144;
+    --c-success: 5 150 105;
+    --c-warning: 180 83 9;
+    --c-danger: 220 38 38;
+    --c-chart-grid: 226 232 242;
+    --c-chart-axis: 100 116 139;
+    --c-scroll-thumb: 200 209 227;
+    --c-scroll-thumb-hover: 169 182 208;
   }
 
   body {
-    background-color: var(--bg);
-    color: var(--text);
+    background-color: rgb(var(--c-bg));
+    color: rgb(var(--c-text));
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
   }
@@ -30,20 +72,20 @@
   }
 }
 
-/* Scrollbars estilizadas sutiles en tema oscuro */
+/* Scrollbars estilizadas sutiles (siguen el tema activo) */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #060A13;
+  background: rgb(var(--c-bg));
 }
 ::-webkit-scrollbar-thumb {
-  background: #1C2742;
+  background: rgb(var(--c-scroll-thumb));
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2A3B63;
+  background: rgb(var(--c-scroll-thumb-hover));
 }
 
 /* ---------------------------------------------------------------------------
