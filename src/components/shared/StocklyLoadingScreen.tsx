@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MorphingSquare } from '@/components/ui/morphing-square';
 import { Button } from '@/components/ui/Button';
+import { playStartupSound } from '@/lib/startupSound';
 
 /** Segundos tras los cuales se avisa que la carga tarda más de lo normal (no es una espera artificial). */
 const SLOW_AFTER_MS = 15_000;
@@ -12,6 +13,10 @@ const SLOW_AFTER_MS = 15_000;
  */
 export const StocklyLoadingScreen: React.FC<{ leaving?: boolean }> = ({ leaving = false }) => {
   const [isSlow, setIsSlow] = useState(false);
+
+  useEffect(() => {
+    void playStartupSound();
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setIsSlow(true), SLOW_AFTER_MS);
