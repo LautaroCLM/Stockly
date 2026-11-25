@@ -1,5 +1,5 @@
 import React from 'react';
-import type { RouteId, Company } from '@/types';
+import type { RouteId, Company, NavSection } from '@/types';
 import type { Product, Sale } from '@/features/inventario/types';
 import type { useProducts } from '@/features/inventario/hooks/useProducts';
 import type { useCategories } from '@/features/inventario/hooks/useCategories';
@@ -23,6 +23,8 @@ import { MaquinasPage } from '@/features/maquinas/MaquinasPage';
 import { EmpleadosPage } from '@/features/empleados/EmpleadosPage';
 import { FichajePage } from '@/features/empleados/FichajePage';
 import { PermisosPage } from '@/features/permisos/PermisosPage';
+import { PreferenciasPage } from '@/features/preferencias/PreferenciasPage';
+import type { HiddenRoutesState } from '@/features/preferencias/hooks/useHiddenRoutes';
 import { atLeast, effectiveLevel } from '@/features/permisos/access';
 import type { ModuleKey, ModuleLevels } from '@/features/permisos/types';
 import { ProveedoresPage } from '@/features/proveedores/components/ProveedoresPage';
@@ -55,6 +57,9 @@ interface WorkspaceRoutesProps {
     open: () => void;
   };
   onViewReceipt: (sale: Sale) => void;
+  /** Módulos permitidos (para elegir cuáles ocultar) y preferencias de la persona. */
+  permittedSections: NavSection[];
+  preferences: HiddenRoutesState;
 }
 
 const reloadCatalog = (catalog: WorkspaceRoutesProps['catalog'], context: string) => () => {
@@ -136,6 +141,8 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       return <EmpleadosPage company={company} {...access('personal')} />;
     case 'fichaje':
       return <FichajePage company={company} />;
+    case 'mis-preferencias':
+      return <PreferenciasPage sections={props.permittedSections} preferences={props.preferences} />;
     case 'config-permisos':
       return <PermisosPage company={company} isMasterAdmin={isMasterAdmin} />;
     case 'auditoria':

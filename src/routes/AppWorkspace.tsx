@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { RouteId, Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
 import type { ProfileRow } from '@/features/auth/types';
 import type { Sale } from '@/features/inventario/types';
-import { NAV_SECTIONS } from '@/components/layout/navSections';
 import { AppShell } from '@/components/layout/AppShell';
 import { useNotices } from '@/features/avisos/hooks/useNotices';
 import { useCart } from '@/features/inventario/hooks/useCart';
@@ -24,6 +23,8 @@ import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PageEnter } from '@/components/motion/PageEnter';
 import { useModulePermissions } from '@/features/permisos/hooks/useModulePermissions';
 import { atLeast, effectiveLevel, isRouteVisible } from '@/features/permisos/access';
+import { useHiddenRoutes } from '@/features/preferencias/hooks/useHiddenRoutes';
+import { useWorkspaceNav } from './useWorkspaceNav';
 
 
 interface AppWorkspaceProps {
@@ -108,15 +109,9 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     attendanceRoute: atLeast(levelOf('personal'), 'view') ? 'personal' : 'fichaje',
   });
 
-  // Compras, Finanzas y Empleados muestran costos o datos sensibles: solo administradores
-  const navSections = useMemo(
-    () =>
-      NAV_SECTIONS.map((section) => ({
-        ...section,
-        items: section.items.filter((item) => isRouteVisible(item.id, isMasterAdmin, permissions.levels)),
-      })).filter((section) => section.items.length > 0),
-    [isMasterAdmin, permissions.levels]
-  );
+  // Menú: lo que permiten los permisos, menos lo que la persona ocultó en Mis preferencias
+  const preferences = useHiddenRoutes(user.id);
+  const nav = useWorkspaceNav(isMasterAdmin, permissions.levels, preferences);
 
   // Si le quitan el acceso a la pantalla en la que está, vuelve al inicio
   useEffect(() => {
@@ -126,7 +121,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   return (
     <>
       <AppShell
-        sections={navSections}
+        sections={nav.visible}
         activeRoute={activeRoute}
         onNavigate={setActiveRoute}
         companies={companies}
@@ -169,6 +164,8 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             open: () => setIsCartOpen(true),
           }}
           onViewReceipt={setReceiptSale}
+          permittedSections={nav.permitted}
+          preferences={preferences}
         />
         </ErrorBoundary>
         </PageEnter>

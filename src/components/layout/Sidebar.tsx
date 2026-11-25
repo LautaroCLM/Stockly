@@ -1,32 +1,9 @@
 import React from 'react';
 import { RouteId, NavSection } from '@/types';
 import { Badge } from '@/components/ui/Badge';
-import {
-  LucideIcon,
-  LayoutDashboard,
-  Boxes,
-  Receipt,
-  Wallet,
-  ShoppingCart,
-  Truck,
-  Users,
-  BarChart3,
-  UserCheck,
-  Clock,
-  KeyRound,
-  History,
-  Building2,
-  ShieldCheck,
-  ScrollText,
-  ReceiptText,
-  ArrowLeftRight,
-  FileBarChart,
-  Tractor,
-  FileText,
-  Percent,
-  X,
-  LogOut,
-} from 'lucide-react';
+import { Boxes, X } from 'lucide-react';
+import { NAV_ICONS } from './navIcons';
+import { SidebarUserCard } from './SidebarUserCard';
 
 interface SidebarProps {
   sections: NavSection[];
@@ -39,29 +16,6 @@ interface SidebarProps {
   onSignOut?: () => void;
 }
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  LayoutDashboard,
-  Boxes,
-  Receipt,
-  Wallet,
-  ShoppingCart,
-  Truck,
-  Users,
-  BarChart3,
-  UserCheck,
-  History,
-  Building2,
-  ShieldCheck,
-  ScrollText,
-  ReceiptText,
-  ArrowLeftRight,
-  FileBarChart,
-  Tractor,
-  FileText,
-  Percent,
-  Clock,
-  KeyRound,
-};
 
 export const Sidebar: React.FC<SidebarProps> = ({
   sections,
@@ -134,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               {section.items.map((item) => {
                 const isActive = activeRoute === item.id;
-                const IconComponent = ICON_MAP[item.iconName] || Boxes;
+                const IconComponent = NAV_ICONS[item.iconName] || Boxes;
 
                 return (
                   <button
@@ -177,37 +131,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </div>
 
-        {/* Footer profile & system status */}
-        <div className="p-3 border-t border-border shrink-0 bg-surface/50">
-          <div className="flex items-center justify-between p-2 rounded-lg bg-surface-2/60 border border-border/60">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary/30 to-surface-3 border border-border flex items-center justify-center text-xs font-bold text-text-primary shrink-0">
-                {avatarInitials}
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-medium text-text-primary truncate" title={displayName}>
-                  {displayName}
-                </span>
-                <span className="text-[10px] text-text-muted truncate">
-                  {userEmail || 'Sesión activa'}
-                </span>
-              </div>
-            </div>
-            {onSignOut ? (
-              <button
-                onClick={onSignOut}
-                className="p-1.5 rounded-md text-text-muted hover:text-danger hover:bg-surface-3 transition-colors shrink-0"
-                title="Cerrar sesión"
-              >
-                <LogOut size={15} />
-              </button>
-            ) : (
-              <div className="flex items-center gap-1 shrink-0" title="Sistema en línea">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              </div>
-            )}
-          </div>
-        </div>
+        <SidebarUserCard
+          displayName={displayName}
+          avatarInitials={avatarInitials}
+          userEmail={userEmail}
+          isPreferencesActive={activeRoute === 'mis-preferencias'}
+          onOpenPreferences={() => {
+            onNavigate('mis-preferencias');
+            onCloseMobile();
+          }}
+          onSignOut={onSignOut}
+        />
       </aside>
     </>
   );

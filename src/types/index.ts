@@ -35,7 +35,8 @@ export type RouteId =
   | 'auditoria'
   | 'config-empresa'
   | 'config-miembros'
-  | 'config-permisos';
+  | 'config-permisos'
+  | 'mis-preferencias';
 
 export interface NavItem {
   id: RouteId;
