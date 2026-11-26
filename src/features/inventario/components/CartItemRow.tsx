@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AlertTriangle, Minus, Plus, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
+import { AnimatedCurrency } from '@/components/motion/AnimatedCurrency';
+import { flashElement } from '@/lib/motion/flash';
 import type { CartItem } from '../types';
 
 interface CartItemRowProps {
@@ -17,8 +19,18 @@ const STEP_BUTTON =
   'w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors';
 
 /** Un producto del carrito con su cantidad editable y subtotal. */
-export const CartItemRow: React.FC<CartItemRowProps> = ({ item, isInactive, isSelected = false, onUpdateQuantity, onRemove }) => (
-  <div aria-current={isSelected || undefined} className={`rounded-xl p-3 flex flex-col gap-2 transition-colors ${
+export const CartItemRow: React.FC<CartItemRowProps> = ({ item, isInactive, isSelected = false, onUpdateQuantity, onRemove }) => {
+  // Destello cuando se suma una unidad a un producto que ya estaba (la línea nueva entra con su propia animación).
+  // Se anima el mismo elemento: así los campos de la línea no pierden el foco.
+  const rowRef = useRef<HTMLDivElement>(null);
+  const previousQuantity = useRef(item.quantity);
+  useEffect(() => {
+    if (item.quantity > previousQuantity.current) flashElement(rowRef.current);
+    previousQuantity.current = item.quantity;
+  }, [item.quantity]);
+
+  return (
+  <div ref={rowRef} aria-current={isSelected || undefined} className={`rounded-xl p-3 flex flex-col gap-2 transition-colors ${
     isInactive ? 'bg-danger/10 border border-danger/40' : 'bg-surface-2/70 border border-border/80 hover:border-border-active'
   } ${isSelected ? 'ring-2 ring-primary/60' : ''}`}>
     <div className="flex items-start justify-between gap-2">
@@ -53,7 +65,8 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({ item, isInactive, isSe
           <Plus size={12} />
         </button>
       </div>
-      <span className="text-xs font-bold text-text-primary tabular-nums">{formatCurrency(item.subtotal)}</span>
+      <AnimatedCurrency value={item.subtotal} className="text-xs font-bold text-text-primary tabular-nums" />
     </div>
   </div>
-);
+  );
+};

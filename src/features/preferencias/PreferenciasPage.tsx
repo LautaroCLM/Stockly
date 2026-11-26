@@ -5,6 +5,7 @@ import type { NavSection, RouteId } from '@/types';
 import type { HiddenRoutesState } from './hooks/useHiddenRoutes';
 import { useModuleToggle } from './hooks/useModuleToggle';
 import { ModuleVisibilityList } from './components/ModuleVisibilityList';
+import { CartEffectsCard } from './components/CartEffectsCard';
 
 interface PreferenciasPageProps {
   /** Módulos que la persona tiene permitidos, agrupados como el menú. */
@@ -36,6 +37,8 @@ export const PreferenciasPage: React.FC<PreferenciasPageProps> = ({ sections, pr
           </p>
         </div>
       </div>
+
+      <CartEffectsCard />
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-16 text-sm text-text-muted">

@@ -121,7 +121,7 @@ export const ProductTableRow: React.FC<ProductTableRowProps> = ({
 
       {/* Action Buttons */}
       <td className="py-2.5 px-4 text-right">
-        <ProductRowActions product={product} isInCart={isInCart} onAddToCart={onAddToCart} onEdit={onEdit}
+        <ProductRowActions product={product} isInCart={isInCart} quantityInCart={quantityInCart} onAddToCart={onAddToCart} onEdit={onEdit}
           onAdjustStock={onAdjustStock} onDeactivate={onDeactivate} onReactivate={onReactivate} />
       </td>
     </tr>

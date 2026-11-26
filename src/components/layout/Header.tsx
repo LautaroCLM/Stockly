@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Company, RouteId } from '@/types';
 import { TenantSwitcher } from '@/components/shared/TenantSwitcher';
 import { Button } from '@/components/ui/Button';
-import { formatCurrency } from '@/lib/formatters';
+import { AnimatePresence, m } from 'motion/react';
+import { AnimatedCurrency } from '@/components/motion/AnimatedCurrency';
+import { bumpElement } from '@/lib/motion/flash';
 import { Menu, ShoppingCart } from 'lucide-react';
 import { NoticesBell } from '@/features/avisos/components/NoticesBell';
 import type { Notice } from '@/features/avisos/types';
@@ -43,6 +45,14 @@ export const Header: React.FC<HeaderProps> = ({
   notices = [],
   onNoticeSelect,
 }) => {
+  // El botón del carrito rebota cuando le suman un producto (no al cargar la pantalla)
+  const cartButtonRef = useRef<HTMLButtonElement>(null);
+  const previousCount = useRef(cartItemsCount);
+  useEffect(() => {
+    if (cartItemsCount > previousCount.current) bumpElement(cartButtonRef.current);
+    previousCount.current = cartItemsCount;
+  }, [cartItemsCount]);
+
   return (
     <header className="h-16 bg-surface/90 backdrop-blur-md border-b border-border sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between gap-4">
       {/* Left: Mobile hamburger + Tenant Context */}
@@ -81,6 +91,8 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Cart button in header */}
         {onOpenCart && (
           <button
+            ref={cartButtonRef}
+            data-cart-target
             onClick={onOpenCart}
             className={`flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-semibold transition-all ${
               cartItemsCount > 0
@@ -91,16 +103,22 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <div className="relative">
               <ShoppingCart size={15} />
-              {cartItemsCount > 0 && (
-                <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center animate-in zoom-in">
-                  {cartItemsCount}
-                </span>
-              )}
+              <AnimatePresence initial={false}>
+                {cartItemsCount > 0 && (
+                  <m.span key="badge" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                    transition={{ type: 'spring', stiffness: 520, damping: 22 }}
+                    className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-primary text-white text-[9px] font-bold flex items-center justify-center overflow-hidden">
+                    {/* El número sube desde abajo cada vez que cambia */}
+                    <m.span key={cartItemsCount} initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}>
+                      {cartItemsCount}
+                    </m.span>
+                  </m.span>
+                )}
+              </AnimatePresence>
             </div>
             {cartItemsCount > 0 && (
-              <span className="tabular-nums font-bold text-text-primary hidden sm:inline">
-                {formatCurrency(cartTotal)}
-              </span>
+              <AnimatedCurrency value={cartTotal} className="tabular-nums font-bold text-text-primary hidden sm:inline" />
             )}
           </button>
         )}

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Banknote, CheckCircle2, X } from 'lucide-react';
 import type { Customer } from '@/features/clientes/types';
-import { formatCurrency } from '@/lib/formatters';
 import { toUserMessage } from '@/lib/errorMessages';
 import { Button } from '@/components/ui/Button';
+import { AnimatedCurrency } from '@/components/motion/AnimatedCurrency';
 import type { PaymentEntry, PaymentMethod } from '../types';
 import { buildSinglePayment, buildSplitPayments, singlePaymentSummary, splitPaymentSummary } from '../checkoutPayments';
 import { CustomerSelector } from './CustomerSelector';
@@ -113,7 +113,7 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
           <div>
             <h2 className="text-base font-bold text-text-primary">Finalizar Venta y Cobro</h2>
             <span className="text-xs text-text-muted">
-              Total a cobrar: <strong className="text-primary font-bold">{formatCurrency(total)}</strong>
+              Total a cobrar: <AnimatedCurrency value={total} fromZero className="text-primary font-bold" />
             </span>
           </div>
         </div>

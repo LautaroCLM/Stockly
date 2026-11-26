@@ -24,6 +24,7 @@ import { atLeast, effectiveLevel, isRouteVisible } from '@/features/permisos/acc
 import { useHiddenRoutes } from '@/features/preferencias/hooks/useHiddenRoutes';
 import { useWorkspaceNav } from './useWorkspaceNav';
 import { useSaleFlow } from './useSaleFlow';
+import { useCartFeedback } from '@/features/inventario/hooks/useCartFeedback';
 import { useWorkspaceNavigation } from './useWorkspaceNavigation';
 
 
@@ -62,6 +63,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   const catalog = useProducts(companyId, canSeeCosts);
   const categories = useCategories(companyId, catalog.renameCategoryInProducts);
   const cart = useCart(companyId);
+  const cartFeedback = useCartFeedback();
   const suppliers = useSuppliers(companyId);
   const customers = useCustomers(companyId);
   const members = useCompanyMembers(companyId, isMasterAdmin);
@@ -142,7 +144,10 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             totalItemsCount: cart.totalItemsCount,
             total: cart.total,
             getQuantity: getItemQuantityInCart,
-            addProduct: (product) => cart.addItem(product, 1),
+            addProduct: (product) => {
+              cart.addItem(product, 1);
+              cartFeedback();
+            },
             removeOne: (product) => cart.updateQuantity(product.id, getItemQuantityInCart(product.id) - 1),
             open: sale.openCart,
           }}

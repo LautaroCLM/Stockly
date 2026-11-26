@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertTriangle, ArrowRight, Percent, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
+import { AnimatedCurrency } from '@/components/motion/AnimatedCurrency';
 import type { CartItem } from '../types';
 
 interface CartFooterProps {
@@ -58,7 +59,7 @@ export const CartFooter: React.FC<CartFooterProps> = ({
       <div className="space-y-1.5 pt-2 border-t border-border/60 text-xs">
         <div className="flex items-center justify-between text-text-secondary">
           <span>Subtotal:</span>
-          <span className="font-medium tabular-nums">{formatCurrency(subtotal)}</span>
+          <AnimatedCurrency value={subtotal} className="font-medium tabular-nums" />
         </div>
         {discountAmount > 0 && (
           <div className="flex items-center justify-between text-accent">
@@ -68,7 +69,7 @@ export const CartFooter: React.FC<CartFooterProps> = ({
         )}
         <div className="flex items-center justify-between text-sm font-bold text-text-primary pt-1">
           <span>Total a Cobrar:</span>
-          <span className="text-base text-primary font-bold tabular-nums">{formatCurrency(total)}</span>
+          <AnimatedCurrency value={total} pulse className="text-base text-primary font-bold tabular-nums" />
         </div>
       </div>
 

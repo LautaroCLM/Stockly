@@ -26,6 +26,25 @@ interface CartDrawerProps {
   onProceedToCheckout: () => void;
 }
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+const FADE = { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.18, ease: EASE } };
+/** Entrada y salida de una línea: altura y opacidad. */
+const COLLAPSE = {
+  initial: { opacity: 0, height: 0 },
+  animate: { opacity: 1, height: 'auto' },
+  exit: { opacity: 0, height: 0 },
+  transition: { duration: 0.2, ease: EASE },
+  style: { overflow: 'hidden' },
+} as const;
+/** El pie sube desde abajo; el recorte se quita al terminar para no cortar el foco de los campos. */
+const FOOTER_SLIDE = {
+  initial: { opacity: 0, height: 0, y: 12 },
+  animate: { opacity: 1, height: 'auto', y: 0, transitionEnd: { overflow: 'visible' } },
+  exit: { opacity: 0, height: 0, y: 12, overflow: 'hidden' },
+  transition: { duration: 0.24, ease: EASE },
+  style: { overflow: 'hidden' },
+} as const;
+
 /** Panel lateral del carrito: productos, descuento y paso al cobro. */
 const CartDrawerBody: React.FC<CartDrawerProps> = (props) => {
   const { isOpen, onClose, items, products } = props;
@@ -84,42 +103,54 @@ const CartDrawerBody: React.FC<CartDrawerProps> = (props) => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
-            {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center p-6 text-text-muted">
-                <div className="w-16 h-16 rounded-2xl bg-surface-2 border border-border flex items-center justify-center mb-3">
-                  <ShoppingCart size={28} className="text-text-muted/60" />
-                </div>
-                <p className="text-xs font-semibold text-text-primary mb-1">El carrito está vacío</p>
-                <p className="text-[11px] text-text-muted max-w-[220px]">
-                  Buscá productos con F2 y agregalos con Enter, o escaneá el código de barras.
-                </p>
-              </div>
-            ) : (
-              items.map((item, index) => (
-                <CartItemRow key={item.productId} item={item} isInactive={inactiveIds.has(item.productId)} isSelected={index === selectedIndex}
-                  onUpdateQuantity={props.onUpdateQuantity} onRemove={props.onRemoveItem} />
-              ))
-            )}
+          <div className="relative flex-1 overflow-y-auto p-3">
+            <AnimatePresence initial={false}>
+              {items.length === 0 && (
+                <m.div key="empty" {...FADE} className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-text-muted pointer-events-none">
+                  <div className="w-16 h-16 rounded-2xl bg-surface-2 border border-border flex items-center justify-center mb-3">
+                    <ShoppingCart size={28} className="text-text-muted/60" />
+                  </div>
+                  <p className="text-xs font-semibold text-text-primary mb-1">El carrito está vacío</p>
+                  <p className="text-[11px] text-text-muted max-w-[220px]">
+                    Buscá productos con F2 y agregalos con Enter, o escaneá el código de barras.
+                  </p>
+                </m.div>
+              )}
+            </AnimatePresence>
+            {/* Cada línea se despliega al entrar y se pliega al salir: las demás suben o bajan sin saltos */}
+            <AnimatePresence initial={false}>
+              {items.map((item, index) => (
+                <m.div key={item.productId} {...COLLAPSE} className="px-1">
+                  <div className="py-1.5">
+                    <CartItemRow item={item} isInactive={inactiveIds.has(item.productId)} isSelected={index === selectedIndex}
+                      onUpdateQuantity={props.onUpdateQuantity} onRemove={props.onRemoveItem} />
+                  </div>
+                </m.div>
+              ))}
+            </AnimatePresence>
           </div>
 
           <div className="px-4 pb-3"><MiscItemForm onAdd={props.onAddMiscItem} /></div>
 
-          {items.length > 0 && <SaleShortcutHints hints={SALE_HINTS.cart} className="px-4 py-2 border-t border-border/60" />}
-
-          {items.length > 0 && (
-            <CartFooter
-              subtotal={props.subtotal}
-              discountPercent={props.discountPercent}
-              discountAmount={props.discountAmount}
-              total={props.total}
-              inactiveItems={inactiveItems}
-              onSetDiscount={props.onSetDiscount}
-              onClearCart={props.onClearCart}
-              onRemoveItem={props.onRemoveItem}
-              onProceedToCheckout={props.onProceedToCheckout}
-            />
-          )}
+          {/* El pie con totales y cobro se desliza al aparecer: el panel ya no salta de alto */}
+          <AnimatePresence initial={false}>
+            {items.length > 0 && (
+              <m.div key="footer" {...FOOTER_SLIDE}>
+                <SaleShortcutHints hints={SALE_HINTS.cart} className="px-4 py-2 border-t border-border/60" />
+                <CartFooter
+                  subtotal={props.subtotal}
+                  discountPercent={props.discountPercent}
+                  discountAmount={props.discountAmount}
+                  total={props.total}
+                  inactiveItems={inactiveItems}
+                  onSetDiscount={props.onSetDiscount}
+                  onClearCart={props.onClearCart}
+                  onRemoveItem={props.onRemoveItem}
+                  onProceedToCheckout={props.onProceedToCheckout}
+                />
+              </m.div>
+            )}
+          </AnimatePresence>
         </m.aside>
       </div>
     </m.div>

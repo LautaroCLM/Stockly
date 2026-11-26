@@ -152,3 +152,19 @@
     box-shadow: none !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Carrito: el importe destella en celeste cuando cambia. El destello de las líneas y el rebote
+   del botón del carrito se hacen con la API de animaciones (lib/motion/flash.ts).
+   Se anula con "reducir movimiento".
+   --------------------------------------------------------------------------- */
+@keyframes cart-value-pulse {
+  0% { color: #27d3f5; transform: translateY(-1px); }
+  100% { color: inherit; transform: translateY(0); }
+}
+
+.cart-value-pulse { display: inline-block; animation: cart-value-pulse 500ms var(--ease-out, ease-out) 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-value-pulse { animation: none; }
+}
