@@ -3,14 +3,11 @@ import type { User } from '@supabase/supabase-js';
 import type { RouteId, Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
 import type { ProfileRow } from '@/features/auth/types';
-import type { Sale } from '@/features/inventario/types';
 import { AppShell } from '@/components/layout/AppShell';
 import { useNotices } from '@/features/avisos/hooks/useNotices';
 import { useCart } from '@/features/inventario/hooks/useCart';
 import { useProducts } from '@/features/inventario/hooks/useProducts';
 import { useCategories } from '@/features/inventario/hooks/useCategories';
-import { useCheckout } from '@/features/inventario/hooks/useCheckout';
-import { useOpenCartShortcut } from '@/features/inventario/hooks/useOpenCartShortcut';
 import { useSuppliers } from '@/features/proveedores/hooks/useSuppliers';
 import { useCustomers } from '@/features/clientes/hooks/useCustomers';
 import { useCompanyMembers } from '@/features/companies/hooks/useCompanyMembers';
@@ -26,6 +23,7 @@ import { useModulePermissions } from '@/features/permisos/hooks/useModulePermiss
 import { atLeast, effectiveLevel, isRouteVisible } from '@/features/permisos/access';
 import { useHiddenRoutes } from '@/features/preferencias/hooks/useHiddenRoutes';
 import { useWorkspaceNav } from './useWorkspaceNav';
+import { useSaleFlow } from './useSaleFlow';
 
 
 interface AppWorkspaceProps {
@@ -77,29 +75,15 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   const members = useCompanyMembers(companyId, isMasterAdmin);
   const settings = useCompanySettings(companyId);
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
-  const showReceipt = useCallback((sale: Sale | null) => {
-    setIsCartOpen(false);
-    setReceiptSale(sale);
-  }, []);
-
-  const checkout = useCheckout({
+  const sale = useSaleFlow({
     companyId,
     cart,
     products: catalog.products,
     customers: customers.customers,
     reloadProducts: catalog.reloadProducts,
-    onSaleCompleted: showReceipt,
+    canCancelSales: atLeast(effectiveLevel(isMasterAdmin, permissions.levels, 'anular_ventas'), 'operate'),
   });
-
-  const openCart = useCallback(() => setIsCartOpen(true), []);
-  useOpenCartShortcut(openCart);
-
-  const getItemQuantityInCart = useCallback(
-    (productId: string) => cart.items.find((i) => i.productId === productId)?.quantity ?? 0,
-    [cart.items]
-  );
+  const { checkout, receiptSale, setReceiptSale, getItemQuantityInCart } = sale;
 
   // Campana del encabezado: stock bajo, deudas viejas, entradas sin salida y caja abierta de un día anterior.
   // Cada fuente se consulta solo si la persona tiene acceso a ese módulo.
@@ -132,11 +116,11 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         activeCompany={activeCompany}
         onSelectCompany={(comp) => {
           onSelectCompany(comp);
-          setIsCartOpen(false);
+          sale.closeCart();
         }}
         cartItemsCount={cart.totalItemsCount}
         cartTotal={cart.total}
-        onOpenCart={() => setIsCartOpen(true)}
+        onOpenCart={sale.openCart}
         onSearch={handleHeaderSearch}
         searchProducts={catalog.products}
         userName={profile?.full_name || undefined}
@@ -166,7 +150,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             getQuantity: getItemQuantityInCart,
             addProduct: (product) => cart.addItem(product, 1),
             removeOne: (product) => cart.updateQuantity(product.id, getItemQuantityInCart(product.id) - 1),
-            open: () => setIsCartOpen(true),
+            open: sale.openCart,
           }}
           onViewReceipt={setReceiptSale}
           permittedSections={nav.permitted}
@@ -177,8 +161,8 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
       </AppShell>
 
       <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
+        isOpen={sale.isCartOpen}
+        onClose={sale.closeCart}
         items={cart.items}
         products={catalog.products}
         subtotal={cart.subtotal}
@@ -190,7 +174,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         onSetDiscount={cart.setDiscount}
         onClearCart={cart.clearCart}
         onProceedToCheckout={() => {
-          setIsCartOpen(false);
+          sale.closeCart();
           checkout.setIsCheckoutOpen(true);
         }}
       />

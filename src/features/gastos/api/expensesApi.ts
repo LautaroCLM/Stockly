@@ -87,10 +87,17 @@ export async function fetchExpenses(
   };
 }
 
-async function runAction(call: () => PromiseLike<{ error: { message: string } | null }>): Promise<ExpenseActionResult> {
+/** Las RPC de gastos devuelven `{ expense_id }`: se conserva para poder deshacer. */
+function expenseIdFrom(data: unknown): string | undefined {
+  if (typeof data !== 'object' || data === null) return undefined;
+  const id = (data as Record<string, unknown>).expense_id;
+  return typeof id === 'string' ? id : undefined;
+}
+
+async function runAction(call: () => PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<ExpenseActionResult> {
   try {
-    const { error } = await call();
-    if (!error) return { ok: true };
+    const { data, error } = await call();
+    if (!error) return { ok: true, expenseId: expenseIdFrom(data) };
     if (isNetworkOrUncertainError(error.message)) return { ok: false, message: UNCERTAIN_MESSAGE, uncertain: true };
     return { ok: false, message: cleanMessage(error.message) };
   } catch (err) {

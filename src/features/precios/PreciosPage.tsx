@@ -16,6 +16,7 @@ import { INITIAL_PRICE_FORM, PriceChangeForm } from './components/PriceChangeFor
 import type { PriceFormState } from './components/PriceChangeForm';
 import { PriceHistory } from './components/PriceHistory';
 import { PricePreviewTable } from './components/PricePreviewTable';
+import { useToast } from '@/components/feedback/ToastProvider';
 
 interface PreciosPageProps {
   company: Company;
@@ -38,6 +39,7 @@ export const PreciosPage: React.FC<PreciosPageProps> = ({ company, canView, canO
   const batchIdRef = useRef('');
 
   const history = usePriceHistory(company.id, canView);
+  const { notify } = useToast();
   const params = useMemo<PriceChangeParams | null>(() => {
     const percent = validatePercent(form.percentText, form.direction) === null ? signedPercent(form.percentText, form.direction) : null;
     return percent === null ? null : { percent, step: form.step, categoryIds: form.categoryIds, supplierIds: form.supplierIds };
@@ -74,9 +76,24 @@ export const PreciosPage: React.FC<PreciosPageProps> = ({ company, canView, canO
     setConfirming(true);
   };
 
+  // Aviso con Deshacer: revierte el lote recién aplicado (también se puede desde el historial)
   const applied = (updated: number) => {
     setConfirming(false);
-    setNotice({ kind: 'ok', message: `Listo: se actualizó el precio de ${formatNumber(updated)} ${updated === 1 ? 'producto' : 'productos'}. Podés revertirlo desde el historial.` });
+    setNotice(null);
+    const batchId = batchIdRef.current;
+    notify({
+      message: `Precio actualizado en ${formatNumber(updated)} ${updated === 1 ? 'producto' : 'productos'}`,
+      detail: 'También podés revertirlo después desde el historial.',
+      undo: {
+        run: async () => {
+          const result = await history.revert(batchId);
+          if (!result.ok) return { ok: false, message: result.message };
+          onPricesChanged();
+          void preview.reload();
+          return { ok: true };
+        },
+      },
+    });
     setForm((f) => ({ ...f, percentText: '', note: '' }));
     onPricesChanged();
   };

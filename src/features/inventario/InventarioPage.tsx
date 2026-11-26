@@ -19,6 +19,7 @@ import { downloadSpreadsheet } from './excel/excelIO';
 import { buildExportTable, exportFileName } from './excel/exportRows';
 import { pickProductForQuery } from './saleShortcuts';
 import { SaleShortcutHints } from './components/SaleShortcutHints';
+import { useProductNotices } from './hooks/useProductNotices';
 
 type SimpleResult = { success: boolean; error?: string };
 type CategoryResult = { success: boolean; error?: string; category?: Category };
@@ -58,6 +59,7 @@ interface InventarioPageProps {
 export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
   const { company, products, categories, isMasterAdmin = true, productsError = null } = props;
   const [dialog, setDialog] = useState<InventoryDialog>({ kind: 'none' });
+  const productActions = useProductNotices(props);
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
   const filters = useProductFilters(products, categoryNames, company.id, props.searchRequest ?? null);
   // Las sugerencias respetan el filtro Activos / Inactivos / Todos
@@ -165,7 +167,7 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         onEdit={isMasterAdmin ? (product) => setDialog({ kind: 'edit', product }) : undefined}
         onAdjustStock={isMasterAdmin ? (product) => setDialog({ kind: 'adjust', product }) : undefined}
         onDeactivate={isMasterAdmin ? (product) => setDialog({ kind: 'deactivate', product }) : undefined}
-        onReactivate={isMasterAdmin ? (product) => void props.onReactivateProduct(product.id) : undefined}
+        onReactivate={isMasterAdmin ? (product) => void productActions.reactivate(product.id) : undefined}
       />
 
       <InventoryDialogs
@@ -177,9 +179,9 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         isCategoriesLoading={props.isCategoriesLoading ?? false}
         categoriesError={props.categoriesError ?? null}
         isMasterAdmin={isMasterAdmin}
-        onCreateProduct={props.onCreateProduct}
-        onUpdateProduct={props.onUpdateProduct}
-        onDeactivateProduct={props.onDeactivateProduct}
+        onCreateProduct={productActions.create}
+        onUpdateProduct={productActions.update}
+        onDeactivateProduct={productActions.deactivate}
         onAdjustStock={props.onAdjustStock}
         onImportInitialStock={props.onImportInitialStock}
         onProductsImported={props.onReloadProducts}

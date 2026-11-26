@@ -4,16 +4,19 @@ import { CompanyProvider } from '@/features/companies/hooks/useCompany';
 import { AppAuthShell } from '@/routes/AppAuthShell';
 import { MotionProvider } from '@/lib/motion';
 import { PwaStatus } from '@/features/pwa/PwaStatus';
+import { ToastProvider } from '@/components/feedback/ToastProvider';
 
 /** Raíz de la app: sesión, empresa activa y la pantalla que corresponda. */
 export const App: React.FC = () => (
   <MotionProvider>
-    <AuthProvider>
-      <CompanyProvider>
-        <AppAuthShell />
-        <PwaStatus />
-      </CompanyProvider>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <CompanyProvider>
+          <AppAuthShell />
+          <PwaStatus />
+        </CompanyProvider>
+      </AuthProvider>
+    </ToastProvider>
   </MotionProvider>
 );
 

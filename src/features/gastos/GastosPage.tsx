@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import type { Company } from '@/types';
 import type { Supplier } from '@/features/proveedores/types';
 import { useExpenses } from './hooks/useExpenses';
+import { useExpenseNotice } from './hooks/useExpenseNotice';
 import { useMachineOptions } from '@/features/maquinas/hooks/useMachineOptions';
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from './types';
 import type { Expense, ExpenseCategory } from './types';
@@ -22,6 +23,7 @@ interface GastosPageProps {
 /** Gastos de la empresa: registrar, filtrar por categoría y anular con motivo. */
 export const GastosPage: React.FC<GastosPageProps> = ({ company, canView, canOperate, suppliers }) => {
   const exp = useExpenses(company.id, canView);
+  const createWithNotice = useExpenseNotice(exp.createExpense, exp.voidExpense);
   const machines = useMachineOptions(company.id, canView);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [voiding, setVoiding] = useState<Expense | null>(null);
@@ -118,7 +120,7 @@ export const GastosPage: React.FC<GastosPageProps> = ({ company, canView, canOpe
         </>
       )}
 
-      <AnimatePresence>{isFormOpen && <ExpenseFormModal suppliers={suppliers} machines={machines} onClose={() => setIsFormOpen(false)} onSubmit={exp.createExpense} />}</AnimatePresence>
+      <AnimatePresence>{isFormOpen && <ExpenseFormModal suppliers={suppliers} machines={machines} onClose={() => setIsFormOpen(false)} onSubmit={createWithNotice} />}</AnimatePresence>
       <AnimatePresence>{voiding && <VoidExpenseModal expense={voiding} onClose={() => setVoiding(null)} onSubmit={exp.voidExpense} />}</AnimatePresence>
     </div>
   );

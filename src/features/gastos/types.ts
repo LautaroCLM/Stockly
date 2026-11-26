@@ -58,7 +58,7 @@ export interface NewExpenseInput {
   payFromCash: boolean;
 }
 
-export type ExpenseActionResult = { ok: true } | { ok: false; message: string; uncertain?: boolean };
+export type ExpenseActionResult = { ok: true; expenseId?: string } | { ok: false; message: string; uncertain?: boolean };
 
 export interface ExpenseFilters {
   category: 'all' | ExpenseCategory;
