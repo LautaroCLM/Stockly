@@ -28,3 +28,16 @@ describe('formulario de producto', () => {
     expect(marginSummary('5000', '4500').isNegativeMargin).toBe(true);
   });
 });
+
+describe('proveedor habitual', () => {
+  it('se carga del producto al editar y se manda tal cual (vacío = sin proveedor)', () => {
+    const product = {
+      id: 'p1', sku: 'A', barcode: '', name: 'X', category: 'General', supplierId: 's1', salePrice: 10, costPrice: null,
+      stock: 1, minStock: 1, unit: 'unidad', status: 'normal' as const,
+    };
+    const values = initialProductFormValues(product, ['General']);
+    expect(values.supplierId).toBe('s1');
+    expect(toProductFormData(values, false).supplierId).toBe('s1');
+    expect(toProductFormData({ ...values, supplierId: '' }, false).supplierId).toBeUndefined();
+  });
+});

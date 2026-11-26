@@ -19,11 +19,13 @@ const UNITS: [string, string][] = [
 ];
 
 /** Nombre, SKU, código de barras y categoría. */
-export const ProductIdentityFields: React.FC<{ values: ProductFormValues; categories: string[]; onChange: Change }> = ({
-  values,
-  categories,
-  onChange,
-}) => (
+export const ProductIdentityFields: React.FC<{
+  values: ProductFormValues;
+  categories: string[];
+  /** Proveedores activos para elegir el habitual (si no hay, no se muestra el campo). */
+  suppliers: { id: string; name: string }[];
+  onChange: Change;
+}> = ({ values, categories, suppliers, onChange }) => (
   <>
     <div className="space-y-1">
       <label htmlFor="product-name" className={LABEL}>Nombre del Producto <Required /></label>
@@ -59,6 +61,18 @@ export const ProductIdentityFields: React.FC<{ values: ProductFormValues; catego
         )}
         <p className="text-[10px] text-text-muted">Para crear o editar categorías, use el módulo &quot;Categorías&quot; del inventario.</p>
       </div>
+      {suppliers.length > 0 && (
+        <div className="space-y-1">
+          <label htmlFor="product-supplier" className={LABEL}>
+            Proveedor habitual <span className="text-text-muted text-[11px]">(Opcional)</span>
+          </label>
+          <select id="product-supplier" value={values.supplierId} onChange={(e) => onChange('supplierId', e.target.value)} className={`${FIELD} cursor-pointer`}>
+            <option value="">Sin proveedor</option>
+            {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <p className="text-[10px] text-text-muted">Se usa para armar los pedidos de reposición por proveedor.</p>
+        </div>
+      )}
     </div>
   </>
 );

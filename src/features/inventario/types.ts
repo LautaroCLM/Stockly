@@ -35,6 +35,8 @@ export interface ProductFormData {
   barcode: string;
   categoryId?: string;
   category: string;
+  /** Proveedor habitual ('' o ausente: sin proveedor). */
+  supplierId?: string;
   costPrice?: number | null;
   salePrice: number;
   minStock: number;

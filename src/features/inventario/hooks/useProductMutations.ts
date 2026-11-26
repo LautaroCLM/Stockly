@@ -30,6 +30,7 @@ export function useProductMutations(ctx: CatalogContext) {
           barcode: formData.barcode?.trim() || undefined,
           description: formData.description?.trim() || undefined,
           categoryId: formData.categoryId || undefined,
+          supplierId: formData.supplierId || undefined,
         });
         const fresh = await fetchAndApply();
         return { success: true, product: fresh.find((p) => p.id === newId) };
@@ -74,6 +75,8 @@ export function useProductMutations(ctx: CatalogContext) {
           barcode: formData.barcode,
           description: formData.description,
           categoryId: formData.categoryId,
+          // Siempre se manda el proveedor del formulario: si faltara, la base lo dejaría vacío
+          supplierId: formData.supplierId,
           isActive: existing.isActive,
         },
         isMasterAdmin

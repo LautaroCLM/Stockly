@@ -6,6 +6,8 @@ export interface ProductFormValues {
   sku: string;
   barcode: string;
   category: string;
+  /** Proveedor habitual: '' si no tiene. */
+  supplierId: string;
   costPrice: string;
   salePrice: string;
   minStock: string;
@@ -20,6 +22,7 @@ export function initialProductFormValues(product: Product | null | undefined, ca
       sku: product.sku,
       barcode: product.barcode || '',
       category: product.category,
+      supplierId: product.supplierId ?? '',
       costPrice: product.costPrice !== null && product.costPrice !== undefined ? product.costPrice.toString() : '',
       salePrice: product.salePrice.toString(),
       minStock: product.minStock.toString(),
@@ -32,6 +35,7 @@ export function initialProductFormValues(product: Product | null | undefined, ca
     sku: '',
     barcode: '',
     category: categories[0] || '',
+    supplierId: '',
     costPrice: '',
     salePrice: '0',
     minStock: '5',
@@ -76,6 +80,7 @@ export function toProductFormData(values: ProductFormValues, canManageCosts: boo
     sku: values.sku.trim().toUpperCase(),
     barcode: values.barcode.trim(),
     category: values.category.trim(),
+    supplierId: values.supplierId || undefined,
     costPrice: canManageCosts ? parseCost(values.costPrice) : undefined,
     salePrice: parseFloat(values.salePrice) || 0,
     minStock: Math.max(0, parseInt(values.minStock, 10) || 0),

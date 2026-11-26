@@ -35,6 +35,8 @@ interface InventoryDialogsProps {
   company: { id: string; name: string };
   products: Product[];
   categories: Category[];
+  /** Proveedores activos (para el proveedor habitual del producto). */
+  suppliers: { id: string; name: string }[];
   isCategoriesLoading: boolean;
   categoriesError: string | null;
   isMasterAdmin: boolean;
@@ -73,6 +75,7 @@ export const InventoryDialogs: React.FC<InventoryDialogsProps> = (props) => {
         mode={dialog.kind === 'edit' ? 'edit' : 'create'}
         initialProduct={editedProduct}
         existingCategories={categoryNames}
+        suppliers={props.suppliers}
         canManageCosts={isMasterAdmin}
         onClose={onClose}
         onSubmit={submitProduct}

@@ -15,6 +15,7 @@ interface ProductFormModalProps {
   mode: 'create' | 'edit';
   initialProduct?: Product | null;
   existingCategories: string[];
+  suppliers?: { id: string; name: string }[];
   canManageCosts?: boolean;
   onClose: () => void;
   onSubmit: (data: ProductFormData) => Promise<Result> | Result;
@@ -26,6 +27,7 @@ const ProductFormModalBody: React.FC<ProductFormModalProps> = ({
   mode,
   initialProduct,
   existingCategories,
+  suppliers = [],
   canManageCosts = true,
   onClose,
   onSubmit,
@@ -111,7 +113,7 @@ const ProductFormModalBody: React.FC<ProductFormModalProps> = ({
           </div>
         )}
 
-        <ProductIdentityFields values={values} categories={existingCategories} onChange={change} />
+        <ProductIdentityFields values={values} categories={existingCategories} suppliers={suppliers} onChange={change} />
         <ProductPricingFields values={values} canManageCosts={canManageCosts}
           costPlaceholder={costMissing ? 'Sin costo asignado' : '0.00'} onChange={change} />
         {canManageCosts && <MarginBox costPrice={values.costPrice} salePrice={values.salePrice} />}

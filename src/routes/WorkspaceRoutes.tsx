@@ -75,6 +75,8 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
   const { route, onNavigate, company, isMasterAdmin, catalog, categories, suppliers, customers, members, settings, cart } =
     props;
   const goTo = (target: RouteId) => () => onNavigate(target);
+  // Proveedores activos para elegir el habitual de cada producto
+  const activeSuppliers = suppliers.suppliers.filter((s) => s.isActive).map((s) => ({ id: s.id, name: s.name }));
   // Acceso a un módulo configurable: ver (cargar la pantalla) y operar (modificar)
   const access = (module: ModuleKey) => {
     const level = effectiveLevel(isMasterAdmin, props.permissionLevels, module);
@@ -95,6 +97,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
           searchRequest={props.inventorySearch}
           products={catalog.products}
           categories={categories.categories}
+          suppliers={activeSuppliers}
           isProductsLoading={catalog.isLoading}
           productsError={catalog.error}
           productsSyncWarning={catalog.syncWarning}

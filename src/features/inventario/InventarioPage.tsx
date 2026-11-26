@@ -29,6 +29,8 @@ interface InventarioPageProps {
   company: Company;
   products: Product[];
   categories: Category[];
+  /** Proveedores activos (proveedor habitual de cada producto). */
+  suppliers: { id: string; name: string }[];
   isProductsLoading?: boolean;
   productsError?: string | null;
   productsSyncWarning?: string | null;
@@ -167,6 +169,7 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         company={company}
         products={products}
         categories={categories}
+        suppliers={props.suppliers}
         isCategoriesLoading={props.isCategoriesLoading ?? false}
         categoriesError={props.categoriesError ?? null}
         isMasterAdmin={isMasterAdmin}
