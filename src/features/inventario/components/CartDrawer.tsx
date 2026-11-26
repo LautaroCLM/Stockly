@@ -5,6 +5,7 @@ import { drawerRightVariants, overlayVariants } from '@/lib/motion';
 import type { CartItem, Product } from '../types';
 import { CartItemRow } from './CartItemRow';
 import { CartFooter } from './CartFooter';
+import { MiscItemForm } from './MiscItemForm';
 import { SALE_HINTS, SaleShortcutHints } from './SaleShortcutHints';
 import { useCartKeyboard } from '../hooks/useCartKeyboard';
 
@@ -19,6 +20,7 @@ interface CartDrawerProps {
   total: number;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
+  onAddMiscItem: (item: CartItem) => void;
   onSetDiscount: (percent: number) => void;
   onClearCart: () => void;
   onProceedToCheckout: () => void;
@@ -100,6 +102,8 @@ const CartDrawerBody: React.FC<CartDrawerProps> = (props) => {
               ))
             )}
           </div>
+
+          <div className="px-4 pb-3"><MiscItemForm onAdd={props.onAddMiscItem} /></div>
 
           {items.length > 0 && <SaleShortcutHints hints={SALE_HINTS.cart} className="px-4 py-2 border-t border-border/60" />}
 

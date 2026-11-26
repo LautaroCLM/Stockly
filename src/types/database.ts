@@ -879,14 +879,14 @@ isOneToOne: false
                   ]
                 },"sale_items": {
                   Row: {
-                    "company_id": string,"created_at": string,"id": string,"product_id": string,"quantity": number,"sale_id": string,"subtotal": number,"unit_price": number
+                    "company_id": string,"created_at": string,"description": string | null,"id": string,"product_id": string | null,"quantity": number,"sale_id": string,"subtotal": number,"unit_price": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_id": string,"created_at"?: string,"id"?: string,"product_id": string,"quantity": number,"sale_id": string,"subtotal": number,"unit_price": number
+                    "company_id": string,"created_at"?: string,"description"?: string | null,"id"?: string,"product_id"?: string | null,"quantity": number,"sale_id": string,"subtotal": number,"unit_price": number
                   }
                   Update: {
-                    "company_id"?: string,"created_at"?: string,"id"?: string,"product_id"?: string,"quantity"?: number,"sale_id"?: string,"subtotal"?: number,"unit_price"?: number
+                    "company_id"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"product_id"?: string | null,"quantity"?: number,"sale_id"?: string,"subtotal"?: number,"unit_price"?: number
                   }
                   Relationships: [
                     {
@@ -903,6 +903,64 @@ isOneToOne: false
       referencedColumns: ["company_id","id"]
     },{
       foreignKeyName: "sale_items_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"sale_return_items": {
+                  Row: {
+                    "amount": number,"company_id": string,"id": string,"product_id": string | null,"quantity": number,"return_id": string,"sale_item_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"company_id": string,"id"?: string,"product_id"?: string | null,"quantity": number,"return_id": string,"sale_item_id": string
+                  }
+                  Update: {
+                    "amount"?: number,"company_id"?: string,"id"?: string,"product_id"?: string | null,"quantity"?: number,"return_id"?: string,"sale_item_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_sale_return_items_return"
+      columns: ["company_id","return_id"]
+isOneToOne: false
+      referencedRelation: "sale_returns"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_sale_return_items_sale_item"
+      columns: ["company_id","sale_item_id"]
+isOneToOne: false
+      referencedRelation: "sale_items"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "sale_return_items_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"sale_returns": {
+                  Row: {
+                    "cash_session_id": string,"company_id": string,"created_at": string,"created_by": string,"id": string,"idempotency_key": string,"reason": string,"refund_amount": number,"return_number": string,"sale_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cash_session_id": string,"company_id": string,"created_at"?: string,"created_by": string,"id"?: string,"idempotency_key": string,"reason": string,"refund_amount": number,"return_number": string,"sale_id": string
+                  }
+                  Update: {
+                    "cash_session_id"?: string,"company_id"?: string,"created_at"?: string,"created_by"?: string,"id"?: string,"idempotency_key"?: string,"reason"?: string,"refund_amount"?: number,"return_number"?: string,"sale_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_sale_returns_sale"
+      columns: ["company_id","sale_id"]
+isOneToOne: false
+      referencedRelation: "sales"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "sale_returns_company_id_fkey"
       columns: ["company_id"]
 isOneToOne: false
       referencedRelation: "companies"
@@ -1085,6 +1143,12 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "profiles"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "user_preferences_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
     }
                   ]
                 }
@@ -1219,6 +1283,9 @@ isOneToOne: true
                            },
 "process_sale":
 { Args: { "p_company_id": string,"p_customer_id"?: string,"p_discount"?: number,"p_idempotency_key": string,"p_items": Json,"p_notes"?: string,"p_payments"?: Json }; Returns: Json
+                           },
+"process_sale_return":
+{ Args: { "p_company_id": string,"p_idempotency_key": string,"p_items": Json,"p_reason": string,"p_sale_id": string }; Returns: Json
                            },
 "products_with_movements":
 { Args: { "p_company_id": string,"p_product_ids": (string)[] }; Returns: {

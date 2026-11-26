@@ -21,7 +21,7 @@ const SALE_COLUMNS = `
   id, company_id, sale_number, customer_id, status, subtotal, discount, total_amount,
   payments, notes, created_at, cancelled_at, cancel_reason,
   customer:customers ( name, identification_type, tax_id ),
-  sale_items ( product_id, quantity, unit_price, subtotal, product:products ( name, sku ) )
+  sale_items ( id, product_id, description, quantity, unit_price, subtotal, product:products ( name, sku ) )
 `;
 
 function parsePayments(payments: Json): PaymentEntry[] {
@@ -72,10 +72,11 @@ export async function fetchSalesPage(
   return {
     total: count ?? rows.length,
     rows: rows.map((row) => {
+      // Las líneas sin producto son artículos varios: se muestran con su descripción
       const items: CartItem[] = row.sale_items.map((item) => ({
-        productId: item.product_id,
-        sku: item.product?.sku ?? '',
-        name: item.product?.name ?? 'Producto',
+        productId: item.product_id ?? `misc:${item.id}`,
+        sku: item.product?.sku ?? (item.product_id ? '' : 'VARIOS'),
+        name: item.product?.name ?? item.description ?? 'Producto',
         unitPrice: Number(item.unit_price),
         quantity: Number(item.quantity),
         subtotal: Number(item.subtotal),

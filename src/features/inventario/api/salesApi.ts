@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase';
 
-export interface ProcessSaleItemPayload {
-  product_id: string;
-  quantity: number;
-}
+/** Línea de producto del catálogo, o artículo varios (descripción y precio, sin producto). */
+export type ProcessSaleItemPayload =
+  | { product_id: string; quantity: number }
+  | { description: string; unit_price: number; quantity: number };
 
 export interface ProcessSalePaymentPayload {
   method: string;

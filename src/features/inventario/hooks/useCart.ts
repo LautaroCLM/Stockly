@@ -139,6 +139,11 @@ export function useCart(tenantId: TenantId) {
     });
   }, []);
 
+  /** Artículo varios: una línea más del carrito, con su propio id (no se suma a otra igual). */
+  const addMiscItem = useCallback((item: CartItem) => {
+    setCartState((prev) => calculateTotals([...prev.items, item], prev.discountPercent));
+  }, []);
+
   const removeItem = useCallback((productId: string) => {
     setCartState((prev) => {
       const filtered = prev.items.filter((item) => item.productId !== productId);
@@ -171,6 +176,7 @@ export function useCart(tenantId: TenantId) {
     total: cartState.total,
     totalItemsCount,
     addItem,
+    addMiscItem,
     updateQuantity,
     removeItem,
     setDiscount,

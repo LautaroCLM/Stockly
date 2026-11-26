@@ -165,6 +165,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         total={cart.total}
         onUpdateQuantity={cart.updateQuantity}
         onRemoveItem={cart.removeItem}
+        onAddMiscItem={cart.addMiscItem}
         onSetDiscount={cart.setDiscount}
         onClearCart={cart.clearCart}
         onProceedToCheckout={() => {

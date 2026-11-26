@@ -1,3 +1,4 @@
+import { isMiscItem } from '../miscItem';
 import { TenantId } from '@/types';
 import { CartItem, PaymentEntry, Sale } from '../types';
 import { isIdempotencyMismatchError } from '../saleIntent';
@@ -40,10 +41,12 @@ export function buildSaleRequest(params: ExecuteSaleParams): SaleRequest {
 
   return {
     companyId: tenantId,
-    items: cartItems.map((item) => ({
-      product_id: item.productId,
-      quantity: item.quantity,
-    })),
+    // Los artículos varios viajan sin producto, con su descripción y precio
+    items: cartItems.map((item) =>
+      isMiscItem(item)
+        ? { description: item.name, unit_price: item.unitPrice, quantity: item.quantity }
+        : { product_id: item.productId, quantity: item.quantity }
+    ),
     discount: discountAmount > 0 ? discountAmount : 0,
     payments: payments.map((p) => ({
       method: p.method,
