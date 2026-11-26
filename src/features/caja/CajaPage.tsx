@@ -102,7 +102,7 @@ export const CajaPage: React.FC<{ company: Company; canOperate?: boolean }> = ({
       </AnimatePresence>
       <AnimatePresence>
       {isClosing && summary && (
-        <CloseCashModal expectedAmount={summary.expectedAmount} onClose={() => setIsClosing(false)} onSubmit={closeSession} />
+        <CloseCashModal summary={summary} onClose={() => setIsClosing(false)} onSubmit={closeSession} />
       )}
       </AnimatePresence>
     </div>

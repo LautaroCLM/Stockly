@@ -1,30 +1,12 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/formatters';
-import { paymentMethodLabel } from '../cashMath';
+import { expectedBreakdown, paymentMethodLabel } from '../cashMath';
 import type { CashSummary } from '../types';
-
-interface Line {
-  label: string;
-  amount: number;
-  sign: '+' | '-' | '';
-  hint?: string;
-}
 
 /** Cómo se llega al efectivo esperado del turno, línea por línea. */
 export const CashSummaryPanel: React.FC<{ summary: CashSummary }> = ({ summary }) => {
-  const lines: Line[] = [
-    { label: 'Fondo inicial', amount: summary.openingAmount, sign: '' },
-    {
-      label: 'Ventas cobradas en efectivo',
-      amount: summary.cashSalesAmount,
-      sign: '+',
-      hint: summary.completedSalesCount === null ? undefined : `${summary.completedSalesCount} ventas completadas en el turno`,
-    },
-    { label: 'Devoluciones por anulaciones', amount: summary.cashRefundsAmount, sign: '-' },
-    { label: 'Ingresos de efectivo', amount: summary.cashInAmount, sign: '+' },
-    { label: 'Retiros de efectivo', amount: summary.cashOutAmount, sign: '-' },
-  ];
+  const lines = expectedBreakdown(summary);
   const otherPayments = Object.entries(summary.otherPayments).filter(([, amount]) => amount !== 0);
 
   return (
