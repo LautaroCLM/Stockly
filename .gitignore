@@ -95,3 +95,12 @@ desktop.ini
 # Tauri (app de escritorio)
 src-tauri/target/
 src-tauri/gen/
+
+# ------------------------------------------------------------------------------
+# 7. Herramientas locales (no son parte de la app)
+# ------------------------------------------------------------------------------
+# Skills instaladas con `npx skills add` (video promocional)
+/.agents/
+/skills-lock.json
+# Configuración local de Claude Code (servidores de prueba con rutas de esta PC)
+/.claude/
