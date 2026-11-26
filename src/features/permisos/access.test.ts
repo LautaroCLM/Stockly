@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { atLeast, effectiveLevel, isRouteVisible } from './access';
+import { atLeast, effectiveLevel, isRouteVisible, homeRoute } from './access';
 import { DEFAULT_LEVELS, PERMISSION_TEMPLATES } from './types';
 import type { ModuleLevels } from './types';
 
@@ -56,5 +56,13 @@ describe('permisos por módulo', () => {
 
   it('la plantilla básica equivale al valor por defecto', () => {
     expect(PERMISSION_TEMPLATES[0]?.levels).toEqual(DEFAULT_LEVELS);
+  });
+});
+
+describe('homeRoute', () => {
+  it('el administrador arranca en el Dashboard y el empleado en la venta', () => {
+    expect(homeRoute(true)).toBe('dashboard');
+    expect(homeRoute(false)).toBe('inventario');
+    expect(isRouteVisible(homeRoute(false), false, null)).toBe(true);
   });
 });

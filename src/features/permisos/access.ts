@@ -42,3 +42,6 @@ export function isRouteVisible(route: RouteId, isAdmin: boolean, levels: ModuleL
   if (!module) return true;
   return atLeast(effectiveLevel(isAdmin, levels, module), 'view');
 }
+
+/** Pantalla de inicio: el administrador arranca en el Dashboard y el empleado directo en la venta. */
+export const homeRoute = (isAdmin: boolean): RouteId => (isAdmin ? 'dashboard' : 'inventario');

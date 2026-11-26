@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import type { User } from '@supabase/supabase-js';
-import type { RouteId, Company } from '@/types';
+import type { Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
 import type { ProfileRow } from '@/features/auth/types';
 import { AppShell } from '@/components/layout/AppShell';
@@ -24,6 +24,7 @@ import { atLeast, effectiveLevel, isRouteVisible } from '@/features/permisos/acc
 import { useHiddenRoutes } from '@/features/preferencias/hooks/useHiddenRoutes';
 import { useWorkspaceNav } from './useWorkspaceNav';
 import { useSaleFlow } from './useSaleFlow';
+import { useWorkspaceNavigation } from './useWorkspaceNavigation';
 
 
 interface AppWorkspaceProps {
@@ -48,19 +49,10 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
 }) => {
   const companyId = activeCompany.id;
   const isMasterAdmin = userRole === 'master_admin';
-  const [activeRoute, setActiveRoute] = useState<RouteId>('dashboard');
+  const navigation = useWorkspaceNavigation(companyId, isMasterAdmin);
+  const { activeRoute, setActiveRoute } = navigation;
   // Qué módulos puede usar el rol empleado (los configura el administrador, en vivo)
   const permissions = useModulePermissions(companyId);
-
-  // Búsqueda del encabezado: abre Inventario filtrado. Se descarta al salir de Inventario.
-  const [inventorySearch, setInventorySearch] = useState<{ query: string; id: number } | null>(null);
-  const handleHeaderSearch = useCallback((query: string) => {
-    setInventorySearch({ query, id: Date.now() });
-    setActiveRoute('inventario');
-  }, []);
-  useEffect(() => {
-    if (activeRoute !== 'inventario') setInventorySearch(null);
-  }, [activeRoute]);
 
   // Cambios hechos por otros usuarios de la empresa: recarga los datos afectados
   useCompanyRealtime(companyId);
@@ -103,7 +95,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
 
   // Si le quitan el acceso a la pantalla en la que está, vuelve al inicio
   useEffect(() => {
-    if (!isRouteVisible(activeRoute, isMasterAdmin, permissions.levels)) setActiveRoute('dashboard');
+    if (!isRouteVisible(activeRoute, isMasterAdmin, permissions.levels)) navigation.goHome();
   }, [activeRoute, isMasterAdmin, permissions.levels]);
 
   return (
@@ -121,7 +113,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         cartItemsCount={cart.totalItemsCount}
         cartTotal={cart.total}
         onOpenCart={sale.openCart}
-        onSearch={handleHeaderSearch}
+        onSearch={navigation.searchInventory}
         searchProducts={catalog.products}
         userName={profile?.full_name || undefined}
         userEmail={user.email || undefined}
@@ -137,7 +129,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           currentUserId={user.id}
           isMasterAdmin={isMasterAdmin}
           permissionLevels={permissions.levels}
-          inventorySearch={inventorySearch}
+          inventorySearch={navigation.inventorySearch}
           catalog={catalog}
           categories={categories}
           suppliers={suppliers}
