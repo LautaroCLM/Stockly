@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, RefreshCw, Search, ShieldAlert, ShoppingCart } from 'lucide-react';
+import { PackageSearch, Plus, RefreshCw, Search, ShieldAlert, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface ComprasHeaderProps {
@@ -9,10 +9,13 @@ interface ComprasHeaderProps {
   onNewPurchase: () => void;
   /** Sin permiso para registrar compras, no se muestra el botón. */
   canCreate?: boolean;
+  /** Cantidad de productos en o bajo el mínimo: muestra "Reponer stock bajo". */
+  lowStockCount?: number;
+  onRestock?: () => void;
 }
 
 /** Título de Compras con recarga y alta de compra. */
-export const ComprasHeader: React.FC<ComprasHeaderProps> = ({ companyName, isLoading, onReload, onNewPurchase, canCreate = true }) => (
+export const ComprasHeader: React.FC<ComprasHeaderProps> = ({ companyName, isLoading, onReload, onNewPurchase, canCreate = true, lowStockCount = 0, onRestock }) => (
   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
     <div>
       <h1 className="text-xl font-bold text-text-primary flex items-center gap-2">
@@ -25,6 +28,13 @@ export const ComprasHeader: React.FC<ComprasHeaderProps> = ({ companyName, isLoa
       <Button variant="secondary" size="sm" onClick={onReload} disabled={isLoading} aria-label="Actualizar compras">
         <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
       </Button>
+      {onRestock && (
+        <Button variant="secondary" size="sm" onClick={onRestock} className="flex items-center gap-1.5">
+          <PackageSearch size={15} />
+          <span>Reponer stock bajo</span>
+          {lowStockCount > 0 && <span className="ml-0.5 px-1.5 rounded-full bg-warning/20 text-warning text-[10px] font-bold tabular-nums">{lowStockCount}</span>}
+        </Button>
+      )}
       {canCreate && (
         <Button variant="primary" size="sm" onClick={onNewPurchase} className="flex items-center gap-1.5">
           <Plus size={15} />

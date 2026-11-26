@@ -3,16 +3,19 @@ import { CriticalProduct } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency } from '@/lib/formatters';
-import { AlertCircle, ArrowRight } from 'lucide-react';
+import { AlertCircle, ArrowRight, PackageSearch } from 'lucide-react';
 
 interface CriticalStockTableProps {
   products: CriticalProduct[];
   onViewAllClick: () => void;
+  /** Abre la reposición sugerida (si se tiene acceso a Compras). */
+  onRestock?: () => void;
 }
 
 export const CriticalStockTable: React.FC<CriticalStockTableProps> = ({
   products,
   onViewAllClick,
+  onRestock,
 }) => {
   return (
     <Card className="flex flex-col">
@@ -21,6 +24,14 @@ export const CriticalStockTable: React.FC<CriticalStockTableProps> = ({
           <AlertCircle size={16} className="text-amber-400" />
           <CardTitle>Productos en Stock Crítico o Negativo</CardTitle>
         </div>
+        <div className="flex items-center gap-3">
+        {onRestock && products.length > 0 && (
+          <button onClick={onRestock}
+            className="text-xs font-semibold text-white bg-primary hover:bg-primary/90 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors">
+            <PackageSearch size={13} />
+            <span>Armar pedido</span>
+          </button>
+        )}
         <button
           onClick={onViewAllClick}
           className="text-xs font-medium text-primary hover:text-primary-light flex items-center gap-1 transition-colors"
@@ -28,6 +39,7 @@ export const CriticalStockTable: React.FC<CriticalStockTableProps> = ({
           <span>Ir a Inventario</span>
           <ArrowRight size={13} />
         </button>
+        </div>
       </CardHeader>
 
       <CardContent className="p-0">

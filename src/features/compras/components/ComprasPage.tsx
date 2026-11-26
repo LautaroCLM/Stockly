@@ -11,6 +11,9 @@ import { usePurchases } from '../hooks/usePurchases';
 import { cancelPurchaseRpc } from '../api/purchaseCancellationApi';
 import { PurchaseDetailModal } from './PurchaseDetailModal';
 import { PurchaseFormModal } from './PurchaseFormModal';
+import { RestockModal } from './RestockModal';
+import { useRestockFlow } from '../hooks/useRestockFlow';
+import { needsRestock } from '../restockPlan';
 import { PurchasesSummaryCards } from './PurchasesSummaryCards';
 import { PurchasesTable } from './PurchasesTable';
 import { ComprasAccessDenied, ComprasHeader, ComprasSearchBar } from './ComprasHeader';
@@ -25,6 +28,8 @@ interface ComprasPageProps {
   /** Se invoca al registrar o anular una compra (el stock cambió). */
   onStockChanged: () => void;
   onNavigateHome: () => void;
+  /** Pedido del Dashboard para abrir "Reponer stock bajo" (cambia en cada pedido). */
+  restockRequest?: number;
 }
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -37,6 +42,7 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
   canOperate,
   onStockChanged,
   onNavigateHome,
+  restockRequest,
 }) => {
   // Paginación, búsqueda y resumen se resuelven en el servidor (ver usePurchases)
   const {
@@ -59,6 +65,7 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [purchaseToCancel, setPurchaseToCancel] = useState<Purchase | null>(null);
+  const restock = useRestockFlow(restockRequest);
 
   // El texto se envía al servidor recién cuando el usuario deja de escribir
   useEffect(() => {
@@ -81,7 +88,8 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-12">
-      <ComprasHeader companyName={company.name} isLoading={isLoading} onReload={() => void onReload()} onNewPurchase={() => setIsFormOpen(true)} canCreate={canOperate} />
+      <ComprasHeader companyName={company.name} isLoading={isLoading} onReload={() => void onReload()} onNewPurchase={() => setIsFormOpen(true)} canCreate={canOperate}
+        onRestock={restock.openRestock} lowStockCount={products.filter(needsRestock).length} />
 
       <PurchasesSummaryCards summary={summary} activeSuppliers={suppliers.filter((s) => s.isActive).length} />
 
@@ -169,9 +177,13 @@ export const ComprasPage: React.FC<ComprasPageProps> = ({
         purchase={selectedPurchase}
       />
 
+      <RestockModal isOpen={restock.isRestockOpen} companyName={company.name} products={products} suppliers={suppliers}
+        canRegister={canOperate} onClose={restock.closeRestock} onRegisterPurchase={restock.registerFromRestock} />
+
       <PurchaseFormModal
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        isOpen={isFormOpen || restock.draft !== null}
+        initialDraft={restock.draft}
+        onClose={() => { setIsFormOpen(false); restock.clearDraft(); }}
         suppliers={suppliers}
         products={products}
         onSavePurchase={createPurchase}

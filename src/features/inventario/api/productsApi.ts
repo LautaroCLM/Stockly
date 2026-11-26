@@ -112,6 +112,7 @@ export async function fetchProducts(
       name: row.name,
       categoryId: row.category_id || undefined,
       category: categoryName,
+      supplierId: row.supplier_id || undefined,
       salePrice: Number(row.selling_price),
       costPrice: cost,
       stock,

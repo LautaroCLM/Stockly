@@ -17,6 +17,8 @@ export interface Product {
   name: string;
   categoryId?: string;
   category: string;
+  /** Proveedor habitual (si se cargó): se usa para armar pedidos de reposición. */
+  supplierId?: string;
   salePrice: number;
   costPrice: number | null;
   stock: number;

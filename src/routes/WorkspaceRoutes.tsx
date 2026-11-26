@@ -43,6 +43,9 @@ interface WorkspaceRoutesProps {
   /** Permisos del rol empleado (null mientras cargan). */
   permissionLevels: ModuleLevels | null;
   inventorySearch: { query: string; id: number } | null;
+  /** Pedido de reposición desde el Dashboard (cambia en cada pedido). */
+  restockRequest: number;
+  onRequestRestock: () => void;
   catalog: ReturnType<typeof useProducts>;
   categories: ReturnType<typeof useCategories>;
   suppliers: ReturnType<typeof useSuppliers>;
@@ -82,7 +85,8 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
     case 'dashboard':
       return (
         <DashboardPage company={company} products={catalog.products} isMasterAdmin={isMasterAdmin}
-          onNavigateToInventario={goTo('inventario')} onNavigateToHistorial={goTo('historial')} onNavigate={onNavigate} />
+          onNavigateToInventario={goTo('inventario')} onNavigateToHistorial={goTo('historial')} onNavigate={onNavigate}
+          onRestock={access('compras').canView ? props.onRequestRestock : undefined} />
       );
     case 'inventario':
       return (
@@ -159,7 +163,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       return (
         <ComprasPage company={company} suppliers={suppliers.suppliers} products={catalog.products}
           {...access('compras')} onStockChanged={reloadCatalog(catalog, 'tras compra')}
-          onNavigateHome={goTo('dashboard')} />
+          onNavigateHome={goTo('dashboard')} restockRequest={props.restockRequest} />
       );
     case 'clientes':
       return (

@@ -21,6 +21,8 @@ interface DashboardPageProps {
   onNavigateToHistorial: () => void;
   /** Ir a cualquier pantalla (lo usa la guía de primeros pasos). */
   onNavigate: (route: RouteId) => void;
+  /** Abre "Reponer stock bajo" en Compras (solo si se tiene acceso a Compras). */
+  onRestock?: () => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
@@ -30,6 +32,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigateToInventario,
   onNavigateToHistorial,
   onNavigate,
+  onRestock,
 }) => {
   const { kpis, revenueHistory, criticalStock, activity, isLoading, error, reload } =
     useDashboardData(company.id, products);
@@ -107,7 +110,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
       {/* Row 3: Critical and Negative Stock Table */}
       <div>
-        <CriticalStockTable products={criticalStock} onViewAllClick={onNavigateToInventario} />
+        <CriticalStockTable products={criticalStock} onViewAllClick={onNavigateToInventario} onRestock={onRestock} />
       </div>
     </div>
   );

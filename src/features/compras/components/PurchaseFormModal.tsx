@@ -20,10 +20,12 @@ interface PurchaseFormModalProps {
   products: Product[];
   onSavePurchase: (input: CreatePurchaseInput) => Promise<PurchaseActionResult>;
   onSuccess?: () => void;
+  /** Compra ya cargada (por ejemplo, desde Reponer stock bajo). */
+  initialDraft?: { supplierId: string; items: PurchaseDraftItem[] } | null;
 }
 
 /** Registro de una compra a proveedor: datos del comprobante, productos, cantidades y costos. */
-const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClose, suppliers, products, onSavePurchase, onSuccess }) => {
+const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClose, suppliers, products, onSavePurchase, onSuccess, initialDraft }) => {
   const [supplierId, setSupplierId] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
@@ -42,17 +44,17 @@ const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClo
 
   useEffect(() => {
     if (!isOpen) return;
-    setSupplierId('');
+    setSupplierId(initialDraft?.supplierId ?? '');
     setInvoiceNumber('');
     setPurchaseDate(localDateInputValue());
     setNotes('');
     setOnCredit(false);
-    setDraftItems([]);
+    setDraftItems(initialDraft?.items ?? []);
     setSelectedProductId('');
     setErrorMsg(null);
     setIsSubmitting(false);
     idempotencyKeyRef.current = crypto.randomUUID();
-  }, [isOpen]);
+  }, [isOpen, initialDraft]);
 
   useEffect(() => {
     if (!isOpen) return;
