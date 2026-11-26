@@ -1,5 +1,5 @@
 import React from 'react';
-import { Boxes, FileDown, FileUp, FolderTree, Loader2, PackagePlus, Plus, ShoppingCart } from 'lucide-react';
+import { Boxes, FileDown, FileUp, FolderTree, Loader2, PackagePlus, Plus, ShoppingCart, Tags } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
 
@@ -16,6 +16,7 @@ interface InventoryHeaderProps {
   onImportExcel: () => void;
   onExportExcel: () => void;
   isExporting: boolean;
+  onPrintLabels: () => void;
 }
 
 const ACTION_CLASS = 'gap-1.5 font-medium border-border hover:bg-surface-2';
@@ -34,6 +35,7 @@ export const InventoryHeader: React.FC<InventoryHeaderProps> = ({
   onImportExcel,
   onExportExcel,
   isExporting,
+  onPrintLabels,
 }) => (
   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
     <div className="flex items-center gap-3">
@@ -80,6 +82,11 @@ export const InventoryHeader: React.FC<InventoryHeaderProps> = ({
           )}
         </>
       )}
+
+      <Button variant="secondary" size="md" onClick={onPrintLabels} className={ACTION_CLASS} title="Imprimir etiquetas de precio para la góndola">
+        <Tags size={16} className="text-primary" />
+        <span>Etiquetas</span>
+      </Button>
 
       <Button variant="secondary" size="md" onClick={onExportExcel} disabled={isExporting} className={ACTION_CLASS}
         title="Descargar el inventario en un archivo de Excel">

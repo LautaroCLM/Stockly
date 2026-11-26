@@ -15,8 +15,9 @@ import { CatalogAlerts } from './components/CatalogAlerts';
 import { ProductsTable } from './components/ProductsTable';
 import { InventoryDialogs, type InventoryDialog } from './components/InventoryDialogs';
 import { useProductFilters } from './hooks/useProductFilters';
-import { downloadSpreadsheet } from './excel/excelIO';
-import { buildExportTable, exportFileName } from './excel/exportRows';
+import { useExcelExport } from './hooks/useExcelExport';
+import { LabelsModal } from '@/features/etiquetas/components/LabelsModal';
+import { labelFromProduct } from '@/features/etiquetas/types';
 import { pickProductForQuery } from './saleShortcuts';
 import { SaleShortcutHints } from './components/SaleShortcutHints';
 import { useProductNotices } from './hooks/useProductNotices';
@@ -80,26 +81,11 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
       focusFirstRow();
     }
   };
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
-  const [exportInfo, setExportInfo] = useState<string | null>(null);
-
-  // Exporta todos los productos (no solo la página que se ve), con el costo solo si se puede ver
-  const exportExcel = async () => {
-    setIsExporting(true);
-    setExportError(null);
-    setExportInfo(null);
-    try {
-      const fileName = exportFileName(company.name, new Date());
-      const outcome = await downloadSpreadsheet(buildExportTable(products, { includeCosts: isMasterAdmin }), fileName);
-      if (outcome === 'saved') setExportInfo(`Listo: se guardó el archivo con ${products.length} productos.`);
-      else if (outcome === 'downloaded') setExportInfo(`Listo: se descargó ${fileName} con ${products.length} productos. Buscalo en tu carpeta de Descargas.`);
-    } catch {
-      setExportError('No se pudo generar el archivo de Excel. Intentá de nuevo.');
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  const excel = useExcelExport(company, products, isMasterAdmin);
+  const { exportInfo, exportError } = excel;
+  // Etiquetas de precio: con pocos productos filtrados arrancan todos marcados
+  const [isLabelsOpen, setIsLabelsOpen] = useState(false);
+  const labelCandidates = filters.filteredProducts.filter((p) => p.isActive !== false);
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto pb-12">
@@ -114,14 +100,15 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         onInitialStock={() => setDialog({ kind: 'initialStock' })}
         onOpenCart={props.onOpenCart}
         onImportExcel={() => setDialog({ kind: 'importExcel' })}
-        onExportExcel={() => void exportExcel()}
-        isExporting={isExporting}
+        onExportExcel={() => void excel.exportExcel()}
+        isExporting={excel.isExporting}
+        onPrintLabels={() => setIsLabelsOpen(true)}
       />
 
       {exportInfo && (
         <p role="status" className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between gap-2">
           <span>{exportInfo}</span>
-          <button type="button" onClick={() => setExportInfo(null)} className="underline shrink-0">Cerrar</button>
+          <button type="button" onClick={excel.clearInfo} className="underline shrink-0">Cerrar</button>
         </p>
       )}
 
@@ -169,6 +156,10 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         onDeactivate={isMasterAdmin ? (product) => setDialog({ kind: 'deactivate', product }) : undefined}
         onReactivate={isMasterAdmin ? (product) => void productActions.reactivate(product.id) : undefined}
       />
+
+      <LabelsModal isOpen={isLabelsOpen} onClose={() => setIsLabelsOpen(false)} labels={labelCandidates.map(labelFromProduct)}
+        initialSelected={labelCandidates.length <= 30 ? labelCandidates.map((p) => p.id) : []}
+        subtitle="Se listan los productos activos según los filtros de Inventario. Se imprimen 21 por hoja A4." />
 
       <InventoryDialogs
         dialog={dialog}

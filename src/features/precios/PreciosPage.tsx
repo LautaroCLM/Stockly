@@ -17,6 +17,9 @@ import type { PriceFormState } from './components/PriceChangeForm';
 import { PriceHistory } from './components/PriceHistory';
 import { PricePreviewTable } from './components/PricePreviewTable';
 import { useToast } from '@/components/feedback/ToastProvider';
+import type { Product } from '@/features/inventario/types';
+import type { LabelData } from '@/features/etiquetas/types';
+import { AppliedLabelsBanner } from './components/AppliedLabelsBanner';
 
 interface PreciosPageProps {
   company: Company;
@@ -24,6 +27,8 @@ interface PreciosPageProps {
   canOperate: boolean;
   categories: Category[];
   suppliers: Supplier[];
+  /** Catálogo (para el código de barras y la unidad de las etiquetas). */
+  products: Product[];
   /** Recarga el catálogo de Inventario para que muestre los precios nuevos. */
   onPricesChanged: () => void;
 }
@@ -31,11 +36,12 @@ interface PreciosPageProps {
 type Notice = { kind: 'ok' | 'error'; message: string } | null;
 
 /** Cambio de precios masivo: subir o bajar el precio de venta por porcentaje, con vista previa y reversión. */
-export const PreciosPage: React.FC<PreciosPageProps> = ({ company, canView, canOperate, categories, suppliers, onPricesChanged }) => {
+export const PreciosPage: React.FC<PreciosPageProps> = ({ company, canView, canOperate, categories, suppliers, products, onPricesChanged }) => {
   const [form, setForm] = useState<PriceFormState>(INITIAL_PRICE_FORM);
   const [excluded, setExcluded] = useState<ReadonlySet<string>>(new Set());
   const [confirming, setConfirming] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  const [appliedLabels, setAppliedLabels] = useState<LabelData[] | null>(null);
   const batchIdRef = useRef('');
 
   const history = usePriceHistory(company.id, canView);
@@ -80,6 +86,11 @@ export const PreciosPage: React.FC<PreciosPageProps> = ({ company, canView, canO
   const applied = (updated: number) => {
     setConfirming(false);
     setNotice(null);
+    const byId = new Map(products.map((p) => [p.id, p]));
+    setAppliedLabels((preview.rows ?? []).filter((r) => !excluded.has(r.productId)).map((r) => ({
+      id: r.productId, name: r.name, sku: r.sku, price: r.newPrice,
+      barcode: byId.get(r.productId)?.barcode ?? '', unit: byId.get(r.productId)?.unit ?? 'unidad',
+    })));
     const batchId = batchIdRef.current;
     notify({
       message: `Precio actualizado en ${formatNumber(updated)} ${updated === 1 ? 'producto' : 'productos'}`,
@@ -89,6 +100,7 @@ export const PreciosPage: React.FC<PreciosPageProps> = ({ company, canView, canO
           const result = await history.revert(batchId);
           if (!result.ok) return { ok: false, message: result.message };
           onPricesChanged();
+          setAppliedLabels(null);
           void preview.reload();
           return { ok: true };
         },
@@ -114,6 +126,8 @@ export const PreciosPage: React.FC<PreciosPageProps> = ({ company, canView, canO
           {notice.kind === 'ok' ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}<span>{notice.message}</span>
         </div>
       )}
+
+      {appliedLabels && appliedLabels.length > 0 && <AppliedLabelsBanner labels={appliedLabels} onDismiss={() => setAppliedLabels(null)} />}
 
       {canOperate ? (
         <>
