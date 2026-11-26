@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, HandCoins } from 'lucide-react';
+import { FileText, HandCoins, MessageCircle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
@@ -21,10 +21,12 @@ interface BalancesTableProps {
   /** Sin permiso para cobrar o pagar, no se pasa y el botón no se muestra. */
   onSettle?: (party: AccountBalance) => void;
   onOpenStatement: (party: AccountBalance) => void;
+  /** Solo clientes: recordar el saldo por WhatsApp. */
+  onRemind?: (party: AccountBalance) => void;
 }
 
 /** Cuentas corrientes (de clientes o de proveedores): saldo, antigüedad de la deuda y acciones. */
-export const BalancesTable: React.FC<BalancesTableProps> = ({ kind, balances, onSettle, onOpenStatement }) => {
+export const BalancesTable: React.FC<BalancesTableProps> = ({ kind, balances, onSettle, onOpenStatement, onRemind }) => {
   const labels = ACCOUNT_LABELS[kind];
   return (
     <Card className="border-border bg-surface overflow-x-auto">
@@ -56,6 +58,12 @@ export const BalancesTable: React.FC<BalancesTableProps> = ({ kind, balances, on
                 </td>
                 <td className="p-3">
                   <div className="flex justify-end gap-1.5">
+                    {onRemind && b.balance > 0 && (
+                      <button type="button" onClick={() => onRemind(b)} title="Recordar el saldo por WhatsApp" aria-label={`Recordar el saldo a ${b.partyName} por WhatsApp`}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-white bg-[#25D366] hover:bg-[#1fb857]">
+                        <MessageCircle size={14} />
+                      </button>
+                    )}
                     <Button variant="secondary" size="sm" onClick={() => onOpenStatement(b)} className="gap-1 h-8">
                       <FileText size={13} /><span>Estado de cuenta</span>
                     </Button>

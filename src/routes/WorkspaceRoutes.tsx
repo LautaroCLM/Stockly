@@ -138,7 +138,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
     case 'gastos':
       return <GastosPage company={company} {...access('gastos')} suppliers={suppliers.suppliers} />;
     case 'cobros-pagos':
-      return <CobrosPagosPage company={company} {...access('cobros_pagos')} />;
+      return <CobrosPagosPage company={company} {...access('cobros_pagos')} customers={customers.customers} />;
     case 'informes':
       return <InformesPage company={company} canView={access('informes').canView} />;
     case 'maquinas':

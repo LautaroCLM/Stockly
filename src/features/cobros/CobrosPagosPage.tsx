@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/formatters';
 import { toHundredths, fromHundredths } from '@/lib/decimal';
 import type { Company } from '@/types';
+import type { Customer } from '@/features/clientes/types';
+import { normalizeArPhone, whatsappUrl } from '@/features/inventario/whatsappTicket';
+import { debtReminderMessage } from './debtReminder';
 import { ACCOUNT_LABELS } from './accountKinds';
 import type { AccountKind } from './accountKinds';
 import { useAccounts } from './hooks/useAccounts';
@@ -17,12 +20,14 @@ interface CobrosPagosPageProps {
   company: Company;
   canView: boolean;
   canOperate: boolean;
+  /** Clientes (para el celular del recordatorio por WhatsApp). */
+  customers: Customer[];
 }
 
 const KINDS: AccountKind[] = ['customer', 'supplier'];
 
 /** Cobros y Pagos: cuenta corriente de clientes (lo que nos deben) y de proveedores (lo que debemos). */
-export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, canView, canOperate }) => {
+export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, canView, canOperate, customers }) => {
   const [kind, setKind] = useState<AccountKind>('customer');
   const labels = ACCOUNT_LABELS[kind];
   const accounts = useAccounts(kind, company.id, canView);
@@ -40,6 +45,10 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, canVi
   // El modal usa el saldo más reciente, no el de cuando se abrió
   const live = (p: AccountBalance | null) => (p ? accounts.balances.find((b) => b.partyId === p.partyId) ?? p : null);
   const settlingLive = live(settling);
+  const remind = (b: AccountBalance) => {
+    const phone = customers.find((c) => c.id === b.partyId)?.phone;
+    window.open(whatsappUrl(phone ? normalizeArPhone(phone) : null, debtReminderMessage(company.name, b)), '_blank', 'noopener,noreferrer');
+  };
   const statementLive = live(statementOf);
 
   return (
@@ -96,7 +105,8 @@ export const CobrosPagosPage: React.FC<CobrosPagosPageProps> = ({ company, canVi
       ) : accounts.balances.length === 0 ? (
         !accounts.error && <p className="py-12 text-center text-xs text-text-muted leading-relaxed">{labels.emptyList}</p>
       ) : (
-        <BalancesTable kind={kind} balances={accounts.balances} onSettle={canOperate ? setSettling : undefined} onOpenStatement={setStatementOf} />
+        <BalancesTable kind={kind} balances={accounts.balances} onSettle={canOperate ? setSettling : undefined} onOpenStatement={setStatementOf}
+          onRemind={kind === 'customer' ? remind : undefined} />
       )}
 
       <AnimatePresence>
