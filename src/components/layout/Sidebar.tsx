@@ -1,4 +1,5 @@
 import React from 'react';
+import { AnimatePresence, m } from 'motion/react';
 import { RouteId, NavSection } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Boxes, X } from 'lucide-react';
@@ -16,6 +17,15 @@ interface SidebarProps {
   onSignOut?: () => void;
 }
 
+
+/** Al ocultar o mostrar un módulo desde Mis preferencias, la fila se pliega o despliega en vez de saltar. */
+const COLLAPSE = {
+  initial: { opacity: 0, height: 0 },
+  animate: { opacity: 1, height: 'auto' },
+  exit: { opacity: 0, height: 0 },
+  transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] },
+  style: { overflow: 'hidden' },
+} as const;
 
 export const Sidebar: React.FC<SidebarProps> = ({
   sections,
@@ -81,18 +91,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation list */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-          {sections.map((section, idx) => (
-            <div key={idx} className="space-y-1">
+          <AnimatePresence initial={false}>
+          {sections.map((section) => (
+            <m.div key={section.title} className="space-y-1" {...COLLAPSE}>
               <div className="px-3 pb-1.5 text-[10px] font-semibold tracking-wider uppercase text-text-muted/80">
                 {section.title}
               </div>
+              <AnimatePresence initial={false}>
               {section.items.map((item) => {
                 const isActive = activeRoute === item.id;
                 const IconComponent = NAV_ICONS[item.iconName] || Boxes;
 
                 return (
+                  <m.div key={item.id} {...COLLAPSE}>
                   <button
-                    key={item.id}
                     onClick={() => {
                       onNavigate(item.id);
                       onCloseMobile();
@@ -125,10 +137,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </Badge>
                     )}
                   </button>
+                  </m.div>
                 );
               })}
-            </div>
+              </AnimatePresence>
+            </m.div>
           ))}
+          </AnimatePresence>
         </div>
 
         <SidebarUserCard

@@ -10,6 +10,8 @@ export async function fetchHiddenRoutes(userId: string): Promise<RouteId[]> {
     .select('hidden_routes')
     .eq('user_id', userId)
     .maybeSingle();
+  // PGRST205: la tabla todavía no existe en el servidor (falta aplicar la migración)
+  if (error?.code === 'PGRST205') throw new Error('Esta opción todavía no está activada en el servidor.');
   if (error) throw new Error(toUserMessage(error, 'No se pudieron cargar tus preferencias.'));
   return parseHiddenRoutes(data?.hidden_routes);
 }

@@ -33,15 +33,23 @@ export function useHiddenRoutes(userId: string) {
     };
   }, [userId]);
 
+  // La lista vigente vive también en una referencia: así "Deshacer" (que se llama más tarde) no usa una copia vieja
+  const currentRef = useRef<RouteId[]>([]);
+  currentRef.current = hidden;
+
   const save = useCallback(
     async (next: RouteId[]): Promise<SavePreferencesResult> => {
-      const previous = hidden;
+      const previous = currentRef.current;
+      currentRef.current = next;
       setHidden(next);
       const result = await saveHiddenRoutes(userId, next);
-      if (!result.ok) setHidden(previous);
+      if (!result.ok) {
+        currentRef.current = previous;
+        setHidden(previous);
+      }
       return result;
     },
-    [hidden, userId]
+    [userId]
   );
 
   const hiddenSet = useMemo(() => new Set(hidden), [hidden]);
