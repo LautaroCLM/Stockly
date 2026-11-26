@@ -8,6 +8,9 @@ import { RecentActivityList } from './components/RecentActivityList';
 import { useDashboardData } from './hooks/useDashboardData';
 import { Button } from '@/components/ui/Button';
 import { ShoppingCart, RefreshCw, AlertTriangle, Loader2 } from 'lucide-react';
+import type { RouteId } from '@/types';
+import { SetupGuideCard } from '@/features/guia/components/SetupGuideCard';
+import { useSetupGuide } from '@/features/guia/hooks/useSetupGuide';
 
 interface DashboardPageProps {
   company: Company;
@@ -16,6 +19,8 @@ interface DashboardPageProps {
   isMasterAdmin: boolean;
   onNavigateToInventario: () => void;
   onNavigateToHistorial: () => void;
+  /** Ir a cualquier pantalla (lo usa la guía de primeros pasos). */
+  onNavigate: (route: RouteId) => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
@@ -24,9 +29,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   isMasterAdmin,
   onNavigateToInventario,
   onNavigateToHistorial,
+  onNavigate,
 }) => {
   const { kpis, revenueHistory, criticalStock, activity, isLoading, error, reload } =
     useDashboardData(company.id, products);
+  // Primeros pasos: solo para el administrador, mientras falte algo por configurar
+  const guide = useSetupGuide(company.id, products.length, isMasterAdmin);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -77,6 +85,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             Reintentar
           </Button>
         </div>
+      )}
+
+      {guide.isVisible && (
+        <SetupGuideCard steps={guide.steps} doneCount={guide.doneCount} onNavigate={onNavigate} onDismiss={guide.dismiss} />
       )}
 
       {/* Row 1: KPI Cards */}

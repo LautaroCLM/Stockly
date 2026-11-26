@@ -82,7 +82,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
     case 'dashboard':
       return (
         <DashboardPage company={company} products={catalog.products} isMasterAdmin={isMasterAdmin}
-          onNavigateToInventario={goTo('inventario')} onNavigateToHistorial={goTo('historial')} />
+          onNavigateToInventario={goTo('inventario')} onNavigateToHistorial={goTo('historial')} onNavigate={onNavigate} />
       );
     case 'inventario':
       return (
