@@ -191,6 +191,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         isOpen={receiptSale !== null}
         sale={receiptSale}
         company={activeCompany}
+        customerPhone={customers.customers.find((c) => c.id === receiptSale?.customerId)?.phone}
         onClose={() => setReceiptSale(null)}
       />
     </>

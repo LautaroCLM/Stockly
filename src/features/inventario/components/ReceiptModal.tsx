@@ -4,6 +4,7 @@ import { Sale } from '../types';
 import { Company } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { ReceiptTicket } from './ReceiptTicket';
+import { WhatsAppShare } from './WhatsAppShare';
 import { useCompanyLogo } from '@/features/logo/hooks/useCompanyLogo';
 import { useDocumentSettings } from '@/features/documentos/hooks/useDocumentSettings';
 import type { DocumentSettings } from '@/features/documentos/types';
@@ -19,6 +20,8 @@ interface ReceiptModalProps {
   isOpen: boolean;
   sale: Sale | null;
   company: Company;
+  /** Celular del cliente de la venta (para completar el envío por WhatsApp). */
+  customerPhone?: string | null;
   onClose: () => void;
 }
 
@@ -33,6 +36,7 @@ const ReceiptModalBody: React.FC<ReceiptModalBodyProps> = ({
   company,
   settings,
   logo,
+  customerPhone,
   onClose,
 }) => {
   // Handle escape key
@@ -84,6 +88,8 @@ const ReceiptModalBody: React.FC<ReceiptModalBodyProps> = ({
         <div className="p-6 overflow-y-auto max-h-[75vh] print:max-h-none print:overflow-visible">
           <ReceiptTicket sale={sale} company={company} settings={settings} logo={logo} />
         </div>
+
+        <WhatsAppShare key={sale.id} sale={sale} companyName={company.name} defaultPhone={customerPhone} />
 
         {/* Modal actions (hidden in print) */}
         <div className="p-4 px-6 border-t border-border bg-surface-2/60 flex items-center justify-between gap-3 print:hidden">
