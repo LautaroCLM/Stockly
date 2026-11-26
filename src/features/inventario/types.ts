@@ -52,6 +52,8 @@ export interface CartItem {
   quantity: number;
   subtotal: number;
   currentStock: number;
+  /** Id de la línea de venta guardada (solo en ventas ya registradas: se usa para devoluciones). */
+  saleItemId?: string;
 }
 
 export interface CartState {
@@ -96,6 +98,8 @@ export interface Sale {
   status: 'completada' | 'anulada';
   cancelledAt?: string | null;
   cancelReason?: string | null;
+  /** Total reintegrado por devoluciones parciales. */
+  returnedAmount?: number;
 }
 
 export type StockMovementDirection = 'increase' | 'decrease';
@@ -109,7 +113,8 @@ export type StockMovementReason =
   | 'internal_use'
   | 'sale'
   | 'cancellation'
-  | 'purchase_cancellation';
+  | 'purchase_cancellation'
+  | 'sale_return';
 
 export interface StockMovement {
   id: string;

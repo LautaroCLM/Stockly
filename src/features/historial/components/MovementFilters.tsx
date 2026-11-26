@@ -13,6 +13,7 @@ const REASON_OPTIONS: [string, string][] = [
   ['purchase', 'Entradas / Compras'],
   ['sale', 'Ventas mostrador'],
   ['cancellation', 'Anulaciones de venta'],
+  ['sale_return', 'Devoluciones de venta'],
   ['purchase_cancellation', 'Anulaciones de compra'],
 ];
 

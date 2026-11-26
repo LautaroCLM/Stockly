@@ -15,6 +15,7 @@ export const REASON_LABELS: Record<string, { label: string; badge: BadgeVariant 
   internal_use: { label: 'Consumo Interno', badge: 'danger' },
   sale: { label: 'Venta Mostrador', badge: 'neutral' },
   cancellation: { label: 'Anulación Venta', badge: 'warning' },
+  sale_return: { label: 'Devolución Venta', badge: 'warning' },
   purchase_cancellation: { label: 'Anulación Compra', badge: 'warning' },
 };
 

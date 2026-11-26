@@ -135,6 +135,7 @@ const REASON_LABELS: Record<string, string> = {
   internal_use: 'Consumo interno',
   sale: 'Venta',
   cancellation: 'Anulación de venta',
+  sale_return: 'Devolución de venta',
   purchase_cancellation: 'Anulación de compra',
 };
 

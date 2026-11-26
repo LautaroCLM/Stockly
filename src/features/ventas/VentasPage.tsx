@@ -12,6 +12,8 @@ import { CancelDocumentModal } from '@/components/shared/CancelDocumentModal';
 import { AlertTriangle, Loader2, Search } from 'lucide-react';
 import { VentasHeader } from './components/VentasHeader';
 import { SaleRow } from './components/SaleRow';
+import { SaleReturnModal } from './components/SaleReturnModal';
+import { useToast } from '@/components/feedback/ToastProvider';
 
 interface VentasPageProps {
   company: Company;
@@ -35,6 +37,8 @@ export const VentasPage: React.FC<VentasPageProps> = ({
   onSaleCancelled,
 }) => {
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
+  const [saleToReturn, setSaleToReturn] = useState<Sale | null>(null);
+  const { notify } = useToast();
   // Paginación y búsqueda se resuelven en el servidor (ver useSalesHistory)
   const { sales, total, hasMore, isLoading, isLoadingMore, error, setSearch, loadMore, reload } =
     useSalesHistory(company.id, customers);
@@ -137,7 +141,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
                   </tr>
                 ) : (
                   sales.map((sale) => (
-                    <SaleRow key={sale.id} sale={sale} canCancel={isMasterAdmin} onViewReceipt={onViewReceipt} onCancel={setSaleToCancel} />
+                    <SaleRow key={sale.id} sale={sale} canCancel={isMasterAdmin} onViewReceipt={onViewReceipt} onCancel={setSaleToCancel} onReturn={setSaleToReturn} />
                   ))
                 )}
               </tbody>
@@ -170,6 +174,13 @@ export const VentasPage: React.FC<VentasPageProps> = ({
         onClose={() => setSaleToCancel(null)}
         onConfirm={(reason) => handleConfirmCancel(saleToCancel as Sale, reason)}
       />
+      <SaleReturnModal sale={saleToReturn} companyId={company.id} onClose={() => setSaleToReturn(null)}
+        onReturned={(number, amount) => {
+          setSaleToReturn(null);
+          reload();
+          onSaleCancelled();
+          notify({ message: `Devolución ${number} registrada`, detail: `Devolvé ${formatCurrency(amount)} en efectivo al cliente.` });
+        }} />
     </div>
   );
 };

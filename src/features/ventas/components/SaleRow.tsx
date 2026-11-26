@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ban, Eye } from 'lucide-react';
+import { Ban, Eye, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
@@ -11,10 +11,12 @@ interface SaleRowProps {
   canCancel: boolean;
   onViewReceipt: (sale: Sale) => void;
   onCancel: (sale: Sale) => void;
+  /** Devolución parcial (mismo permiso que anular). */
+  onReturn?: (sale: Sale) => void;
 }
 
 /** Una venta del historial: comprobante, cliente, ítems, medios de pago y total. */
-export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt, onCancel }) => {
+export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt, onCancel, onReturn }) => {
   const isCancelled = sale.status === 'anulada';
   return (
     <tr className="hover:bg-surface-2/50 transition-colors group">
@@ -23,6 +25,9 @@ export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt
           <span className="font-mono font-bold text-text-primary text-xs">{sale.saleNumber}</span>
           {isCancelled && (
             <Badge variant="danger" size="sm" title={sale.cancelReason ?? undefined}>Anulada</Badge>
+          )}
+          {!isCancelled && (sale.returnedAmount ?? 0) > 0 && (
+            <Badge variant="warning" size="sm" title={`Devuelto ${formatCurrency(sale.returnedAmount ?? 0)}`}>Con devolución</Badge>
           )}
         </div>
       </td>
@@ -51,7 +56,13 @@ export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt
             <Eye size={13} />
             <span>Ticket</span>
           </Button>
-          {canCancel && sale.status === 'completada' && (
+          {canCancel && onReturn && sale.status === 'completada' && !sale.payments.some((p) => p.method === 'cuenta_corriente') && (
+            <Button variant="secondary" size="sm" onClick={() => onReturn(sale)} className="h-7 px-2.5 text-xs gap-1" title="Devolver algunos productos">
+              <Undo2 size={13} />
+              <span>Devolver</span>
+            </Button>
+          )}
+          {canCancel && sale.status === 'completada' && !(sale.returnedAmount ?? 0) && (
             <Button variant="secondary" size="sm" onClick={() => onCancel(sale)} className="h-7 px-2.5 text-xs gap-1 hover:text-danger" title="Anular venta">
               <Ban size={13} />
               <span>Anular</span>
