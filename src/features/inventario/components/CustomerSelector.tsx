@@ -50,7 +50,7 @@ export const CustomerSelector: React.FC<CustomerSelectorProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div data-enter-ignore className="space-y-2">
       <div className="flex items-center justify-between">
         <label className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
           <UserCheck size={14} className="text-primary" />

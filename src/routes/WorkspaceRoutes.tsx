@@ -54,6 +54,7 @@ interface WorkspaceRoutesProps {
     total: number;
     getQuantity: (productId: string) => number;
     addProduct: (product: Product) => void;
+    removeOne: (product: Product) => void;
     open: () => void;
   };
   onViewReceipt: (sale: Sale) => void;
@@ -101,6 +102,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
           cartTotal={cart.total}
           getItemQuantityInCart={cart.getQuantity}
           onAddToCart={cart.addProduct}
+          onRemoveOneFromCart={cart.removeOne}
           onOpenCart={cart.open}
           onCreateProduct={catalog.createProduct}
           onUpdateProduct={catalog.updateProduct}

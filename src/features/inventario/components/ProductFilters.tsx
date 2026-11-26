@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import type { Product, StockStatus } from '../types';
 import { X, Filter } from 'lucide-react';
 import { ProductSearchBox } from './ProductSearchBox';
+import { isDialogOpen, isSearchKey, isTypingTarget } from '../saleShortcuts';
 
 interface ProductFiltersProps {
   /** Productos entre los que se sugiere al escribir (según el filtro de activos). */
@@ -16,6 +17,10 @@ interface ProductFiltersProps {
   selectedStatus: 'all' | StockStatus;
   onStatusChange: (status: 'all' | StockStatus) => void;
   totalFiltered: number;
+  /** Enter en el buscador: agrega el producto escaneado o el único resultado. */
+  onSearchSubmit?: () => void;
+  /** Flecha abajo desde el buscador: pasa a la tabla. */
+  onFocusTable?: () => void;
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
@@ -30,19 +35,16 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   selectedStatus,
   onStatusChange,
   totalFiltered,
+  onSearchSubmit,
+  onFocusTable,
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcut: '/' or 'Ctrl+K' focuses the search input if not inside another input
+  // F2, Ctrl+K o '/' (fuera de un campo de texto) llevan al buscador, salvo que haya otra ventana abierta
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      const activeEl = document.activeElement;
-      const isInput =
-        activeEl?.tagName === 'INPUT' ||
-        activeEl?.tagName === 'TEXTAREA' ||
-        (activeEl as HTMLElement)?.isContentEditable;
-
-      if ((e.key === '/' && !isInput) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+      if (isDialogOpen()) return;
+      if (isSearchKey(e) || (e.key === '/' && !isTypingTarget(document.activeElement))) {
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
@@ -63,8 +65,10 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           onChange={onSearchChange}
           products={suggestionProducts}
           inputRef={searchInputRef}
+          onSubmit={onSearchSubmit}
+          onArrowDownOut={onFocusTable}
           ariaLabel="Buscar productos"
-          placeholder="Buscar por Nombre, SKU o Código de Barras... (Presiona '/' o Ctrl+K)"
+          placeholder="Buscar por Nombre, SKU o Código de Barras... (F2 o Ctrl+K)"
           inputClassName="w-full h-9 pl-9 pr-16 text-xs bg-surface-2 border border-border/80 focus:border-primary focus:bg-surface-2 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
           trailing={searchQuery ? (
             <button
@@ -77,7 +81,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             </button>
           ) : (
             <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-3 text-text-muted border border-border select-none pointer-events-none">
-              /
+              F2
             </kbd>
           )}
         />

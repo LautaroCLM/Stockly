@@ -8,6 +8,7 @@ import { ProductsEmptyState } from './ProductsEmptyState';
 
 interface RowActions {
   onAddToCart: (product: Product) => void;
+  onRemoveOne?: (product: Product) => void;
   onEdit?: (product: Product) => void;
   onAdjustStock?: (product: Product) => void;
   onDeactivate?: (product: Product) => void;
@@ -39,7 +40,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = (props) => {
     <Card className="overflow-hidden">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse" data-products-table>
             <thead>
               <tr className="border-b border-border bg-surface-2/40 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
                 <th className="py-2.5 px-4">SKU / Código</th>
@@ -76,6 +77,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = (props) => {
                     isSelected={props.selectedRowIndex === idx}
                     onSelectRow={() => props.onSelectRow(idx)}
                     onAddToCart={props.onAddToCart}
+                    onRemoveOne={props.onRemoveOne}
                     onEdit={props.onEdit}
                     onAdjustStock={props.onAdjustStock}
                     onDeactivate={props.onDeactivate}

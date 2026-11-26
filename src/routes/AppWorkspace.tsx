@@ -10,6 +10,7 @@ import { useCart } from '@/features/inventario/hooks/useCart';
 import { useProducts } from '@/features/inventario/hooks/useProducts';
 import { useCategories } from '@/features/inventario/hooks/useCategories';
 import { useCheckout } from '@/features/inventario/hooks/useCheckout';
+import { useOpenCartShortcut } from '@/features/inventario/hooks/useOpenCartShortcut';
 import { useSuppliers } from '@/features/proveedores/hooks/useSuppliers';
 import { useCustomers } from '@/features/clientes/hooks/useCustomers';
 import { useCompanyMembers } from '@/features/companies/hooks/useCompanyMembers';
@@ -92,6 +93,9 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     onSaleCompleted: showReceipt,
   });
 
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  useOpenCartShortcut(openCart);
+
   const getItemQuantityInCart = useCallback(
     (productId: string) => cart.items.find((i) => i.productId === productId)?.quantity ?? 0,
     [cart.items]
@@ -161,6 +165,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
             total: cart.total,
             getQuantity: getItemQuantityInCart,
             addProduct: (product) => cart.addItem(product, 1),
+            removeOne: (product) => cart.updateQuantity(product.id, getItemQuantityInCart(product.id) - 1),
             open: () => setIsCartOpen(true),
           }}
           onViewReceipt={setReceiptSale}

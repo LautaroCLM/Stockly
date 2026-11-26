@@ -7,6 +7,8 @@ interface CartItemRowProps {
   item: CartItem;
   /** El producto fue desactivado: bloquea el cobro hasta quitarlo. */
   isInactive: boolean;
+  /** Línea elegida con el teclado. */
+  isSelected?: boolean;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
 }
@@ -15,10 +17,10 @@ const STEP_BUTTON =
   'w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors';
 
 /** Un producto del carrito con su cantidad editable y subtotal. */
-export const CartItemRow: React.FC<CartItemRowProps> = ({ item, isInactive, onUpdateQuantity, onRemove }) => (
-  <div className={`rounded-xl p-3 flex flex-col gap-2 transition-colors ${
+export const CartItemRow: React.FC<CartItemRowProps> = ({ item, isInactive, isSelected = false, onUpdateQuantity, onRemove }) => (
+  <div aria-current={isSelected || undefined} className={`rounded-xl p-3 flex flex-col gap-2 transition-colors ${
     isInactive ? 'bg-danger/10 border border-danger/40' : 'bg-surface-2/70 border border-border/80 hover:border-border-active'
-  }`}>
+  } ${isSelected ? 'ring-2 ring-primary/60' : ''}`}>
     <div className="flex items-start justify-between gap-2">
       <div className="flex flex-col min-w-0">
         <span className={`text-xs font-medium truncate ${isInactive ? 'text-danger font-semibold' : 'text-text-primary'}`}>{item.name}</span>

@@ -3,12 +3,15 @@ import { Product } from '../types';
 import { StockBadge } from './StockBadge';
 import { formatCurrency } from '@/lib/formatters';
 import { CartIndicator, ProductRowActions } from './ProductRowActions';
+import { isMinusKey, isPlusKey } from '../saleShortcuts';
 
 interface ProductTableRowProps {
   product: Product;
   quantityInCart: number;
   isSelected?: boolean;
   onAddToCart: (product: Product) => void;
+  /** Quita una unidad del carrito (tecla −). */
+  onRemoveOne?: (product: Product) => void;
   onSelectRow?: () => void;
   onEdit?: (product: Product) => void;
   onAdjustStock?: (product: Product) => void;
@@ -21,6 +24,7 @@ export const ProductTableRow: React.FC<ProductTableRowProps> = ({
   quantityInCart,
   isSelected,
   onAddToCart,
+  onRemoveOne,
   onSelectRow,
   onEdit,
   onAdjustStock,
@@ -30,12 +34,19 @@ export const ProductTableRow: React.FC<ProductTableRowProps> = ({
   const isInCart = quantityInCart > 0;
   const isInactive = product.isActive === false;
 
+  // Teclado en la fila: Enter o + agregan una unidad, − quita una, flechas pasan de fila
   function handleKeyDown(e: React.KeyboardEvent<HTMLTableRowElement>) {
-    if (e.key === 'Enter') {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter' || isPlusKey(e)) {
       e.preventDefault();
-      if (!isInactive) {
-        onAddToCart(product);
-      }
+      if (!isInactive) onAddToCart(product);
+    } else if (isMinusKey(e)) {
+      e.preventDefault();
+      if (quantityInCart > 0) onRemoveOne?.(product);
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const sibling = e.key === 'ArrowDown' ? e.currentTarget.nextElementSibling : e.currentTarget.previousElementSibling;
+      if (sibling instanceof HTMLElement) sibling.focus();
     }
   }
 
@@ -44,6 +55,8 @@ export const ProductTableRow: React.FC<ProductTableRowProps> = ({
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onClick={onSelectRow}
+      onFocus={onSelectRow}
+      data-product-row
       className={`border-b border-border/60 transition-colors group cursor-pointer focus:outline-none focus:bg-primary/5 ${
         isInactive
           ? 'bg-surface-2/20 text-text-secondary opacity-75 hover:opacity-95'

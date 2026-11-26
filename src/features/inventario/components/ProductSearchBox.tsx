@@ -17,6 +17,10 @@ interface ProductSearchBoxProps {
   inputRef?: React.Ref<HTMLInputElement>;
   /** Botones a la derecha del campo (borrar, atajo de teclado). */
   trailing?: React.ReactNode;
+  /** Enter sin una sugerencia elegida. */
+  onSubmit?: () => void;
+  /** Flecha abajo con la lista de sugerencias cerrada. */
+  onArrowDownOut?: () => void;
 }
 
 const FIELD_LABEL = { name: 'Nombre', sku: 'SKU', barcode: 'Código' } as const;
@@ -35,7 +39,7 @@ const HighlightedText: React.FC<{ suggestion: ProductSuggestion }> = ({ suggesti
 
 /** Campo de búsqueda de productos con sugerencias mientras se escribe (por nombre, SKU o código de barras). */
 export const ProductSearchBox: React.FC<ProductSearchBoxProps> = ({
-  value, onChange, products, onPick, placeholder, ariaLabel, inputClassName, inputRef, trailing,
+  value, onChange, products, onPick, placeholder, ariaLabel, inputClassName, inputRef, trailing, onSubmit, onArrowDownOut,
 }) => {
   const listId = useId();
   const [isFocused, setIsFocused] = useState(false);
@@ -59,6 +63,25 @@ export const ProductSearchBox: React.FC<ProductSearchBoxProps> = ({
       setActiveIndex(-1);
       return;
     }
+    const isPickingSuggestion = isOpen && activeIndex >= 0 && Boolean(suggestions[activeIndex]);
+    if ((event.key === 'Enter' || event.key === 'Tab') && isPickingSuggestion) {
+      event.preventDefault();
+      pick(suggestions[activeIndex]);
+      return;
+    }
+    // Enter sin sugerencia elegida (por ejemplo, lo que manda un lector de códigos)
+    if (event.key === 'Enter' && onSubmit) {
+      event.preventDefault();
+      setDismissedFor(value);
+      onSubmit();
+      return;
+    }
+    // Con la lista cerrada, la flecha abajo pasa a la tabla
+    if (event.key === 'ArrowDown' && !isOpen && onArrowDownOut) {
+      event.preventDefault();
+      onArrowDownOut();
+      return;
+    }
     if (suggestions.length === 0) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
@@ -67,9 +90,6 @@ export const ProductSearchBox: React.FC<ProductSearchBoxProps> = ({
       // Recorre las sugerencias y una posición más (-1) que significa "ninguna", para volver a lo escrito
       const positions = suggestions.length + 1;
       setActiveIndex((index) => ((index + 1 + step + positions) % positions) - 1);
-    } else if ((event.key === 'Enter' || event.key === 'Tab') && isOpen && activeIndex >= 0 && suggestions[activeIndex]) {
-      event.preventDefault();
-      pick(suggestions[activeIndex]);
     }
   };
 

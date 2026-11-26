@@ -10,6 +10,8 @@ import { CustomerSelector } from './CustomerSelector';
 import { SinglePaymentPanel, SplitPaymentPanel } from './PaymentPanels';
 import { ModalFrame } from '@/components/motion/ModalFrame';
 import { AnimatePresence } from 'motion/react';
+import { useCheckoutKeyboard } from '../hooks/useCheckoutKeyboard';
+import { SALE_HINTS, SaleShortcutHints } from './SaleShortcutHints';
 
 type SaleResult = { success: boolean; error?: string };
 
@@ -51,13 +53,7 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
     setSplits((prev) => prev.map((p) => (p.method === 'cuenta_corriente' ? { ...p, method: 'efectivo' } : p)));
   }, [selectedCustomer]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !isSubmitting) onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isSubmitting, onClose]);
+  const confirmRef = useCheckoutKeyboard(isOpen, isSubmitting, onClose);
 
   if (!isOpen) return null;
 
@@ -100,6 +96,11 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
     } catch (err) {
       fail(toUserMessage(err, 'Ocurrió un error al procesar la venta.'));
     }
+  };
+
+  const canSubmit = !isSubmitting && !(paymentMode === 'split' && !splitSummary.isExact) && !(paymentMode === 'single' && cashInsufficient);
+  confirmRef.current = () => {
+    if (canSubmit) handleSubmit();
   };
 
   return (
@@ -173,12 +174,15 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
       </div>
 
       <div className="p-4 px-6 border-t border-border bg-surface-2/40 flex items-center justify-between gap-3">
-        <Button variant="secondary" size="md" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" size="md" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
+          <SaleShortcutHints hints={SALE_HINTS.checkout} />
+        </div>
         <Button
           variant="primary"
           size="md"
           onClick={handleSubmit}
-          disabled={isSubmitting || (paymentMode === 'split' && !splitSummary.isExact) || (paymentMode === 'single' && cashInsufficient)}
+          disabled={!canSubmit}
           className="shadow-lg shadow-primary/25 min-w-[170px]"
         >
           {isSubmitting ? <span>Procesando...</span> : (<><CheckCircle2 size={16} /><span>Confirmar Venta</span></>)}

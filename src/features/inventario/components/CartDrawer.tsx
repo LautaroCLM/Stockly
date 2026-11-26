@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, m } from 'motion/react';
 import { ShoppingCart, X } from 'lucide-react';
 import { drawerRightVariants, overlayVariants } from '@/lib/motion';
 import type { CartItem, Product } from '../types';
 import { CartItemRow } from './CartItemRow';
 import { CartFooter } from './CartFooter';
+import { SALE_HINTS, SaleShortcutHints } from './SaleShortcutHints';
+import { useCartKeyboard } from '../hooks/useCartKeyboard';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -32,6 +34,20 @@ const CartDrawerBody: React.FC<CartDrawerProps> = (props) => {
     [products]
   );
   const inactiveItems = useMemo(() => items.filter((item) => inactiveIds.has(item.productId)), [items, inactiveIds]);
+  // Al abrir, el foco entra al carrito para que las flechas no muevan la tabla de atrás
+  const panelRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (isOpen) panelRef.current?.focus();
+  }, [isOpen]);
+
+  const selectedIndex = useCartKeyboard({
+    isOpen,
+    items,
+    canCheckout: items.length > 0 && inactiveItems.length === 0,
+    onUpdateQuantity: props.onUpdateQuantity,
+    onRemoveItem: props.onRemoveItem,
+    onCheckout: props.onProceedToCheckout,
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -47,7 +63,8 @@ const CartDrawerBody: React.FC<CartDrawerProps> = (props) => {
     <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <m.aside variants={drawerRightVariants} className="w-screen max-w-md bg-surface border-l border-border flex flex-col shadow-2xl shadow-black/80">
+        <m.aside ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Carrito de venta"
+          variants={drawerRightVariants} className="focus:outline-none w-screen max-w-md bg-surface border-l border-border flex flex-col shadow-2xl shadow-black/80">
           <div className="p-4 px-5 border-b border-border flex items-center justify-between bg-surface-2/40">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
@@ -73,16 +90,18 @@ const CartDrawerBody: React.FC<CartDrawerProps> = (props) => {
                 </div>
                 <p className="text-xs font-semibold text-text-primary mb-1">El carrito está vacío</p>
                 <p className="text-[11px] text-text-muted max-w-[220px]">
-                  Buscá productos en el catálogo y agregalos con un clic o presiona Enter en la fila.
+                  Buscá productos con F2 y agregalos con Enter, o escaneá el código de barras.
                 </p>
               </div>
             ) : (
-              items.map((item) => (
-                <CartItemRow key={item.productId} item={item} isInactive={inactiveIds.has(item.productId)}
+              items.map((item, index) => (
+                <CartItemRow key={item.productId} item={item} isInactive={inactiveIds.has(item.productId)} isSelected={index === selectedIndex}
                   onUpdateQuantity={props.onUpdateQuantity} onRemove={props.onRemoveItem} />
               ))
             )}
           </div>
+
+          {items.length > 0 && <SaleShortcutHints hints={SALE_HINTS.cart} className="px-4 py-2 border-t border-border/60" />}
 
           {items.length > 0 && (
             <CartFooter

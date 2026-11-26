@@ -17,6 +17,8 @@ import { InventoryDialogs, type InventoryDialog } from './components/InventoryDi
 import { useProductFilters } from './hooks/useProductFilters';
 import { downloadSpreadsheet } from './excel/excelIO';
 import { buildExportTable, exportFileName } from './excel/exportRows';
+import { pickProductForQuery } from './saleShortcuts';
+import { SaleShortcutHints } from './components/SaleShortcutHints';
 
 type SimpleResult = { success: boolean; error?: string };
 type CategoryResult = { success: boolean; error?: string; category?: Category };
@@ -36,6 +38,8 @@ interface InventarioPageProps {
   cartTotal: number;
   getItemQuantityInCart: (productId: string) => number;
   onAddToCart: (product: Product) => void;
+  /** Quita una unidad del producto del carrito. */
+  onRemoveOneFromCart?: (product: Product) => void;
   onOpenCart: () => void;
   onCreateProduct: (data: ProductFormData) => Promise<SimpleResult> | SimpleResult;
   onUpdateProduct: (id: string, data: ProductFormData) => Promise<SimpleResult> | SimpleResult;
@@ -62,6 +66,18 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
     [products, filters.activeFilter]
   );
   const openCreate = () => setDialog({ kind: 'create' });
+  const focusFirstRow = () => document.querySelector<HTMLElement>('[data-products-table] [data-product-row]')?.focus();
+
+  // Enter en el buscador: agrega lo escaneado (o el único resultado) y deja el buscador listo para el siguiente
+  const submitSearch = () => {
+    const product = pickProductForQuery(filters.searchQuery, filters.filteredProducts, products);
+    if (product) {
+      props.onAddToCart(product);
+      filters.setSearchQuery('');
+    } else if (filters.filteredProducts.length > 0) {
+      focusFirstRow();
+    }
+  };
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportInfo, setExportInfo] = useState<string | null>(null);
@@ -123,7 +139,11 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         selectedStatus={filters.selectedStatus}
         onStatusChange={filters.setSelectedStatus}
         totalFiltered={filters.filteredProducts.length}
+        onSearchSubmit={submitSearch}
+        onFocusTable={focusFirstRow}
       />
+
+      <SaleShortcutHints />
 
       <ProductsTable
         pageProducts={filters.pageProducts}
@@ -141,6 +161,7 @@ export const InventarioPage: React.FC<InventarioPageProps> = (props) => {
         onClearFilters={filters.clearFilters}
         onCreateProduct={openCreate}
         onAddToCart={props.onAddToCart}
+        onRemoveOne={props.onRemoveOneFromCart}
         onEdit={isMasterAdmin ? (product) => setDialog({ kind: 'edit', product }) : undefined}
         onAdjustStock={isMasterAdmin ? (product) => setDialog({ kind: 'adjust', product }) : undefined}
         onDeactivate={isMasterAdmin ? (product) => setDialog({ kind: 'deactivate', product }) : undefined}
