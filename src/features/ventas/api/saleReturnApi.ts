@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { isNetworkOrUncertainError, toUserMessage } from '@/lib/errorMessages';
+import type { ReturnReceiptData } from '../returnReceiptTypes';
 
 export type SaleReturnResult =
   | { ok: true; returnNumber: string; refundAmount: number }
@@ -43,4 +44,26 @@ export async function processSaleReturnRpc(
     }
     return { ok: false, message: toUserMessage(err, 'No se pudo registrar la devolución.') };
   }
+}
+
+/** Devoluciones registradas de una venta (de la más vieja a la más nueva), con sus líneas, para los comprobantes. */
+export async function fetchSaleReturns(companyId: string, saleId: string): Promise<ReturnReceiptData[]> {
+  const { data, error } = await supabase
+    .from('sale_returns')
+    .select('return_number, reason, refund_amount, created_at, sale_return_items ( quantity, amount, sale_items ( description, product:products ( name ) ) )')
+    .eq('company_id', companyId)
+    .eq('sale_id', saleId)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(toUserMessage(error, 'No se pudieron cargar las devoluciones de esta venta.'));
+  return (data ?? []).map((r) => ({
+    returnNumber: r.return_number,
+    createdAt: r.created_at,
+    reason: r.reason,
+    refundAmount: Number(r.refund_amount),
+    items: r.sale_return_items.map((i) => ({
+      name: i.sale_items?.product?.name ?? i.sale_items?.description ?? 'Artículo',
+      quantity: Number(i.quantity),
+      amount: Number(i.amount),
+    })),
+  }));
 }

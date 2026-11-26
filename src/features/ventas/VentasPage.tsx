@@ -13,6 +13,8 @@ import { AlertTriangle, Loader2, Search } from 'lucide-react';
 import { VentasHeader } from './components/VentasHeader';
 import { SaleRow } from './components/SaleRow';
 import { SaleReturnModal } from './components/SaleReturnModal';
+import { ReturnReceiptModal } from './components/ReturnReceiptModal';
+import { useReturnReceipts } from './hooks/useReturnReceipts';
 import { useToast } from '@/components/feedback/ToastProvider';
 
 interface VentasPageProps {
@@ -39,6 +41,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const [saleToReturn, setSaleToReturn] = useState<Sale | null>(null);
   const { notify } = useToast();
+  const { receipt, openReturnReceipts, closeReceipt } = useReturnReceipts(company.id);
   // Paginación y búsqueda se resuelven en el servidor (ver useSalesHistory)
   const { sales, total, hasMore, isLoading, isLoadingMore, error, setSearch, loadMore, reload } =
     useSalesHistory(company.id, customers);
@@ -141,7 +144,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
                   </tr>
                 ) : (
                   sales.map((sale) => (
-                    <SaleRow key={sale.id} sale={sale} canCancel={isMasterAdmin} onViewReceipt={onViewReceipt} onCancel={setSaleToCancel} onReturn={setSaleToReturn} />
+                    <SaleRow key={sale.id} sale={sale} canCancel={isMasterAdmin} onViewReceipt={onViewReceipt} onCancel={setSaleToCancel} onReturn={setSaleToReturn} onViewReturns={(s) => void openReturnReceipts(s)} />
                   ))
                 )}
               </tbody>
@@ -176,11 +179,15 @@ export const VentasPage: React.FC<VentasPageProps> = ({
       />
       <SaleReturnModal sale={saleToReturn} companyId={company.id} onClose={() => setSaleToReturn(null)}
         onReturned={(number, amount) => {
+          const returnedSale = saleToReturn;
           setSaleToReturn(null);
           reload();
           onSaleCancelled();
           notify({ message: `Devolución ${number} registrada`, detail: `Devolvé ${formatCurrency(amount)} en efectivo al cliente.` });
+          if (returnedSale) void openReturnReceipts(returnedSale, number);
         }} />
+      <ReturnReceiptModal sale={receipt?.sale ?? null} company={company} returns={receipt?.returns ?? []} initialNumber={receipt?.number}
+        onClose={closeReceipt} />
     </div>
   );
 };

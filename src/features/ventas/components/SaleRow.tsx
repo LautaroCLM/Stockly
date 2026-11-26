@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ban, Eye, Undo2 } from 'lucide-react';
+import { Ban, Eye, Receipt, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
@@ -13,10 +13,12 @@ interface SaleRowProps {
   onCancel: (sale: Sale) => void;
   /** Devolución parcial (mismo permiso que anular). */
   onReturn?: (sale: Sale) => void;
+  /** Ver los comprobantes de devolución de la venta. */
+  onViewReturns?: (sale: Sale) => void;
 }
 
 /** Una venta del historial: comprobante, cliente, ítems, medios de pago y total. */
-export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt, onCancel, onReturn }) => {
+export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt, onCancel, onReturn, onViewReturns }) => {
   const isCancelled = sale.status === 'anulada';
   return (
     <tr className="hover:bg-surface-2/50 transition-colors group">
@@ -56,6 +58,12 @@ export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt
             <Eye size={13} />
             <span>Ticket</span>
           </Button>
+          {onViewReturns && (sale.returnedAmount ?? 0) > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => onViewReturns(sale)} className="h-7 px-2.5 text-xs gap-1" title="Ver comprobantes de devolución">
+              <Receipt size={13} />
+              <span>Devoluciones</span>
+            </Button>
+          )}
           {canCancel && onReturn && sale.status === 'completada' && !sale.payments.some((p) => p.method === 'cuenta_corriente') && (
             <Button variant="secondary" size="sm" onClick={() => onReturn(sale)} className="h-7 px-2.5 text-xs gap-1" title="Devolver algunos productos">
               <Undo2 size={13} />
