@@ -32,31 +32,33 @@
     --c-scroll-thumb-hover: 42 59 99;
   }
 
+  /* Modo claro: fondo gris azulado, superficies blancas, bordes perceptibles y textos con contraste AA.
+     Solo vale con .light en <html>: el modo oscuro (arriba) no se toca. */
   :root.light {
     color-scheme: light;
-    --c-bg: 244 246 251;
+    --c-bg: 242 244 248;
     --c-surface: 255 255 255;
-    --c-surface-2: 241 244 250;
-    --c-surface-3: 230 235 245;
-    --c-border: 220 226 238;
-    --c-border-light: 200 209 227;
-    --c-border-active: 169 182 208;
-    --c-text: 15 26 51;
-    --c-text-secondary: 67 81 111;
-    --c-text-muted: 95 110 140;
-    --c-text-dim: 138 151 178;
-    --c-primary: 47 107 255;
-    --c-primary-hover: 30 86 224;
-    --c-primary-light: 30 86 224;
-    --c-accent: 8 145 178;
-    --c-accent-hover: 14 116 144;
-    --c-success: 5 150 105;
+    --c-surface-2: 247 248 251;
+    --c-surface-3: 236 239 245;
+    --c-border: 219 224 233;
+    --c-border-light: 203 210 223;
+    --c-border-active: 158 171 196;
+    --c-text: 14 23 44;
+    --c-text-secondary: 60 72 99;
+    --c-text-muted: 88 101 128;
+    --c-text-dim: 134 146 170;
+    --c-primary: 36 94 235;
+    --c-primary-hover: 28 78 205;
+    --c-primary-light: 28 78 205;
+    --c-accent: 14 116 144;
+    --c-accent-hover: 21 94 117;
+    --c-success: 4 120 87;
     --c-warning: 180 83 9;
-    --c-danger: 220 38 38;
-    --c-chart-grid: 226 232 242;
-    --c-chart-axis: 100 116 139;
-    --c-scroll-thumb: 200 209 227;
-    --c-scroll-thumb-hover: 169 182 208;
+    --c-danger: 210 36 43;
+    --c-chart-grid: 228 232 240;
+    --c-chart-axis: 100 113 138;
+    --c-scroll-thumb: 203 210 223;
+    --c-scroll-thumb-hover: 158 171 196;
   }
 
   body {
@@ -204,3 +206,55 @@ html.theme-switching *::after {
   transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease,
     fill 0.35s ease, stroke 0.35s ease, box-shadow 0.35s ease !important;
 }
+
+/* ---------------------------------------------------------------------------
+   Modo claro: colores fijos de los componentes.
+   Algunos componentes usan colores pensados para fondo oscuro (verde y amarillo claros, sombras y
+   fondos negros). En modo claro se traducen acá a sus equivalentes legibles, en un solo lugar.
+   Todas las reglas empiezan con :root.light: en modo oscuro no aplican y nada cambia.
+   --------------------------------------------------------------------------- */
+
+/* Textos de estado: verde, amarillo, rojo y celeste con contraste AA sobre blanco */
+:root.light .text-emerald-300,
+:root.light .text-emerald-400,
+:root.light .text-emerald-500 { color: rgb(var(--c-success)); }
+:root.light .text-emerald-400\/70 { color: rgb(var(--c-success) / 0.75); }
+:root.light .text-amber-200\/90,
+:root.light .text-amber-300,
+:root.light .text-amber-400,
+:root.light .text-amber-400\/90,
+:root.light .text-amber-500 { color: rgb(var(--c-warning)); }
+:root.light .text-rose-300,
+:root.light .text-rose-400 { color: rgb(var(--c-danger)); }
+:root.light .text-rose-400\/70 { color: rgb(var(--c-danger) / 0.75); }
+:root.light .text-cyan-400 { color: rgb(var(--c-accent)); }
+:root.light .text-purple-400 { color: rgb(109 40 217); }
+
+/* Fondos y bordes de estado pensados para oscuro */
+:root.light .bg-emerald-950\/30,
+:root.light .bg-emerald-950\/40 { background-color: rgb(var(--c-success) / 0.07); }
+:root.light .border-emerald-800\/40,
+:root.light .border-emerald-800\/50 { border-color: rgb(var(--c-success) / 0.25); }
+:root.light .bg-amber-500 { background-color: rgb(var(--c-warning)); }
+
+/* Sombras: neutras y suaves (en oscuro se usan negras y profundas) */
+:root.light .shadow-black\/20,
+:root.light .shadow-black\/30,
+:root.light .shadow-black\/40 { --tw-shadow-color: rgb(15 23 42 / 0.06); --tw-shadow: var(--tw-shadow-colored); }
+:root.light .shadow-black\/60,
+:root.light .shadow-black\/80,
+:root.light .shadow-black\/90 { --tw-shadow-color: rgb(15 23 42 / 0.12); --tw-shadow: var(--tw-shadow-colored); }
+
+/* Fondo detrás de ventanas y paneles: velo azul pizarra en vez de negro */
+:root.light .bg-black\/60,
+:root.light .bg-black\/70,
+:root.light .bg-black\/75,
+:root.light .bg-black\/80,
+:root.light .bg-black\/85 { background-color: rgb(15 23 42 / 0.4); }
+
+/* Tarjetas y paneles: una sombra mínima los separa del fondo. Las que tienen sombra fija propia no se
+   tocan, y al pasar el mouse queda el efecto de cada tarjeta (hover:shadow-*). */
+:root.light :is(.rounded-xl, .rounded-2xl)[class~="bg-surface"].border:not([class^="shadow-"]):not([class*=" shadow-"]):not(:hover) {
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.03);
+}
+
