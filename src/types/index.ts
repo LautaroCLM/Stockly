@@ -29,6 +29,8 @@ export type RouteId =
   | 'cobros-pagos'
   | 'informes'
   | 'maquinas'
+  | 'atmosferico'
+  | 'municipio'
   | 'personal'
   | 'fichaje'
   | 'historial'

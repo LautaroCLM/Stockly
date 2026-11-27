@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Customer, UpsertCustomerInput, CustomerActionResult } from '../types';
-import { fetchCustomers, setCustomerVatConditionRpc, upsertCustomerRpc, toggleCustomerStatusRpc } from '../api/customersApi';
+import { fetchCustomers, setCustomerMunicipalityRpc, setCustomerVatConditionRpc, upsertCustomerRpc, toggleCustomerStatusRpc } from '../api/customersApi';
 import { DEFAULT_CUSTOMER_VAT_CONDITION } from '@/features/facturacion/vat';
 import { setCustomerPriceListRpc } from '@/features/listas/api/priceListsApi';
 import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
@@ -79,6 +79,13 @@ export function useCustomers(companyId: string) {
             await setCustomerPriceListRpc(companyId, customerId, input.priceListId);
           } catch (listErr) {
             vatError = `El cliente se guardó, pero no su lista de precios (${toUserMessage(listErr, 'error de conexión')}).`;
+          }
+        }
+        if (input.isMunicipality !== undefined && input.isMunicipality !== (previous?.isMunicipality ?? false)) {
+          try {
+            await setCustomerMunicipalityRpc(companyId, customerId, input.isMunicipality);
+          } catch (munErr) {
+            vatError = `El cliente se guardó, pero no si es municipio (${toUserMessage(munErr, 'error de conexión')}).`;
           }
         }
         if (input.vatCondition && input.vatCondition !== current) {

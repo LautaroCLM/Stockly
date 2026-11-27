@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { toUserMessage } from '@/lib/errorMessages';
 import type { RouteId } from '@/types';
-import { parseHiddenRoutes } from '../schemas';
+import { parseHiddenRoutes, serializeHiddenRoutes } from '../schemas';
 
 /** Módulos que la persona ocultó de su menú. Sin fila guardada: ninguno (todo visible). */
 export async function fetchHiddenRoutes(userId: string): Promise<RouteId[]> {
@@ -22,7 +22,7 @@ export async function saveHiddenRoutes(userId: string, hidden: readonly RouteId[
   try {
     const { error } = await supabase
       .from('user_preferences')
-      .upsert({ user_id: userId, hidden_routes: [...hidden] }, { onConflict: 'user_id' });
+      .upsert({ user_id: userId, hidden_routes: serializeHiddenRoutes(hidden) }, { onConflict: 'user_id' });
     if (error) return { ok: false, message: toUserMessage(error, 'No se pudieron guardar tus preferencias.') };
     return { ok: true };
   } catch {

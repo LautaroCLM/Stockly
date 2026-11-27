@@ -487,14 +487,14 @@ isOneToOne: false
                   ]
                 },"customers": {
                   Row: {
-                    "address": string | null,"company_id": string,"created_at": string,"created_by": string | null,"email": string | null,"id": string,"identification_type": string,"is_active": boolean,"name": string,"notes": string | null,"phone": string | null,"price_list_id": string | null,"tax_id": string | null,"updated_at": string,"vat_condition": string
+                    "address": string | null,"company_id": string,"created_at": string,"created_by": string | null,"email": string | null,"id": string,"identification_type": string,"is_active": boolean,"is_municipality": boolean,"name": string,"notes": string | null,"phone": string | null,"price_list_id": string | null,"tax_id": string | null,"updated_at": string,"vat_condition": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"company_id": string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name": string,"notes"?: string | null,"phone"?: string | null,"price_list_id"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
+                    "address"?: string | null,"company_id": string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"is_municipality"?: boolean,"name": string,"notes"?: string | null,"phone"?: string | null,"price_list_id"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
                   }
                   Update: {
-                    "address"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name"?: string,"notes"?: string | null,"phone"?: string | null,"price_list_id"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
+                    "address"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"is_municipality"?: boolean,"name"?: string,"notes"?: string | null,"phone"?: string | null,"price_list_id"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
                   }
                   Relationships: [
                     {
@@ -1866,6 +1866,9 @@ isOneToOne: false
                            },
 "set_company_negative_stock_policy":
 { Args: { "p_allow_negative_stock": boolean,"p_company_id": string,"p_reason": string }; Returns: undefined
+                           },
+"set_customer_municipality":
+{ Args: { "p_company_id": string,"p_customer_id": string,"p_is_municipality": boolean }; Returns: undefined
                            },
 "set_customer_price_list":
 { Args: { "p_company_id": string,"p_customer_id": string,"p_price_list_id": string }; Returns: undefined

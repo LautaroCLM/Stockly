@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toUserMessage } from '@/lib/errorMessages';
 import type { RouteId } from '@/types';
 import { fetchHiddenRoutes, saveHiddenRoutes, type SavePreferencesResult } from '../api/preferencesApi';
+import { OPT_IN_ROUTES } from '../hiddenRoutes';
 
 /**
  * Módulos ocultos del menú de quien usa la app. Mientras carga o si falla, se muestra todo:
@@ -9,7 +10,8 @@ import { fetchHiddenRoutes, saveHiddenRoutes, type SavePreferencesResult } from 
  * Los cambios se aplican al instante y se deshacen si no se pudieron guardar.
  */
 export function useHiddenRoutes(userId: string) {
-  const [hidden, setHidden] = useState<RouteId[]>([]);
+  // Mientras carga, solo los módulos que vienen ocultos por defecto quedan fuera del menú
+  const [hidden, setHidden] = useState<RouteId[]>(() => [...OPT_IN_ROUTES]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
@@ -34,7 +36,7 @@ export function useHiddenRoutes(userId: string) {
   }, [userId]);
 
   // La lista vigente vive también en una referencia: así "Deshacer" (que se llama más tarde) no usa una copia vieja
-  const currentRef = useRef<RouteId[]>([]);
+  const currentRef = useRef<RouteId[]>([...OPT_IN_ROUTES]);
   currentRef.current = hidden;
 
   const save = useCallback(

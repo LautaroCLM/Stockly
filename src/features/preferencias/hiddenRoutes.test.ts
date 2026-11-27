@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { NavSection, RouteId } from '@/types';
 import { applyHiddenRoutes, toggleHiddenRoute } from './hiddenRoutes';
-import { parseHiddenRoutes } from './schemas';
+import { parseHiddenRoutes, serializeHiddenRoutes } from './schemas';
 
 const SECTIONS: NavSection[] = [
   {
@@ -50,11 +50,25 @@ describe('toggleHiddenRoute', () => {
 
 describe('parseHiddenRoutes', () => {
   it('descarta valores inválidos o módulos que ya no existen', () => {
-    expect(parseHiddenRoutes(['maquinas', 'modulo-viejo', 3, 'maquinas', 'gastos'])).toEqual(['gastos', 'maquinas']);
+    expect(parseHiddenRoutes(['maquinas', 'modulo-viejo', 3, 'maquinas', 'gastos'])).toEqual(['atmosferico', 'gastos', 'maquinas', 'municipio']);
   });
 
   it('sin datos devuelve una lista vacía', () => {
-    expect(parseHiddenRoutes(null)).toEqual([]);
-    expect(parseHiddenRoutes(undefined)).toEqual([]);
+    expect(parseHiddenRoutes(null)).toEqual(['atmosferico', 'municipio']);
+    expect(parseHiddenRoutes(undefined)).toEqual(['atmosferico', 'municipio']);
+  });
+});
+
+describe('módulos que vienen ocultos', () => {
+  it('Atmosférico y Municipio arrancan ocultos y se muestran solo si se activaron', () => {
+    expect(parseHiddenRoutes([])).toEqual(['atmosferico', 'municipio']);
+    expect(parseHiddenRoutes(['show:municipio'])).toEqual(['atmosferico']);
+    expect(parseHiddenRoutes(['show:atmosferico', 'show:municipio', 'gastos'])).toEqual(['gastos']);
+  });
+
+  it('guardar y volver a leer da lo mismo', () => {
+    const cases: RouteId[][] = [['atmosferico', 'municipio'], ['gastos'], ['atmosferico', 'gastos'], []];
+    for (const hidden of cases) expect(parseHiddenRoutes(serializeHiddenRoutes(hidden))).toEqual([...hidden].sort());
+    expect(serializeHiddenRoutes(['gastos'])).toEqual(['gastos', 'show:atmosferico', 'show:municipio']);
   });
 });

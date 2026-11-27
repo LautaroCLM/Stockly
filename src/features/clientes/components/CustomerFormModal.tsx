@@ -33,6 +33,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
   const [taxId, setTaxId] = useState('');
   const [vatCondition, setVatCondition] = useState<CustomerVatCondition>(DEFAULT_CUSTOMER_VAT_CONDITION);
   const [priceListId, setPriceListId] = useState<string | null>(null);
+  const [isMunicipality, setIsMunicipality] = useState(false);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -56,6 +57,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
         );
         setVatCondition(customer.vatCondition);
         setPriceListId(customer.priceListId);
+        setIsMunicipality(customer.isMunicipality);
         setEmail(customer.email || '');
         setPhone(customer.phone || '');
         setAddress(customer.address || '');
@@ -67,6 +69,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
         setTaxId('');
         setVatCondition(DEFAULT_CUSTOMER_VAT_CONDITION);
         setPriceListId(null);
+        setIsMunicipality(false);
         setEmail('');
         setPhone('');
         setAddress('');
@@ -109,6 +112,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
       taxId: taxId.trim() || null,
       vatCondition,
       priceListId,
+      isMunicipality,
       email: email.trim() || null,
       phone: phone.trim() || null,
       address: address.trim() || null,
@@ -188,6 +192,10 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
 
           <CustomerVatConditionField value={vatCondition} error={vatError} disabled={isSubmitting} onChange={setVatCondition} />
           <CustomerPriceListField lists={priceLists} value={priceListId} disabled={isSubmitting} onChange={setPriceListId} />
+          <label className="flex items-center gap-2 text-xs text-text-secondary cursor-pointer">
+            <input type="checkbox" checked={isMunicipality} disabled={isSubmitting} onChange={(e) => setIsMunicipality(e.target.checked)} />
+            Es municipio u organismo público (aparece en el módulo Municipio)
+          </label>
 
           {/* Footer buttons */}
           <div className="modal-sticky-footer flex items-center justify-end gap-3">

@@ -18,6 +18,8 @@ export interface Customer {
   vatCondition: CustomerVatCondition;
   /** Lista de precios del cliente (null: precio normal). */
   priceListId: string | null;
+  /** Municipio u organismo público: aparece en el módulo Municipio. */
+  isMunicipality: boolean;
   email?: string | null;
   phone?: string | null;
   address?: string | null;
@@ -38,6 +40,8 @@ export interface UpsertCustomerInput {
   vatCondition?: CustomerVatCondition;
   /** Si se omite, no se cambia. */
   priceListId?: string | null;
+  /** Si se omite, no se cambia. */
+  isMunicipality?: boolean;
   email?: string | null;
   phone?: string | null;
   address?: string | null;

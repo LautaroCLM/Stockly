@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { fetchAllRows } from '@/lib/fetchAllRows';
+import { toUserMessage } from '@/lib/errorMessages';
 import { toCustomerVatCondition, type CustomerVatCondition } from '@/features/facturacion/vat';
 import type { Customer, UpsertCustomerInput } from '../types';
 
@@ -11,6 +12,7 @@ export interface CustomerDbRow {
   tax_id: string | null;
   vat_condition: string;
   price_list_id: string | null;
+  is_municipality: boolean;
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -42,7 +44,7 @@ export async function fetchCustomers(companyId: string): Promise<Customer[]> {
   const { data, error } = await fetchAllRows((from, to) =>
     supabase
       .from('customers')
-      .select('id, company_id, name, identification_type, tax_id, vat_condition, price_list_id, email, phone, address, notes, is_active, created_by, created_at, updated_at')
+      .select('id, company_id, name, identification_type, tax_id, vat_condition, price_list_id, is_municipality, email, phone, address, notes, is_active, created_by, created_at, updated_at')
       .eq('company_id', companyId)
       .order('name', { ascending: true })
       .order('id', { ascending: true })
@@ -61,6 +63,7 @@ export async function fetchCustomers(companyId: string): Promise<Customer[]> {
     taxId: row.tax_id,
     vatCondition: toCustomerVatCondition(row.vat_condition),
     priceListId: row.price_list_id,
+    isMunicipality: row.is_municipality,
     email: row.email,
     phone: row.phone,
     address: row.address,
@@ -149,4 +152,12 @@ export async function setCustomerVatConditionRpc(
     p_vat_condition: vatCondition,
   });
   if (error) throw new Error(sanitizeCustomerError(error, 'No se pudo guardar la condición frente al IVA.'));
+}
+
+/** Marca o desmarca al cliente como municipio u organismo público (public.set_customer_municipality). */
+export async function setCustomerMunicipalityRpc(companyId: string, customerId: string, value: boolean): Promise<void> {
+  const { error } = await supabase.rpc('set_customer_municipality', {
+    p_company_id: companyId, p_customer_id: customerId, p_is_municipality: value,
+  });
+  if (error) throw new Error(toUserMessage(error, 'No se pudo guardar si el cliente es municipio.'));
 }

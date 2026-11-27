@@ -45,7 +45,7 @@ export const MachineFormModal: React.FC<MachineFormModalProps> = ({ initial, onC
   );
 
   return (
-    <CashModalShell title={initial ? 'Editar máquina' : 'Nueva máquina'} icon={<Tractor size={18} />} isBusy={isSubmitting} onClose={onClose}>
+    <CashModalShell title={initial?.machineId ? 'Editar máquina' : 'Nueva máquina'} icon={<Tractor size={18} />} isBusy={isSubmitting} onClose={onClose}>
       <form onSubmit={handleSubmit} className="p-6 space-y-3 text-xs">
         <Field id="machine-name" label="Nombre" required>{input('machine-name', 'name', { maxLength: 100, placeholder: 'Ej. Retroexcavadora 01' })}</Field>
         <div className="grid grid-cols-2 gap-3">
@@ -75,7 +75,7 @@ export const MachineFormModal: React.FC<MachineFormModalProps> = ({ initial, onC
           <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
           <Button type="submit" variant="primary" size="sm" disabled={isSubmitting} className="gap-1.5">
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}
-            <span>{initial ? 'Guardar cambios' : 'Crear máquina'}</span>
+            <span>{initial?.machineId ? 'Guardar cambios' : 'Crear máquina'}</span>
           </Button>
         </div>
       </form>

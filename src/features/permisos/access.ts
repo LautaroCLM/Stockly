@@ -10,10 +10,12 @@ export const ROUTE_MODULE: Partial<Record<RouteId, ModuleKey>> = {
   proveedores: 'proveedores',
   compras: 'compras',
   'cobros-pagos': 'cobros_pagos',
+  municipio: 'cobros_pagos',
   gastos: 'gastos',
   finanzas: 'finanzas',
   informes: 'informes',
   maquinas: 'maquinas',
+  atmosferico: 'maquinas',
   personal: 'personal',
   fichaje: 'fichaje',
 };

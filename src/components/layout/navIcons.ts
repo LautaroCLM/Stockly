@@ -21,6 +21,8 @@ import {
   Tractor,
   FileText,
   Percent,
+  Droplets,
+  Landmark,
 } from 'lucide-react';
 
 /** Íconos de los módulos del menú, por el nombre que usa navSections. */
@@ -44,6 +46,8 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   Tractor,
   FileText,
   Percent,
+  Droplets,
+  Landmark,
   Clock,
   KeyRound,
 };

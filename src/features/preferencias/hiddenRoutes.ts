@@ -6,6 +6,12 @@ export const ALWAYS_VISIBLE_ROUTES: ReadonlySet<RouteId> = new Set<RouteId>(['da
 export const canHideRoute = (route: RouteId): boolean => !ALWAYS_VISIBLE_ROUTES.has(route);
 
 /**
+ * Módulos que vienen ocultos: cada persona los activa en Mis preferencias si los usa
+ * (son vistas de otros módulos pedidas para organizarse: Atmosférico y Municipio).
+ */
+export const OPT_IN_ROUTES: readonly RouteId[] = ['atmosferico', 'municipio'];
+
+/**
  * Quita del menú los módulos que la persona ocultó. Las secciones que quedan
  * sin módulos desaparecen. Inicio se muestra siempre.
  */

@@ -4,7 +4,7 @@ import { Boxes, Check, Loader2, Lock } from 'lucide-react';
 import type { NavSection, RouteId } from '@/types';
 import { NAV_ICONS } from '@/components/layout/navIcons';
 import { Switch } from '@/components/ui/Switch';
-import { canHideRoute } from '../hiddenRoutes';
+import { OPT_IN_ROUTES, canHideRoute } from '../hiddenRoutes';
 
 interface ModuleVisibilityListProps {
   /** Módulos que la persona tiene permitidos (los demás no se listan). */
@@ -56,7 +56,7 @@ export const ModuleVisibilityList: React.FC<ModuleVisibilityListProps> = ({ sect
                 <label htmlFor={switchId} className={`flex-1 min-w-0 ${locked || disabled ? 'cursor-default' : 'cursor-pointer'}`}>
                   <span className={`block text-sm transition-colors duration-200 ${visible ? 'text-text-primary' : 'text-text-muted'}`}>{item.label}</span>
                   <span className="block text-[11px] text-text-muted">
-                    {locked ? 'Siempre visible' : visible ? 'Se ve en tu menú' : 'Oculto en tu menú'}
+                    {locked ? 'Siempre visible' : visible ? 'Se ve en tu menú' : OPT_IN_ROUTES.includes(item.id) ? 'Viene oculto: activalo si lo usás' : 'Oculto en tu menú'}
                   </span>
                 </label>
                 <RowStatus saving={savingRoute === item.id} saved={savedRoute === item.id} />

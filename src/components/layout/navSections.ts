@@ -94,6 +94,12 @@ export const NAV_SECTIONS: NavSection[] = [
         iconName: 'ArrowLeftRight',
       },
       {
+        id: 'municipio',
+        label: 'Municipio',
+        path: '/municipio',
+        iconName: 'Landmark',
+      },
+      {
         id: 'informes',
         label: 'Informes',
         path: '/informes',
@@ -109,6 +115,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'Máquinas',
         path: '/maquinas',
         iconName: 'Tractor',
+      },
+      {
+        id: 'atmosferico',
+        label: 'Atmosférico',
+        path: '/atmosferico',
+        iconName: 'Droplets',
       },
       {
         id: 'personal',
