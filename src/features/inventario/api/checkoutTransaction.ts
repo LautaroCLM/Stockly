@@ -1,5 +1,6 @@
 import { isMiscItem } from '../miscItem';
 import type { SalePricingArgs } from '@/features/listas/hooks/useSalePricing';
+import type { SaleSellerArgs } from '@/features/comisiones/types';
 import { TenantId } from '@/types';
 import { CartItem, PaymentEntry, Sale } from '../types';
 import { isIdempotencyMismatchError } from '../saleIntent';
@@ -21,6 +22,8 @@ export interface ExecuteSaleParams {
   notes?: string;
   /** Lista de precios de la venta (la del cliente, o la que eligió el admin). */
   pricing?: SalePricingArgs;
+  /** Vendedor elegido en el cobro (comisión). */
+  seller?: SaleSellerArgs | null;
 }
 
 /** Parámetros de process_sale sin la clave: define la "huella" del pedido. */
@@ -59,6 +62,7 @@ export function buildSaleRequest(params: ExecuteSaleParams): SaleRequest {
     customerId: params.customerId || null,
     priceListId: params.pricing?.priceListId ?? null,
     overridePriceList: params.pricing?.overridePriceList ?? false,
+    sellerEmployeeId: params.seller?.employeeId ?? null,
   };
 }
 
@@ -100,6 +104,8 @@ export async function executeSaleTransaction(
       payments,
       status: 'completada',
       priceListName: params.pricing?.priceListName ?? null,
+      sellerId: params.seller?.employeeId ?? null,
+      sellerName: params.seller?.name ?? null,
     };
 
     return {

@@ -109,6 +109,9 @@ export interface Sale {
   returnedAmount?: number;
   /** Lista de precios con la que se cobró (null: precio normal). */
   priceListName?: string | null;
+  /** Vendedor de la venta (comisiones). */
+  sellerId?: string | null;
+  sellerName?: string | null;
 }
 
 export type StockMovementDirection = 'increase' | 'decrease';

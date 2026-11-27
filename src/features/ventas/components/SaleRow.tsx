@@ -17,10 +17,12 @@ interface SaleRowProps {
   onViewReturns?: (sale: Sale) => void;
   /** Botón de factura electrónica (ver, reintentar o facturar). */
   invoiceAction?: React.ReactNode;
+  /** Vendedor de la venta (y botón para cambiarlo). */
+  sellerSlot?: React.ReactNode;
 }
 
 /** Una venta del historial: comprobante, cliente, ítems, medios de pago y total. */
-export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt, onCancel, onReturn, onViewReturns, invoiceAction }) => {
+export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt, onCancel, onReturn, onViewReturns, invoiceAction, sellerSlot }) => {
   const isCancelled = sale.status === 'anulada';
   return (
     <tr className="hover:bg-surface-2/50 transition-colors group">
@@ -38,6 +40,7 @@ export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt
       <td className="py-3 px-3 text-text-secondary">{formatDateTime(sale.createdAt)}</td>
       <td className="py-3 px-3">
         <span className="font-medium text-text-primary">{sale.clientName}</span>
+        {sellerSlot}
       </td>
       <td className="py-3 px-3 text-center">
         <Badge variant="neutral" size="sm">{sale.items.reduce((acc, i) => acc + i.quantity, 0)} u.</Badge>

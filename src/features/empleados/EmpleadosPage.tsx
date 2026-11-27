@@ -10,12 +10,14 @@ import { EmployeeFormModal, employeeToInput } from './components/EmployeeFormMod
 import { ScheduleModal } from './components/ScheduleModal';
 import { StaffTab } from './components/StaffTab';
 import { TodayTab } from './components/TodayTab';
+import { CommissionsTab } from '@/features/comisiones/components/CommissionsTab';
 
-type Tab = 'today' | 'staff' | 'attendance';
+type Tab = 'today' | 'staff' | 'attendance' | 'commissions';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'today', label: 'Fichaje de hoy' },
   { id: 'staff', label: 'Personal y horarios' },
   { id: 'attendance', label: 'Asistencia' },
+  { id: 'commissions', label: 'Comisiones' },
 ];
 
 interface EmpleadosPageProps {
@@ -93,8 +95,10 @@ export const EmpleadosPage: React.FC<EmpleadosPageProps> = ({ company, canView, 
         ) : (
           <StaffTab employees={employees} schedules={staff.schedules} onEdit={(e) => setEditing(employeeToInput(e))} onSchedule={setScheduling} canEdit={canOperate} />
         )
-      ) : (
+      ) : tab === 'attendance' ? (
         <AttendanceTab companyId={company.id} employees={employees} canEdit={canOperate} />
+      ) : (
+        <CommissionsTab companyId={company.id} employees={employees} canOperate={canOperate} />
       )}
 
       <AnimatePresence>{editing !== undefined && <EmployeeFormModal initial={editing} onClose={() => setEditing(undefined)} onSubmit={staff.saveEmployee} />}</AnimatePresence>

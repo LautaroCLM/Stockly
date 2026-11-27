@@ -193,6 +193,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         total={cart.total}
         customers={customers.customers}
         pricing={sale.pricing}
+        sellers={sale.sellers}
         onClose={() => checkout.setIsCheckoutOpen(false)}
         onConfirmSale={checkout.confirmSale}
       />

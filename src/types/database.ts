@@ -227,6 +227,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"commission_payments": {
+                  Row: {
+                    "amount": number,"company_id": string,"created_at": string,"created_by": string,"employee_id": string,"expense_id": string,"id": string,"period_from": string,"period_to": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"company_id": string,"created_at"?: string,"created_by": string,"employee_id": string,"expense_id": string,"id"?: string,"period_from": string,"period_to": string
+                  }
+                  Update: {
+                    "amount"?: number,"company_id"?: string,"created_at"?: string,"created_by"?: string,"employee_id"?: string,"expense_id"?: string,"id"?: string,"period_from"?: string,"period_to"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "commission_payments_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "commission_payments_expense_id_fkey"
+      columns: ["expense_id"]
+isOneToOne: false
+      referencedRelation: "expenses"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fk_commission_payments_employee"
+      columns: ["company_id","employee_id"]
+isOneToOne: false
+      referencedRelation: "employees"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
                 },"companies": {
                   Row: {
                     "allow_negative_stock": boolean,"created_at": string,"created_by": string,"currency": string,"expiry_warning_days": number,"id": string,"is_active": boolean,"name": string,"owner_id": string,"tax_id": string | null,"timezone": string,"updated_at": string
@@ -611,14 +643,14 @@ isOneToOne: false
                   ]
                 },"employees": {
                   Row: {
-                    "company_id": string,"created_at": string,"created_by": string,"document_number": string | null,"full_name": string,"hire_date": string | null,"id": string,"job_title": string | null,"notes": string | null,"phone": string | null,"status": string,"updated_at": string
+                    "commission_percent": number | null,"company_id": string,"created_at": string,"created_by": string,"document_number": string | null,"full_name": string,"hire_date": string | null,"id": string,"job_title": string | null,"notes": string | null,"phone": string | null,"status": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_id": string,"created_at"?: string,"created_by": string,"document_number"?: string | null,"full_name": string,"hire_date"?: string | null,"id"?: string,"job_title"?: string | null,"notes"?: string | null,"phone"?: string | null,"status"?: string,"updated_at"?: string
+                    "commission_percent"?: number | null,"company_id": string,"created_at"?: string,"created_by": string,"document_number"?: string | null,"full_name": string,"hire_date"?: string | null,"id"?: string,"job_title"?: string | null,"notes"?: string | null,"phone"?: string | null,"status"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"document_number"?: string | null,"full_name"?: string,"hire_date"?: string | null,"id"?: string,"job_title"?: string | null,"notes"?: string | null,"phone"?: string | null,"status"?: string,"updated_at"?: string
+                    "commission_percent"?: number | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"document_number"?: string | null,"full_name"?: string,"hire_date"?: string | null,"id"?: string,"job_title"?: string | null,"notes"?: string | null,"phone"?: string | null,"status"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -1185,14 +1217,14 @@ isOneToOne: false
                   ]
                 },"sales": {
                   Row: {
-                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"company_id": string,"created_at": string,"created_by": string,"customer_id": string | null,"discount": number,"id": string,"notes": string | null,"payments": NonNullable<Json>,"price_list_id": string | null,"sale_number": string,"status": string,"subtotal": number,"total_amount": number
+                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"company_id": string,"created_at": string,"created_by": string,"customer_id": string | null,"discount": number,"id": string,"notes": string | null,"payments": NonNullable<Json>,"price_list_id": string | null,"sale_number": string,"seller_commission_percent": number | null,"seller_employee_id": string | null,"status": string,"subtotal": number,"total_amount": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"price_list_id"?: string | null,"sale_number": string,"status"?: string,"subtotal": number,"total_amount": number
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"price_list_id"?: string | null,"sale_number": string,"seller_commission_percent"?: number | null,"seller_employee_id"?: string | null,"status"?: string,"subtotal": number,"total_amount": number
                   }
                   Update: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"price_list_id"?: string | null,"sale_number"?: string,"status"?: string,"subtotal"?: number,"total_amount"?: number
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"price_list_id"?: string | null,"sale_number"?: string,"seller_commission_percent"?: number | null,"seller_employee_id"?: string | null,"status"?: string,"subtotal"?: number,"total_amount"?: number
                   }
                   Relationships: [
                     {
@@ -1206,6 +1238,12 @@ isOneToOne: false
       columns: ["company_id","price_list_id"]
 isOneToOne: false
       referencedRelation: "price_lists"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_sales_seller"
+      columns: ["company_id","seller_employee_id"]
+isOneToOne: false
+      referencedRelation: "employees"
       referencedColumns: ["company_id","id"]
     },{
       foreignKeyName: "sales_cancelled_by_fkey"
@@ -1527,6 +1565,11 @@ isOneToOne: true
 "close_cash_session":
 { Args: { "p_company_id": string,"p_counted_amount": number,"p_notes"?: string,"p_session_id": string }; Returns: Json
                            },
+"commission_report":
+{ Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
+              "base_amount": number,"commission": number,"commission_percent": number,"document_number": string,"employee_id": string,"employee_name": string,"entry_date": string,"is_paid": boolean,"kind": string,"sale_id": string,"sale_number": string
+            }[]
+                           },
 "create_company":
 { Args: { "p_currency"?: string,"p_name": string,"p_tax_id": string,"p_timezone"?: string }; Returns: string
                            },
@@ -1594,6 +1637,9 @@ isOneToOne: true
 "open_cash_session":
 { Args: { "p_company_id": string,"p_notes"?: string,"p_opening_amount": number }; Returns: Json
                            },
+"pay_commission":
+{ Args: { "p_company_id": string,"p_employee_id": string,"p_from": string,"p_pay_from_cash": boolean,"p_payment_method": string,"p_to": string }; Returns: Json
+                           },
 "pending_credit_notes":
 { Args: { "p_company_id": string,"p_sale_ids": (string)[] }; Returns: {
               "amount": number,"return_number": string,"sale_id": string,"sale_return_id": string
@@ -1620,7 +1666,7 @@ isOneToOne: true
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_invoice_number"?: string,"p_items": Json,"p_notes"?: string,"p_purchase_date"?: string,"p_supplier_id": string }; Returns: Json
                            },
 "process_sale":
-{ Args: { "p_company_id": string,"p_customer_id"?: string,"p_discount"?: number,"p_idempotency_key": string,"p_items": Json,"p_notes"?: string,"p_override_price_list"?: boolean,"p_payments"?: Json,"p_price_list_id"?: string }; Returns: Json
+{ Args: { "p_company_id": string,"p_customer_id"?: string,"p_discount"?: number,"p_idempotency_key": string,"p_items": Json,"p_notes"?: string,"p_override_price_list"?: boolean,"p_payments"?: Json,"p_price_list_id"?: string,"p_seller_employee_id"?: string }; Returns: Json
                            },
 "process_sale_return":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_items": Json,"p_reason": string,"p_sale_id": string }; Returns: Json
@@ -1682,6 +1728,11 @@ isOneToOne: true
 "revoke_company_invitation":
 { Args: { "p_company_id": string,"p_invitation_id": string }; Returns: undefined
                            },
+"sale_sellers":
+{ Args: { "p_company_id": string }; Returns: {
+              "can_sell": boolean,"commission_percent": number,"employee_id": string,"full_name": string
+            }[]
+                           },
 "save_arca_settings":
 { Args: { "p_activity_start_date": string,"p_company_id": string,"p_gross_income_number": string,"p_point_of_sale": number }; Returns: undefined
                            },
@@ -1706,6 +1757,9 @@ isOneToOne: true
 "set_customer_vat_condition":
 { Args: { "p_company_id": string,"p_customer_id": string,"p_vat_condition": string }; Returns: undefined
                            },
+"set_employee_commission":
+{ Args: { "p_company_id": string,"p_employee_id": string,"p_percent": number }; Returns: undefined
+                           },
 "set_employee_schedule":
 { Args: { "p_blocks": Json,"p_company_id": string,"p_employee_id": string }; Returns: number
                            },
@@ -1723,6 +1777,9 @@ isOneToOne: true
                            },
 "set_product_vat_rate":
 { Args: { "p_company_id": string,"p_product_id": string,"p_vat_rate": number }; Returns: undefined
+                           },
+"set_sale_seller":
+{ Args: { "p_company_id": string,"p_employee_id": string,"p_sale_id": string }; Returns: undefined
                            },
 "split_stock_lot":
 { Args: { "p_company_id": string,"p_expires_on": string,"p_lot_code": string,"p_lot_id": string,"p_quantity": number }; Returns: string

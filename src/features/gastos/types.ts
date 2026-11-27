@@ -1,6 +1,6 @@
 export const EXPENSE_CATEGORIES = [
   'combustible', 'mantenimiento', 'repuestos', 'alquiler', 'servicios',
-  'impuestos', 'sueldos', 'viaticos', 'seguros', 'otros',
+  'impuestos', 'sueldos', 'viaticos', 'seguros', 'comisiones', 'otros',
 ] as const;
 
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
@@ -15,6 +15,7 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   sueldos: 'Sueldos y jornales',
   viaticos: 'Viáticos',
   seguros: 'Seguros',
+  comisiones: 'Comisiones de vendedores',
   otros: 'Otros',
 };
 

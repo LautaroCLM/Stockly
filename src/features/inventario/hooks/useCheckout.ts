@@ -5,6 +5,7 @@ import { playSaleSound } from '@/lib/sounds/sale';
 import { buildSaleRequest, executeSaleTransaction } from '../api/checkoutTransaction';
 import type { CartItem, PaymentEntry, Product, Sale } from '../types';
 import { useSaleIntent } from './useSaleIntent';
+import type { SaleSellerArgs } from '@/features/comisiones/types';
 import type { SalePricingArgs } from '@/features/listas/hooks/useSalePricing';
 
 interface CheckoutCart {
@@ -36,7 +37,7 @@ export function useCheckout({ companyId, cart, products, customers, reloadProduc
   const { acquireKey, markUncertain, reset } = useSaleIntent();
 
   const confirmSale = useCallback(
-    async (clientName: string, payments: PaymentEntry[], customerId?: string | null, pricing?: SalePricingArgs) => {
+    async (clientName: string, payments: PaymentEntry[], customerId?: string | null, pricing?: SalePricingArgs, seller?: SaleSellerArgs | null) => {
       if (cart.items.length === 0) {
         return { success: false, error: 'El carrito está vacío.' };
       }
@@ -74,6 +75,7 @@ export function useCheckout({ companyId, cart, products, customers, reloadProduc
           discountAmount: cart.discountAmount,
           cartTotal: cart.total,
           pricing,
+          seller,
         };
         const saleRequest = buildSaleRequest(saleParams);
 

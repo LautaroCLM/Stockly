@@ -1,3 +1,6 @@
+import { CheckoutSeller } from '@/features/comisiones/components/CheckoutSeller';
+import type { SellersState } from '@/features/comisiones/hooks/useSellers';
+import type { SaleSellerArgs } from '@/features/comisiones/types';
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Banknote, CheckCircle2, X } from 'lucide-react';
 import type { Customer } from '@/features/clientes/types';
@@ -22,15 +25,17 @@ interface CheckoutModalProps {
   total: number;
   customers?: Customer[];
   onClose: () => void;
-  onConfirmSale: (clientName: string, payments: PaymentEntry[], customerId?: string | null, pricing?: SalePricingArgs) => SaleResult | Promise<SaleResult> | void;
+  onConfirmSale: (clientName: string, payments: PaymentEntry[], customerId?: string | null, pricing?: SalePricingArgs, seller?: SaleSellerArgs | null) => SaleResult | Promise<SaleResult> | void;
   /** Lista de precios de la venta (sale del cliente elegido). */
   pricing?: SalePricing;
+  /** Vendedor de la venta (comisiones). */
+  sellers?: SellersState;
 }
 
 const MODE_BUTTON = 'py-2 text-xs font-semibold rounded-lg transition-all';
 
 /** Cobro de la venta: cliente, medio de pago (único o dividido) y confirmación. */
-const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, customers = [], onClose, onConfirmSale, pricing }) => {
+const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, customers = [], onClose, onConfirmSale, pricing, sellers }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [clientName, setClientName] = useState('Consumidor Final');
   const [paymentMode, setPaymentMode] = useState<'single' | 'split'>('single');
@@ -89,7 +94,7 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
     setIsSubmitting(true);
     try {
       const name = selectedCustomer ? selectedCustomer.name : clientName.trim() || 'Consumidor Final';
-      const result = onConfirmSale(name, built.payments, selectedCustomer ? selectedCustomer.id : null, pricing?.saleArgs);
+      const result = onConfirmSale(name, built.payments, selectedCustomer ? selectedCustomer.id : null, pricing?.saleArgs, sellers?.saleArgs ?? null);
       if (result && typeof (result as Promise<SaleResult>).then === 'function') {
         (result as Promise<SaleResult>)
           .then((res) => {
@@ -141,6 +146,7 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
           disabled={isSubmitting}
         />
         {pricing && <CheckoutPriceList pricing={pricing} disabled={isSubmitting} />}
+        {sellers && <CheckoutSeller sellers={sellers} disabled={isSubmitting} />}
 
         <div className="space-y-2">
           <span className="text-xs font-semibold text-text-secondary">Modalidad de Pago:</span>

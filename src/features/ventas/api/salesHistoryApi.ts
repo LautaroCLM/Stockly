@@ -18,7 +18,7 @@ export interface SalesPage {
 }
 
 const SALE_COLUMNS = `
-  id, company_id, sale_number, customer_id, status, subtotal, discount, total_amount,
+  id, company_id, sale_number, customer_id, seller_employee_id, status, subtotal, discount, total_amount,
   payments, notes, created_at, cancelled_at, cancel_reason,
   customer:customers ( name, identification_type, tax_id ),
   sale_items ( id, product_id, description, quantity, unit_price, subtotal, product:products ( name, sku ) ),
@@ -104,6 +104,7 @@ export async function fetchSalesPage(
         createdAt: row.created_at,
         clientName,
         customerId: row.customer_id,
+        sellerId: row.seller_employee_id,
         customerDoc,
         items,
         subtotal: Number(row.subtotal),

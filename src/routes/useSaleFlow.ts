@@ -6,6 +6,7 @@ import { useCheckout } from '@/features/inventario/hooks/useCheckout';
 import { useOpenCartShortcut } from '@/features/inventario/hooks/useOpenCartShortcut';
 import { useSaleNotice } from '@/features/ventas/hooks/useSaleNotice';
 import { useSalePricing } from '@/features/listas/hooks/useSalePricing';
+import { useSellers } from '@/features/comisiones/hooks/useSellers';
 
 interface SaleFlowOptions {
   companyId: string;
@@ -40,6 +41,8 @@ export function useSaleFlow({ companyId, cart, products, customers, reloadProduc
     companyId, products, customers, isAdmin, active: checkout.isCheckoutOpen, applyPrices: cart.applyPrices,
   });
 
+  const sellers = useSellers(companyId);
+
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
   useOpenCartShortcut(openCart);
@@ -49,5 +52,5 @@ export function useSaleFlow({ companyId, cart, products, customers, reloadProduc
     [cart.items]
   );
 
-  return { isCartOpen, openCart, closeCart, receiptSale, setReceiptSale, checkout, pricing, getItemQuantityInCart };
+  return { isCartOpen, openCart, closeCart, receiptSale, setReceiptSale, checkout, pricing, sellers, getItemQuantityInCart };
 }
