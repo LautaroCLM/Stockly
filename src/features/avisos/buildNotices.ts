@@ -70,7 +70,19 @@ function attendanceNotice(sources: NoticeSources, now: Date): Notice | null {
   };
 }
 
+/** Id del aviso "la caja está cerrada" (también lo usa el recordatorio al abrir la app). */
+export const CASH_CLOSED_NOTICE_ID = 'cash-closed';
+
 function cashNotice(sources: NoticeSources, now: Date): Notice | null {
+  if (sources.openCashSince === null && sources.canOpenCash) {
+    return {
+      id: CASH_CLOSED_NOTICE_ID,
+      severity: 'warning',
+      title: 'La caja está cerrada',
+      detail: 'Abrila con el efectivo inicial antes de empezar a cobrar.',
+      route: 'caja',
+    };
+  }
   if (!sources.openCashSince) return null;
   if (new Date(sources.openCashSince) >= startOfDay(now)) return null;
   return {

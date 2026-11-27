@@ -29,6 +29,7 @@ import { useWorkspaceNavigation } from './useWorkspaceNavigation';
 import { useStockLots } from '@/features/vencimientos/hooks/useStockLots';
 import { useWarehouses } from '@/features/depositos/hooks/useWarehouses';
 import { WarehouseSwitcher } from '@/features/depositos/components/WarehouseSwitcher';
+import { CashReminder } from '@/features/caja/components/CashReminder';
 
 interface AppWorkspaceProps {
   user: User;
@@ -97,6 +98,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     canSeeDebts: atLeast(levelOf('cobros_pagos'), 'view'),
     canSeeAttendance: atLeast(levelOf('fichaje'), 'view') || atLeast(levelOf('personal'), 'view'),
     canSeeCash: atLeast(levelOf('caja'), 'view'),
+    canOpenCash: atLeast(levelOf('caja'), 'operate'),
     attendanceRoute: atLeast(levelOf('personal'), 'view') ? 'personal' : 'fichaje',
     expiry,
   });
@@ -202,6 +204,8 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         onClose={() => checkout.setIsCheckoutOpen(false)}
         onConfirmSale={checkout.confirmSale}
       />
+
+      <CashReminder companyId={companyId} notices={notices} onOpenCash={() => setActiveRoute('caja')} />
 
       <ReceiptModal
         isOpen={receiptSale !== null}

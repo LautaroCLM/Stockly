@@ -7,7 +7,7 @@ const daysAgo = (days: number) => new Date(NOW.getTime() - days * 86_400_000).to
 const hoursAgo = (hours: number) => new Date(NOW.getTime() - hours * 3_600_000).toISOString();
 
 const empty: NoticeSources = {
-  restock: [], customerDebts: null, supplierDebts: null, openAttendance: null, openCashSince: undefined, expiry: null, attendanceRoute: 'personal',
+  restock: [], customerDebts: null, supplierDebts: null, openAttendance: null, openCashSince: undefined, expiry: null, canOpenCash: false, attendanceRoute: 'personal',
 };
 const sources = (changes: Partial<NoticeSources>): NoticeSources => ({ ...empty, ...changes });
 
@@ -90,5 +90,12 @@ describe('avisos de la campana', () => {
     expect(list.map((n) => [n.id, n.severity])).toEqual([['expired-lots', 'danger'], ['soon-lots', 'warning']]);
     expect(list[0].title).toBe('2 lotes vencidos con stock');
     expect(list[1].title).toBe('1 lote vence en los próximos 30 días');
+  });
+
+  it('recuerda abrir la caja solo a quien puede abrirla', () => {
+    expect(buildNotices(sources({ openCashSince: null, canOpenCash: false }), NOW)).toEqual([]);
+    const [notice] = buildNotices(sources({ openCashSince: null, canOpenCash: true }), NOW);
+    expect(notice).toMatchObject({ id: 'cash-closed', title: 'La caja está cerrada', route: 'caja' });
+    expect(buildNotices(sources({ openCashSince: undefined, canOpenCash: true }), NOW)).toEqual([]);
   });
 });

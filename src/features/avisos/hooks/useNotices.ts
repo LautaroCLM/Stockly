@@ -26,6 +26,8 @@ interface UseNoticesOptions {
   canSeeDebts: boolean;
   canSeeAttendance: boolean;
   canSeeCash: boolean;
+  /** Puede abrir la caja (permiso de Caja para operar). */
+  canOpenCash: boolean;
   attendanceRoute: RouteId;
   expiry: NoticeSources['expiry'];
 }
@@ -45,7 +47,7 @@ const startOfTodayIso = () => {
  * Si una consulta falla, se conserva lo último que se sabía de esa fuente.
  */
 export function useNotices(options: UseNoticesOptions): { notices: Notice[]; isLoading: boolean } {
-  const { companyId, products, canSeeDebts, canSeeAttendance, canSeeCash, attendanceRoute, expiry } = options;
+  const { companyId, products, canSeeDebts, canSeeAttendance, canSeeCash, canOpenCash, attendanceRoute, expiry } = options;
   const [remote, setRemote] = useState<RemoteSources>(NO_REMOTE);
   const [isLoading, setIsLoading] = useState(true);
   const [now, setNow] = useState(() => new Date());
@@ -110,10 +112,11 @@ export function useNotices(options: UseNoticesOptions): { notices: Notice[]; isL
           ...remote,
           attendanceRoute,
           expiry,
+          canOpenCash,
         },
         now
       ),
-    [products, remote, attendanceRoute, now, expiry]
+    [products, remote, attendanceRoute, now, expiry, canOpenCash]
   );
 
   useNewNoticeSound(notices, isLoading, companyId);
