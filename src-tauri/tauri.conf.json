@@ -16,6 +16,7 @@
         "minHeight": 680,
         "center": true,
         "resizable": true,
+        "maximized": true,
         "fullscreen": false,
         "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
       }
