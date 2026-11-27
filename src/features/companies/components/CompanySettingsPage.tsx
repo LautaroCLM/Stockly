@@ -8,6 +8,7 @@ import { NegativeStockModal } from './NegativeStockModal';
 import { NegativeStockPolicyCard } from './NegativeStockPolicyCard';
 import { CompanyIdentityCard } from './CompanyIdentityCard';
 import { IssuerDataCard } from '@/features/documentos/components/IssuerDataCard';
+import { ArcaSettingsCard } from '@/features/facturacion/components/ArcaSettingsCard';
 import { CompanyLogoCard } from '@/features/logo/components/CompanyLogoCard';
 
 export interface CompanySettingsPageProps {
@@ -119,6 +120,8 @@ export const CompanySettingsPage: React.FC<CompanySettingsPageProps> = ({
       <CompanyLogoCard company={company} isMasterAdmin={isMasterAdmin} />
 
       <IssuerDataCard company={company} isMasterAdmin={isMasterAdmin} />
+
+      <ArcaSettingsCard company={company} isMasterAdmin={isMasterAdmin} />
 
       <CompanyIdentityCard company={company} settings={settings} />
 

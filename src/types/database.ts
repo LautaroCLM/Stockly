@@ -23,7 +23,27 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "attendance_records": {
+            "arca_settings": {
+                  Row: {
+                    "activity_start_date": string | null,"company_id": string,"gross_income_number": string | null,"point_of_sale": number | null,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "activity_start_date"?: string | null,"company_id": string,"gross_income_number"?: string | null,"point_of_sale"?: number | null,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "activity_start_date"?: string | null,"company_id"?: string,"gross_income_number"?: string | null,"point_of_sale"?: number | null,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "arca_settings_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: true
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"attendance_records": {
                   Row: {
                     "check_in": string,"check_out": string | null,"company_id": string,"created_at": string,"created_by": string,"employee_id": string,"id": string,"reason": string | null,"source": string,"status": string,"updated_at": string,"void_reason": string | null,"voided_at": string | null,"voided_by": string | null
                   }
@@ -375,14 +395,14 @@ isOneToOne: false
                   ]
                 },"customers": {
                   Row: {
-                    "address": string | null,"company_id": string,"created_at": string,"created_by": string | null,"email": string | null,"id": string,"identification_type": string,"is_active": boolean,"name": string,"notes": string | null,"phone": string | null,"tax_id": string | null,"updated_at": string
+                    "address": string | null,"company_id": string,"created_at": string,"created_by": string | null,"email": string | null,"id": string,"identification_type": string,"is_active": boolean,"name": string,"notes": string | null,"phone": string | null,"tax_id": string | null,"updated_at": string,"vat_condition": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"company_id": string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name": string,"notes"?: string | null,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string
+                    "address"?: string | null,"company_id": string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name": string,"notes"?: string | null,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
                   }
                   Update: {
-                    "address"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name"?: string,"notes"?: string | null,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string
+                    "address"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name"?: string,"notes"?: string | null,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
                   }
                   Relationships: [
                     {
@@ -751,14 +771,14 @@ isOneToOne: false
                   ]
                 },"products": {
                   Row: {
-                    "barcode": string | null,"category_id": string | null,"company_id": string,"created_at": string,"current_stock": number,"description": string | null,"id": string,"is_active": boolean,"min_stock": number,"name": string,"selling_price": number,"sku": string,"supplier_id": string | null,"unit": string,"updated_at": string
+                    "barcode": string | null,"category_id": string | null,"company_id": string,"created_at": string,"current_stock": number,"description": string | null,"id": string,"is_active": boolean,"min_stock": number,"name": string,"selling_price": number,"sku": string,"supplier_id": string | null,"unit": string,"updated_at": string,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "barcode"?: string | null,"category_id"?: string | null,"company_id": string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name": string,"selling_price"?: number,"sku": string,"supplier_id"?: string | null,"unit"?: string,"updated_at"?: string
+                    "barcode"?: string | null,"category_id"?: string | null,"company_id": string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name": string,"selling_price"?: number,"sku": string,"supplier_id"?: string | null,"unit"?: string,"updated_at"?: string,"vat_rate"?: number
                   }
                   Update: {
-                    "barcode"?: string | null,"category_id"?: string | null,"company_id"?: string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name"?: string,"selling_price"?: number,"sku"?: string,"supplier_id"?: string | null,"unit"?: string,"updated_at"?: string
+                    "barcode"?: string | null,"category_id"?: string | null,"company_id"?: string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name"?: string,"selling_price"?: number,"sku"?: string,"supplier_id"?: string | null,"unit"?: string,"updated_at"?: string,"vat_rate"?: number
                   }
                   Relationships: [
                     {
@@ -1344,6 +1364,9 @@ isOneToOne: true
 "revoke_company_invitation":
 { Args: { "p_company_id": string,"p_invitation_id": string }; Returns: undefined
                            },
+"save_arca_settings":
+{ Args: { "p_activity_start_date": string,"p_company_id": string,"p_gross_income_number": string,"p_point_of_sale": number }; Returns: undefined
+                           },
 "save_attendance":
 { Args: { "p_check_in": string,"p_check_out": string,"p_company_id": string,"p_employee_id": string,"p_reason": string,"p_record_id": string }; Returns: string
                            },
@@ -1356,11 +1379,17 @@ isOneToOne: true
 "set_company_negative_stock_policy":
 { Args: { "p_allow_negative_stock": boolean,"p_company_id": string,"p_reason": string }; Returns: undefined
                            },
+"set_customer_vat_condition":
+{ Args: { "p_company_id": string,"p_customer_id": string,"p_vat_condition": string }; Returns: undefined
+                           },
 "set_employee_schedule":
 { Args: { "p_blocks": Json,"p_company_id": string,"p_employee_id": string }; Returns: number
                            },
 "set_module_permissions":
 { Args: { "p_company_id": string,"p_levels": Json }; Returns: number
+                           },
+"set_product_vat_rate":
+{ Args: { "p_company_id": string,"p_product_id": string,"p_vat_rate": number }; Returns: undefined
                            },
 "supplier_balances":
 { Args: { "p_company_id": string }; Returns: {

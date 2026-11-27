@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { formatCuit } from '@/features/companies/utils/cuitValidator';
 import type { Customer, UpsertCustomerInput, CustomerActionResult, CustomerIdentificationType } from '../types';
 import { CustomerFormFields } from './CustomerFormFields';
+import { CustomerVatConditionField } from './CustomerVatConditionField';
+import { customerVatConditionError, DEFAULT_CUSTOMER_VAT_CONDITION, type CustomerVatCondition } from '@/features/facturacion/vat';
 import { AnimatePresence, m } from 'motion/react';
 import { modalPanelVariants, overlayVariants } from '@/lib/motion';
 
@@ -24,6 +26,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
   const [name, setName] = useState('');
   const [idType, setIdType] = useState<CustomerIdentificationType>('DNI');
   const [taxId, setTaxId] = useState('');
+  const [vatCondition, setVatCondition] = useState<CustomerVatCondition>(DEFAULT_CUSTOMER_VAT_CONDITION);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -45,6 +48,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
             ? customer.taxId ? formatCuit(customer.taxId) : ''
             : customer.taxId || ''
         );
+        setVatCondition(customer.vatCondition);
         setEmail(customer.email || '');
         setPhone(customer.phone || '');
         setAddress(customer.address || '');
@@ -54,6 +58,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
         setName('');
         setIdType('DNI');
         setTaxId('');
+        setVatCondition(DEFAULT_CUSTOMER_VAT_CONDITION);
         setEmail('');
         setPhone('');
         setAddress('');
@@ -79,10 +84,12 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
 
   if (!isOpen) return null;
 
+  const vatError = customerVatConditionError(vatCondition, idType, taxId);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    if (taxIdError || emailError) return;
+    if (taxIdError || emailError || vatError) return;
 
     setIsSubmitting(true);
     setActionError(null);
@@ -92,6 +99,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
       name: name.trim(),
       identificationType: idType,
       taxId: taxId.trim() || null,
+      vatCondition,
       email: email.trim() || null,
       phone: phone.trim() || null,
       address: address.trim() || null,
@@ -169,6 +177,8 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
             isSubmitting={isSubmitting}
           />
 
+          <CustomerVatConditionField value={vatCondition} error={vatError} disabled={isSubmitting} onChange={setVatCondition} />
+
           {/* Footer buttons */}
           <div className="modal-sticky-footer flex items-center justify-end gap-3">
             <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
@@ -177,7 +187,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting || !name.trim() || Boolean(taxIdError) || Boolean(emailError)}
+              disabled={isSubmitting || !name.trim() || Boolean(taxIdError) || Boolean(emailError) || Boolean(vatError)}
             >
               {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {customer ? 'Guardar cambios' : 'Registrar cliente'}

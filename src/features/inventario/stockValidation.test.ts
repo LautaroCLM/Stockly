@@ -9,6 +9,7 @@ const product = (overrides: Partial<Product> = {}): Product => ({
   name: 'Latex',
   category: 'Pinturas',
   salePrice: 100,
+  vatRate: 21,
   costPrice: 50,
   stock: 0,
   minStock: 0,

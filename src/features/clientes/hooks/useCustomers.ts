@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Customer, UpsertCustomerInput, CustomerActionResult } from '../types';
-import { fetchCustomers, upsertCustomerRpc, toggleCustomerStatusRpc } from '../api/customersApi';
+import { fetchCustomers, setCustomerVatConditionRpc, upsertCustomerRpc, toggleCustomerStatusRpc } from '../api/customersApi';
+import { DEFAULT_CUSTOMER_VAT_CONDITION } from '@/features/facturacion/vat';
 import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
 import type { DataTable } from '@/features/realtime/changeBus';
 import { toUserMessage } from '@/lib/errorMessages';
@@ -68,14 +69,26 @@ export function useCustomers(companyId: string) {
           companyId,
         });
 
+        // Va después del upsert: la base valida el IVA contra el CUIT ya guardado
+        const current = customers.find((c) => c.id === customerId)?.vatCondition ?? DEFAULT_CUSTOMER_VAT_CONDITION;
+        let vatError: string | null = null;
+        if (input.vatCondition && input.vatCondition !== current) {
+          try {
+            await setCustomerVatConditionRpc(companyId, customerId, input.vatCondition);
+          } catch (vatErr) {
+            vatError = `El cliente se guardó, pero no su condición frente al IVA (${toUserMessage(vatErr, 'error de conexión')}).`;
+          }
+        }
+
         await loadCustomers(companyId);
+        if (vatError) return { success: false, error: vatError, customerId };
         return { success: true, customerId };
       } catch (err) {
         const message = toUserMessage(err, 'No se pudo guardar el cliente.');
         return { success: false, error: message };
       }
     },
-    [companyId, loadCustomers]
+    [companyId, customers, loadCustomers]
   );
 
   const toggleStatus = useCallback(

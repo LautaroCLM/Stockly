@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { toUserMessage } from '@/lib/errorMessages';
 import type { Product, ProductFormData } from '../types';
 import { initialProductFormValues, toProductFormData, validateProductForm, type ProductFormValues } from '../productForm';
-import { MarginBox, ProductIdentityFields, ProductPricingFields } from './ProductFormFields';
+import { MarginBox, ProductIdentityFields, ProductPricingFields, ProductVatField } from './ProductFormFields';
 import { ModalFrame } from '@/components/motion/ModalFrame';
 import { AnimatePresence } from 'motion/react';
 
@@ -17,6 +17,8 @@ interface ProductFormModalProps {
   existingCategories: string[];
   suppliers?: { id: string; name: string }[];
   canManageCosts?: boolean;
+  /** Muestra la alícuota de IVA (la empresa factura A y B). */
+  showVat?: boolean;
   onClose: () => void;
   onSubmit: (data: ProductFormData) => Promise<Result> | Result;
 }
@@ -29,6 +31,7 @@ const ProductFormModalBody: React.FC<ProductFormModalProps> = ({
   existingCategories,
   suppliers = [],
   canManageCosts = true,
+  showVat = false,
   onClose,
   onSubmit,
 }) => {
@@ -116,6 +119,7 @@ const ProductFormModalBody: React.FC<ProductFormModalProps> = ({
         <ProductIdentityFields values={values} categories={existingCategories} suppliers={suppliers} onChange={change} />
         <ProductPricingFields values={values} canManageCosts={canManageCosts}
           costPlaceholder={costMissing ? 'Sin costo asignado' : '0.00'} onChange={change} />
+        {showVat && <ProductVatField values={values} onChange={change} />}
         {canManageCosts && <MarginBox costPrice={values.costPrice} salePrice={values.salePrice} />}
 
         <div className="space-y-1">

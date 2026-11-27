@@ -1,3 +1,4 @@
+import type { VatRate } from '@/features/facturacion/vat';
 import { TenantId } from '@/types';
 
 export type StockStatus = 'normal' | 'low' | 'out_of_stock' | 'negative';
@@ -20,6 +21,8 @@ export interface Product {
   /** Proveedor habitual (si se cargó): se usa para armar pedidos de reposición. */
   supplierId?: string;
   salePrice: number;
+  /** Alícuota de IVA incluida en el precio de venta (para facturas A y B). */
+  vatRate: VatRate;
   costPrice: number | null;
   stock: number;
   minStock: number;
@@ -39,6 +42,7 @@ export interface ProductFormData {
   supplierId?: string;
   costPrice?: number | null;
   salePrice: number;
+  vatRate?: VatRate;
   minStock: number;
   unit?: string;
   description?: string;

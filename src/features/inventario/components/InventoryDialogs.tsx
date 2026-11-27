@@ -9,6 +9,8 @@ import type {
   StockAdjustmentResult,
 } from '../types';
 import { ProductFormModal } from './ProductFormModal';
+import { useDocumentSettings } from '@/features/documentos/hooks/useDocumentSettings';
+import { issuerUsesVatRates } from '@/features/facturacion/vat';
 import { StockAdjustmentModal } from './StockAdjustmentModal';
 import { ImportInventoryModal } from './ImportInventoryModal';
 import { InitialStockModal } from './InitialStockModal';
@@ -59,6 +61,8 @@ export const InventoryDialogs: React.FC<InventoryDialogsProps> = (props) => {
   const editedProduct = dialog.kind === 'edit' ? dialog.product : null;
   // Lista estable: el formulario se reinicia si cambia, y no debe borrar lo que se está escribiendo
   const categoryNames = useMemo(() => categories.map((c) => c.name), [categories]);
+  // La alícuota de IVA solo importa si la empresa emite facturas A y B
+  const issuer = useDocumentSettings(company.id, true);
 
   const submitProduct = async (formData: ProductFormData) => {
     const categoryId = categories.find((c) => c.name.toLowerCase() === formData.category.trim().toLowerCase())?.id;
@@ -77,6 +81,7 @@ export const InventoryDialogs: React.FC<InventoryDialogsProps> = (props) => {
         existingCategories={categoryNames}
         suppliers={props.suppliers}
         canManageCosts={isMasterAdmin}
+        showVat={issuerUsesVatRates(issuer.settings.taxCondition)}
         onClose={onClose}
         onSubmit={submitProduct}
       />

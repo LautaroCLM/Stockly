@@ -4,7 +4,7 @@ import { buildExportTable, exportFileName } from './exportRows';
 import type { Product } from '../types';
 
 const product = (changes: Partial<Product>): Product => ({
-  id: '1', sku: 'MIL-1', barcode: '7791', name: 'Milanesa', category: 'Comidas', salePrice: 100, costPrice: 40, stock: 20, minStock: 5,
+  id: '1', sku: 'MIL-1', barcode: '7791', name: 'Milanesa', category: 'Comidas', salePrice: 100, vatRate: 21, costPrice: 40, stock: 20, minStock: 5,
   unit: 'unidad', status: 'normal', description: 'Napolitana', isActive: true, ...changes,
 });
 

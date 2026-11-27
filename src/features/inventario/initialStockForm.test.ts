@@ -9,6 +9,7 @@ const product = (unit: string): Product => ({
   name: 'Latex',
   category: 'Pinturas',
   salePrice: 1,
+  vatRate: 21,
   costPrice: null,
   stock: 0,
   minStock: 0,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
+import { VAT_RATES, formatVatRate } from '@/features/facturacion/vat';
 import { marginSummary, type ProductFormValues } from '../productForm';
 
 type Change = <K extends keyof ProductFormValues>(field: K, value: ProductFormValues[K]) => void;
@@ -115,6 +116,17 @@ export const ProductPricingFields: React.FC<{
     </div>
   );
 };
+
+/** Alícuota de IVA incluida en el precio (solo para empresas Responsable Inscripto). */
+export const ProductVatField: React.FC<{ values: ProductFormValues; onChange: Change }> = ({ values, onChange }) => (
+  <div className="space-y-1">
+    <label htmlFor="product-vat" className={LABEL}>IVA del producto</label>
+    <select id="product-vat" value={values.vatRate} onChange={(e) => onChange('vatRate', e.target.value)} className={`${FIELD} !w-40 cursor-pointer`}>
+      {VAT_RATES.map((rate) => <option key={rate} value={String(rate)}>{formatVatRate(rate)}</option>)}
+    </select>
+    <p className="text-[10px] text-text-muted">El precio de venta ya incluye este IVA. Se discrimina en las facturas A y B.</p>
+  </div>
+);
 
 /** Ganancia y margen estimados en tiempo real. */
 export const MarginBox: React.FC<{ costPrice: string; salePrice: string }> = ({ costPrice, salePrice }) => {

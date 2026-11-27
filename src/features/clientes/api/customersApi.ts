@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { fetchAllRows } from '@/lib/fetchAllRows';
+import { toCustomerVatCondition, type CustomerVatCondition } from '@/features/facturacion/vat';
 import type { Customer, UpsertCustomerInput } from '../types';
 
 export interface CustomerDbRow {
@@ -8,6 +9,7 @@ export interface CustomerDbRow {
   name: string;
   identification_type: string;
   tax_id: string | null;
+  vat_condition: string;
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -39,7 +41,7 @@ export async function fetchCustomers(companyId: string): Promise<Customer[]> {
   const { data, error } = await fetchAllRows((from, to) =>
     supabase
       .from('customers')
-      .select('id, company_id, name, identification_type, tax_id, email, phone, address, notes, is_active, created_by, created_at, updated_at')
+      .select('id, company_id, name, identification_type, tax_id, vat_condition, email, phone, address, notes, is_active, created_by, created_at, updated_at')
       .eq('company_id', companyId)
       .order('name', { ascending: true })
       .order('id', { ascending: true })
@@ -56,6 +58,7 @@ export async function fetchCustomers(companyId: string): Promise<Customer[]> {
     name: row.name,
     identificationType: row.identification_type as Customer['identificationType'],
     taxId: row.tax_id,
+    vatCondition: toCustomerVatCondition(row.vat_condition),
     email: row.email,
     phone: row.phone,
     address: row.address,
@@ -130,4 +133,18 @@ export async function toggleCustomerStatusRpc(
     notes: customer.notes,
     isActive,
   });
+}
+
+/** Cambia la condición del cliente frente al IVA (public.set_customer_vat_condition). */
+export async function setCustomerVatConditionRpc(
+  companyId: string,
+  customerId: string,
+  vatCondition: CustomerVatCondition
+): Promise<void> {
+  const { error } = await supabase.rpc('set_customer_vat_condition', {
+    p_company_id: companyId,
+    p_customer_id: customerId,
+    p_vat_condition: vatCondition,
+  });
+  if (error) throw new Error(sanitizeCustomerError(error, 'No se pudo guardar la condición frente al IVA.'));
 }

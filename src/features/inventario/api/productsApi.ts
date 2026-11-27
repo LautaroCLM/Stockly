@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { fetchAllRows } from '@/lib/fetchAllRows';
+import { toVatRate } from '@/features/facturacion/vat';
 import type { Product, StockStatus } from '../types';
 
 export function computeStatus(stock: number, minStock: number): StockStatus {
@@ -59,7 +60,7 @@ export async function fetchProducts(
   const { data: prodRows, error: prodErr } = await fetchAllRows((from, to) =>
     supabase
       .from('products')
-      .select('id, company_id, sku, barcode, name, description, category_id, supplier_id, unit, selling_price, min_stock, current_stock, is_active, created_at, updated_at')
+      .select('id, company_id, sku, barcode, name, description, category_id, supplier_id, unit, selling_price, vat_rate, min_stock, current_stock, is_active, created_at, updated_at')
       .eq('company_id', companyId)
       .order('name', { ascending: true })
       .order('id', { ascending: true })
@@ -114,6 +115,7 @@ export async function fetchProducts(
       category: categoryName,
       supplierId: row.supplier_id || undefined,
       salePrice: Number(row.selling_price),
+      vatRate: toVatRate(row.vat_rate),
       costPrice: cost,
       stock,
       minStock,
@@ -174,6 +176,8 @@ export async function setProductActiveRpc(
     p_barcode: product.barcode || undefined,
     p_description: product.description || undefined,
     p_category_id: product.categoryId || undefined,
+    // Sin esto la base dejaría vacío el proveedor habitual
+    p_supplier_id: product.supplierId || undefined,
     p_is_active: isActive,
   });
 

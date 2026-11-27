@@ -1,3 +1,4 @@
+import { DEFAULT_VAT_RATE, toVatRate } from '@/features/facturacion/vat';
 import type { Product, ProductFormData } from './types';
 
 /** Valores del formulario de producto tal como los escribe el usuario. */
@@ -10,6 +11,8 @@ export interface ProductFormValues {
   supplierId: string;
   costPrice: string;
   salePrice: string;
+  /** Alícuota de IVA como texto del select ('21', '10.5'...). */
+  vatRate: string;
   minStock: string;
   unit: string;
   description: string;
@@ -25,6 +28,7 @@ export function initialProductFormValues(product: Product | null | undefined, ca
       supplierId: product.supplierId ?? '',
       costPrice: product.costPrice !== null && product.costPrice !== undefined ? product.costPrice.toString() : '',
       salePrice: product.salePrice.toString(),
+      vatRate: String(product.vatRate),
       minStock: product.minStock.toString(),
       unit: product.unit || 'unidad',
       description: product.description || '',
@@ -38,6 +42,7 @@ export function initialProductFormValues(product: Product | null | undefined, ca
     supplierId: '',
     costPrice: '',
     salePrice: '0',
+    vatRate: String(DEFAULT_VAT_RATE),
     minStock: '5',
     unit: 'unidad',
     description: '',
@@ -83,6 +88,7 @@ export function toProductFormData(values: ProductFormValues, canManageCosts: boo
     supplierId: values.supplierId || undefined,
     costPrice: canManageCosts ? parseCost(values.costPrice) : undefined,
     salePrice: parseFloat(values.salePrice) || 0,
+    vatRate: toVatRate(values.vatRate),
     minStock: Math.max(0, parseInt(values.minStock, 10) || 0),
     unit: values.unit.trim().toLowerCase() || 'unidad',
     description: values.description.trim() || undefined,

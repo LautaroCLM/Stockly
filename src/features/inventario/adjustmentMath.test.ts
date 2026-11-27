@@ -9,6 +9,7 @@ const product: Product = {
   name: 'Latex',
   category: 'Pinturas',
   salePrice: 1,
+  vatRate: 21,
   costPrice: 1,
   stock: 20,
   minStock: 5,

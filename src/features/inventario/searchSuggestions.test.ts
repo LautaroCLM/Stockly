@@ -3,7 +3,7 @@ import type { Product } from './types';
 import { foldText, suggestProducts } from './searchSuggestions';
 
 function product(id: string, name: string, sku = '', barcode = ''): Product {
-  return { id, name, sku, barcode, category: 'Varios', salePrice: 100, costPrice: null, stock: 1, minStock: 0, unit: 'un', status: 'normal' };
+  return { id, name, sku, barcode, category: 'Varios', salePrice: 100, vatRate: 21, costPrice: null, stock: 1, minStock: 0, unit: 'un', status: 'normal' };
 }
 
 const CATALOG = [

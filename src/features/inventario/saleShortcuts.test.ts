@@ -3,7 +3,7 @@ import type { Product } from './types';
 import { isCheckoutKey, isMinusKey, isPlusKey, isSearchKey, moveSelection, pickProductForQuery } from './saleShortcuts';
 
 const product = (id: string, sku: string, barcode: string, name: string, isActive = true): Product => ({
-  id, sku, barcode, name, category: 'General', salePrice: 100, costPrice: null, stock: 5, minStock: 1, unit: 'u', status: 'normal', isActive,
+  id, sku, barcode, name, category: 'General', salePrice: 100, vatRate: 21, costPrice: null, stock: 5, minStock: 1, unit: 'u', status: 'normal', isActive,
 });
 
 const tornillo = product('1', 'TOR-01', '7790001', 'Tornillo 6mm');

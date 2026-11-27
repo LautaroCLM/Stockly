@@ -32,12 +32,27 @@ describe('formulario de producto', () => {
 describe('proveedor habitual', () => {
   it('se carga del producto al editar y se manda tal cual (vacío = sin proveedor)', () => {
     const product = {
-      id: 'p1', sku: 'A', barcode: '', name: 'X', category: 'General', supplierId: 's1', salePrice: 10, costPrice: null,
+      id: 'p1', sku: 'A', barcode: '', name: 'X', category: 'General', supplierId: 's1', salePrice: 10, vatRate: 21 as const, costPrice: null,
       stock: 1, minStock: 1, unit: 'unidad', status: 'normal' as const,
     };
     const values = initialProductFormValues(product, ['General']);
     expect(values.supplierId).toBe('s1');
     expect(toProductFormData(values, false).supplierId).toBe('s1');
     expect(toProductFormData({ ...values, supplierId: '' }, false).supplierId).toBeUndefined();
+  });
+});
+
+describe('alícuota de IVA', () => {
+  it('un producto nuevo arranca en 21 % y se manda como número', () => {
+    const fresh = initialProductFormValues(null, ['General']);
+    expect(fresh.vatRate).toBe('21');
+    expect(toProductFormData({ ...fresh, vatRate: '10.5' }, false).vatRate).toBe(10.5);
+  });
+  it('al editar se carga la alícuota guardada', () => {
+    const product = {
+      id: 'p2', sku: 'B', barcode: '', name: 'Y', category: 'General', salePrice: 10, vatRate: 27 as const, costPrice: null,
+      stock: 1, minStock: 1, unit: 'unidad', status: 'normal' as const,
+    };
+    expect(initialProductFormValues(product, ['General']).vatRate).toBe('27');
   });
 });

@@ -4,7 +4,7 @@ import type { Supplier } from '@/features/proveedores/types';
 import { buildRestockPlan, buildSupplierOrderMessage, needsRestock, suggestedQuantity } from './restockPlan';
 
 const product = (over: Partial<Product>): Product => ({
-  id: 'p', sku: 'SKU', barcode: '', name: 'Producto', category: 'General', salePrice: 100, costPrice: null,
+  id: 'p', sku: 'SKU', barcode: '', name: 'Producto', category: 'General', salePrice: 100, vatRate: 21, costPrice: null,
   stock: 2, minStock: 5, unit: 'unidad', status: 'low', isActive: true, ...over,
 });
 const supplier = (id: string, name: string, contactName?: string): Supplier => ({

@@ -3,8 +3,21 @@ import { toUserMessage } from '@/lib/errorMessages';
 import type { ProductFormData } from '../types';
 import { createProductRpc, setProductActiveRpc } from '../api/productsApi';
 import { updateProductRpc } from '../api/productUpdateApi';
+import { setProductVatRateRpc, vatNotSavedMessage } from '../api/productVatApi';
+import { DEFAULT_VAT_RATE, type VatRate } from '@/features/facturacion/vat';
 import { isNetworkOrUncertainError } from '@/lib/errorMessages';
 import type { CatalogContext, ProductOperationResult } from './catalogContext';
+
+/** Guarda el IVA solo si cambió; devuelve el error para el usuario o null. */
+async function saveVatIfChanged(companyId: string, productId: string, next: VatRate | undefined, current: VatRate) {
+  if (next === undefined || next === current) return null;
+  try {
+    await setProductVatRateRpc(companyId, productId, next);
+    return null;
+  } catch (err) {
+    return vatNotSavedMessage(toUserMessage(err, 'error de conexión'));
+  }
+}
 
 /** Alta, modificación, desactivación y reactivación de productos. */
 export function useProductMutations(ctx: CatalogContext) {
@@ -32,8 +45,12 @@ export function useProductMutations(ctx: CatalogContext) {
           categoryId: formData.categoryId || undefined,
           supplierId: formData.supplierId || undefined,
         });
+        // El producto nace con 21 %: solo se llama si eligieron otra alícuota
+        const vatError = await saveVatIfChanged(tenantId, newId, formData.vatRate, DEFAULT_VAT_RATE);
         const fresh = await fetchAndApply();
-        return { success: true, product: fresh.find((p) => p.id === newId) };
+        const created = fresh.find((p) => p.id === newId);
+        if (vatError) return { success: false, partial: true, error: vatError, product: created };
+        return { success: true, product: created };
       } catch (err) {
         if (!isNetworkOrUncertainError(err)) {
           return { success: false, error: toUserMessage(err, 'Error al crear el producto.') };
@@ -81,6 +98,14 @@ export function useProductMutations(ctx: CatalogContext) {
         },
         isMasterAdmin
       );
+
+      if (execResult.status === 'success') {
+        const vatError = await saveVatIfChanged(tenantId, id, formData.vatRate, existing.vatRate);
+        if (vatError) {
+          const updated = (await fetchAndApply().catch(() => products)).find((p) => p.id === id);
+          return { success: false, partial: true, error: vatError, product: updated };
+        }
+      }
 
       // Si hubo cambios o el resultado es incierto, se relee el catálogo real del servidor
       if (execResult.generalDataSaved || execResult.status === 'uncertain') {
