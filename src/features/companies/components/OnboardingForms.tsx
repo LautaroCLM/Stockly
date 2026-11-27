@@ -121,7 +121,7 @@ export const CreateCompanyForm: React.FC<OnboardingFormProps> = ({ isSubmitting,
           </>
         )}
       </div>
-      <div className="pt-2 flex gap-2">
+      <div className="modal-sticky-footer-compact flex gap-2">
         {onCancel && <Button type="button" variant="outline" className="flex-1 text-xs h-9" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
         <Button type="submit" variant="primary" className="flex-1 text-xs h-9 justify-center"
           disabled={isSubmitting || !!cuitError || companyName.trim().length < 2 || isTokenLike(companyName)}>
@@ -172,7 +172,7 @@ export const JoinCompanyForm: React.FC<OnboardingFormProps> = ({ isSubmitting, s
           El token es intransferible y debe coincidir con el correo electrónico de tu cuenta autenticada.
         </p>
       </div>
-      <div className="pt-2 flex gap-2">
+      <div className="modal-sticky-footer-compact flex gap-2">
         {onCancel && <Button type="button" variant="outline" className="flex-1 text-xs h-9" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
         <Button type="submit" variant="primary" className="flex-1 text-xs h-9 justify-center bg-accent hover:bg-accent/90 text-white"
           disabled={isSubmitting || !token.trim()}>

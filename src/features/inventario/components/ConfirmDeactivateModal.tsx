@@ -40,8 +40,8 @@ const ConfirmDeactivateModalBody: React.FC<ConfirmDeactivateModalProps> = ({
         onClick={onClose}
       />
 
-      <div className="min-h-full flex items-center justify-center p-4">
-        <m.div variants={modalPanelVariants} className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
+      <div className="min-h-full flex items-center justify-center p-3 sm:p-4">
+        <m.div variants={modalPanelVariants} className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)]">
           {/* Header */}
           <div className="p-4 px-5 border-b border-border flex items-center justify-between bg-surface-2/50">
             <div className="flex items-center gap-2.5">
@@ -63,7 +63,7 @@ const ConfirmDeactivateModalBody: React.FC<ConfirmDeactivateModalProps> = ({
           </div>
 
           {/* Body */}
-          <div className="p-5 space-y-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">
             {/* Product Card Summary */}
             <div className="bg-surface-2/70 border border-border/80 rounded-xl p-3 flex flex-col gap-1.5">
               <div className="flex items-start justify-between gap-2">

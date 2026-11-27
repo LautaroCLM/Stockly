@@ -21,7 +21,7 @@ export const WhatsAppShare: React.FC<WhatsAppShareProps> = ({ sale, companyName,
   };
 
   return (
-    <div className="px-6 py-3 border-t border-border bg-surface-2/30 space-y-1.5 print:hidden">
+    <div className="shrink-0 px-6 py-3 border-t border-border bg-surface-2/30 space-y-1.5 print:hidden">
       <label htmlFor="whatsapp-phone" className="text-[11px] font-semibold text-text-secondary">Enviar por WhatsApp</label>
       <div className="flex items-center gap-2">
         <input id="whatsapp-phone" type="tel" inputMode="tel" autoComplete="off" value={phone}

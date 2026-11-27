@@ -44,7 +44,7 @@ const PurchaseDetailModalBody: React.FC<PurchaseDetailModalProps> = ({
       />
 
       <m.div variants={modalPanelVariants}
-        className="relative w-full max-w-2xl bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden"
+        className="relative w-full max-w-2xl bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

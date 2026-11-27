@@ -58,7 +58,7 @@ export const DocumentFormModal: React.FC<DocumentFormModalProps> = ({ type, toda
   return (
     <CashModalShell title={DOC_TYPE_NEW_TITLES[type]} subtitle="No cuenta como venta ni modifica el stock"
       icon={<FilePlus2 size={18} />} isBusy={isSubmitting} onClose={onClose} panelClassName="max-w-2xl">
-      <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+      <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
         <DocumentCustomerFields values={values} customers={customers} disabled={isSubmitting} onChange={patch} />
 
         <div className="grid sm:grid-cols-3 gap-3">
@@ -116,7 +116,7 @@ export const DocumentFormModal: React.FC<DocumentFormModalProps> = ({ type, toda
 
         <CashFormError message={error?.message ?? null} uncertain={error?.uncertain} />
 
-        <div className="flex justify-end gap-2.5 pt-1">
+        <div className="modal-sticky-footer flex justify-end gap-2.5">
           <Button type="button" variant="secondary" size="sm" disabled={isSubmitting} onClick={onClose}>Cancelar</Button>
           <Button type="submit" variant="primary" size="sm" disabled={isSubmitting} className="gap-1.5">
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}

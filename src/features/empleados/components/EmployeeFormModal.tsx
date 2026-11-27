@@ -69,7 +69,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ initial, o
           Inactivo (ya no trabaja acá: conserva su historial, pero no puede fichar)
         </label>
         <CashFormError message={error?.message ?? null} uncertain={error?.uncertain} />
-        <div className="pt-3 border-t border-border flex justify-end gap-2.5">
+        <div className="modal-sticky-footer flex justify-end gap-2.5">
           <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
           <Button type="submit" variant="primary" size="sm" disabled={isSubmitting} className="gap-1.5">
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}

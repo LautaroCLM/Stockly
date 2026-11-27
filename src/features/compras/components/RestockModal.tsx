@@ -66,7 +66,7 @@ const RestockModalBody: React.FC<RestockModalProps> = ({ companyName, products, 
         </div>
         <button type="button" onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"><X size={18} /></button>
       </div>
-      <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+      <div className="p-5 space-y-3 min-h-0 flex-1 overflow-y-auto">
         {plan.length === 0 ? (
           <div className="py-12 flex flex-col items-center gap-2 text-center">
             <CheckCircle2 size={28} className="text-success" />

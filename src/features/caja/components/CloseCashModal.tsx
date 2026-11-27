@@ -93,7 +93,7 @@ export const CloseCashModal: React.FC<CloseCashModalProps> = ({ summary, onClose
         )}
 
         <CashFormError message={error?.message ?? null} uncertain={error?.uncertain} />
-        <div className="pt-3 border-t border-border flex justify-between gap-2.5">
+        <div className="modal-sticky-footer flex justify-between gap-2.5">
           {step === 0 ? (
             <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
           ) : (

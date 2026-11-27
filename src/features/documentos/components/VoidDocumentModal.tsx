@@ -43,7 +43,7 @@ export const VoidDocumentModal: React.FC<VoidDocumentModalProps> = ({ doc, onClo
             onChange={(e) => setReason(e.target.value)} autoFocus />
         </div>
         <CashFormError message={error} />
-        <div className="flex justify-end gap-2.5 pt-1">
+        <div className="modal-sticky-footer flex justify-end gap-2.5">
           <Button type="button" variant="secondary" size="sm" disabled={isSubmitting} onClick={onClose}>Volver</Button>
           <Button type="submit" variant="danger" size="sm" disabled={isSubmitting} className="gap-1.5">
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}

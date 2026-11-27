@@ -65,7 +65,7 @@ export const DocumentSettingsModal: React.FC<DocumentSettingsModalProps> = ({ in
           Estos documentos son comprobantes internos, sin validez fiscal. No reemplazan a una factura de ARCA.
         </p>
         <CashFormError message={error} />
-        <div className="flex justify-end gap-2.5 pt-1">
+        <div className="modal-sticky-footer flex justify-end gap-2.5">
           <Button type="button" variant="secondary" size="sm" disabled={isSubmitting} onClick={onClose}>Cancelar</Button>
           <Button type="submit" variant="primary" size="sm" disabled={isSubmitting} className="gap-1.5">
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}

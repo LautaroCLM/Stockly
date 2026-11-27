@@ -110,7 +110,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
 
   return createPortal(
     <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/80">
           <div className="flex items-center gap-3">
@@ -170,7 +170,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
           />
 
           {/* Footer buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/80">
+          <div className="modal-sticky-footer flex items-center justify-end gap-3">
             <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>
               Cancelar
             </Button>

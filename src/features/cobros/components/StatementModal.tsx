@@ -45,7 +45,7 @@ export const StatementModal: React.FC<StatementModalProps> = ({ kind, companyId,
   return (
     <CashModalShell title="Estado de cuenta" subtitle={`${party.partyName} · saldo ${formatCurrency(party.balance)}`}
       icon={<FileText size={18} />} isBusy={isVoiding} onClose={onClose}>
-      <div className="p-6 space-y-3 text-xs max-h-[70vh] overflow-y-auto">
+      <div className="p-6 space-y-3 text-xs min-h-0 flex-1 overflow-y-auto">
         {error && <CashFormError message={error} />}
         {isLoading ? (
           <p className="py-6 text-center text-text-muted"><Loader2 size={14} className="inline animate-spin mr-2 text-primary" />Cargando...</p>

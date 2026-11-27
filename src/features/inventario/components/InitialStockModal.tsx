@@ -128,7 +128,7 @@ const InitialStockModalBody: React.FC<InitialStockModalProps> = ({
         </Button>
       </div>
 
-      <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+      <div className="p-6 space-y-4 min-h-0 flex-1 overflow-y-auto">
         <InitialStockExplanation />
         {!isMasterAdmin && <InitialStockRestricted />}
         {successInfo ? (

@@ -89,7 +89,7 @@ const InviteUserModalBody: React.FC<InviteUserModalProps> = ({
       />
 
       <m.div variants={modalPanelVariants}
-        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden"
+        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -143,7 +143,7 @@ const InviteUserModalBody: React.FC<InviteUserModalProps> = ({
 
             <InviteRolePicker role={role} isOwner={isOwner} disabled={isSubmitting} onChange={setRole} />
 
-            <div className="pt-2 flex gap-2">
+            <div className="modal-sticky-footer-compact flex gap-2">
               <Button
                 type="button"
                 variant="outline"

@@ -105,7 +105,7 @@ const ProductFormModalBody: React.FC<ProductFormModalProps> = ({
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+      <form onSubmit={handleSubmit} className="p-6 space-y-4">
         {formError && (
           <div role="alert" className="p-3 rounded-xl bg-danger/10 border border-danger/30 text-danger text-xs flex items-center gap-2">
             <AlertTriangle size={15} className="shrink-0" />
@@ -135,7 +135,7 @@ const ProductFormModalBody: React.FC<ProductFormModalProps> = ({
           </span>
         </div>
 
-        <div className="pt-3 border-t border-border flex items-center justify-end gap-2.5">
+        <div className="modal-sticky-footer flex items-center justify-end gap-2.5">
           <Button variant="secondary" size="md" type="button" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
           <Button variant="primary" size="md" type="submit" className="gap-1.5 shadow-md" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}

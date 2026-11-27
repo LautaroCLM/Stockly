@@ -78,7 +78,7 @@ const MemberActionModalBody: React.FC<MemberActionModalProps> = ({
       <div className="fixed inset-0 -z-10" onClick={() => !isSubmitting && onClose()} aria-hidden="true" />
 
       <m.div variants={modalPanelVariants}
-        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col my-auto overflow-hidden"
+        className="relative w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-2/40">
@@ -118,7 +118,7 @@ const MemberActionModalBody: React.FC<MemberActionModalProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
           {!isDeactivate && (
             <div className="space-y-1.5">
               <label className="block text-xs font-medium text-text-secondary">
@@ -155,7 +155,7 @@ const MemberActionModalBody: React.FC<MemberActionModalProps> = ({
             />
           </div>
 
-          <div className="pt-2 flex gap-2">
+          <div className="modal-sticky-footer-compact flex gap-2">
             <Button
               type="button"
               variant="outline"

@@ -128,8 +128,8 @@ const CategoryManagementModalBody: React.FC<CategoryManagementModalProps> = ({
   return (
     <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 overflow-y-auto">
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="min-h-full flex items-center justify-center p-4">
-        <m.div variants={modalPanelVariants} className="relative w-full max-w-xl bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
+      <div className="min-h-full flex items-center justify-center p-3 sm:p-4">
+        <m.div variants={modalPanelVariants} className="relative w-full max-w-xl bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)]">
           <div className="p-4 px-5 border-b border-border flex items-center justify-between bg-surface-2/50">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
@@ -145,7 +145,7 @@ const CategoryManagementModalBody: React.FC<CategoryManagementModalProps> = ({
             </button>
           </div>
 
-          <div className="p-5 space-y-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">
             <CategoryFeedback loadError={error} alert={actionAlert} />
 
             <CategoryCreateForm

@@ -136,7 +136,7 @@ const CancelDocumentModalBody: React.FC<CancelDocumentModalProps> = ({
           />
         </div>
 
-        <div className="pt-3 border-t border-border flex items-center justify-end gap-2.5">
+        <div className="modal-sticky-footer flex items-center justify-end gap-2.5">
           <Button variant="secondary" size="md" type="button" onClick={onClose} disabled={isSubmitting}>
             Volver
           </Button>

@@ -58,14 +58,14 @@ const ReceiptModalBody: React.FC<ReceiptModalBodyProps> = ({
 
   return (
     <>
-    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/85 backdrop-blur-sm print:hidden"
         onClick={onClose}
       />
 
-      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl shadow-black/90 z-10 overflow-hidden print:border-none print:shadow-none print:p-0 print:bg-white print:text-black">
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl shadow-black/90 z-10 overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] print:max-h-none print:border-none print:shadow-none print:p-0 print:bg-white print:text-black">
         {/* Modal Toolbar (hidden in print) */}
         <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/60 print:hidden">
           <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ const ReceiptModalBody: React.FC<ReceiptModalBodyProps> = ({
         </div>
 
         {/* Printable Ticket Content Container (80mm Thermal simulator) */}
-        <div className="p-6 overflow-y-auto max-h-[75vh] print:max-h-none print:overflow-visible">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6 print:max-h-none print:overflow-visible">
           <ReceiptTicket sale={sale} company={company} settings={settings} logo={logo} />
         </div>
 

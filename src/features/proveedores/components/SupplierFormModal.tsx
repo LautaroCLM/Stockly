@@ -73,7 +73,7 @@ const SupplierFormModalBody: React.FC<SupplierFormModalProps> = ({ isOpen, onClo
   const modalContent = (
     <m.div variants={overlayVariants} initial="hidden" animate="visible" exit="exit" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
       <div className="fixed inset-0 -z-10" onClick={() => !isSubmitting && onClose()} aria-hidden="true" />
-      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[90vh] my-auto overflow-hidden"
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] my-auto overflow-hidden"
         onClick={(e) => e.stopPropagation()}>
         <div className="shrink-0 p-4 sm:p-5 border-b border-border flex items-center justify-between bg-surface-2/40">
           <div className="flex items-center gap-2.5">
@@ -100,7 +100,7 @@ const SupplierFormModalBody: React.FC<SupplierFormModalProps> = ({ isOpen, onClo
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
           <SupplierFormFields values={values} isEditing={Boolean(supplier)} disabled={isSubmitting} onChange={change} />
-          <div className="pt-2 flex gap-2">
+          <div className="modal-sticky-footer-compact flex gap-2">
             <Button type="button" variant="outline" className="flex-1 text-xs h-9" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
             <Button type="submit" variant="primary" className="flex-1 text-xs h-9 justify-center"
               disabled={isSubmitting || !values.name.trim() || hasFieldErrors}>

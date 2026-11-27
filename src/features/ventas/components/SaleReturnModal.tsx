@@ -63,7 +63,7 @@ const SaleReturnBody: React.FC<SaleReturnModalProps & { sale: Sale }> = ({ sale,
         </div>
         <button type="button" onClick={onClose} disabled={isSubmitting} aria-label="Cerrar" className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"><X size={18} /></button>
       </div>
-      <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto text-xs">
+      <div className="p-6 space-y-4 min-h-0 flex-1 overflow-y-auto text-xs">
         {loadError ? <p role="alert" className="text-danger">{loadError}</p> : !returned ? (
           <p className="flex items-center gap-2 text-text-muted"><Loader2 size={14} className="animate-spin" />Cargando lo ya devuelto…</p>
         ) : (

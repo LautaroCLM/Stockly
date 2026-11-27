@@ -129,7 +129,7 @@ const ImportInventoryModalBody: React.FC<ImportInventoryModalProps> = ({ onClose
         <button onClick={onClose} disabled={busy} aria-label="Cerrar" className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2 disabled:opacity-50"><X size={18} /></button>
       </div>
 
-      <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+      <div className="p-6 space-y-4 min-h-0 flex-1 overflow-y-auto">
         {stage === 'pick' && (
           <>
             <div

@@ -60,7 +60,7 @@ const NegativeStockModalBody: React.FC<NegativeStockModalProps> = ({
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
     >
-      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
+      <m.div variants={modalPanelVariants} className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-surface-2/40">
           <div className="flex items-center gap-3">
@@ -94,7 +94,7 @@ const NegativeStockModalBody: React.FC<NegativeStockModalProps> = ({
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
           {actionError && (
             <div className="p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs flex items-center gap-2">
               <AlertCircle size={15} className="shrink-0" />
@@ -145,7 +145,7 @@ const NegativeStockModalBody: React.FC<NegativeStockModalProps> = ({
           </div>
 
           {/* Botones de acción */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+          <div className="modal-sticky-footer-compact flex items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"

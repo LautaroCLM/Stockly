@@ -50,7 +50,7 @@ const Body: React.FC<ReturnReceiptModalProps & { sale: Sale }> = ({ sale, compan
           ))}
         </div>
       )}
-      <div className="p-6 overflow-y-auto max-h-[70vh]">
+      <div className="min-h-0 flex-1 overflow-y-auto p-6">
         <ReturnTicket data={data} sale={sale} company={company} settings={settings} logo={logo} />
       </div>
       <div className="p-4 px-6 border-t border-border bg-surface-2/60 flex items-center justify-between gap-3 print:hidden">

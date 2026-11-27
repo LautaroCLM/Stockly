@@ -33,7 +33,7 @@ export const ConfirmApplyModal: React.FC<ConfirmApplyModalProps> = ({ params, se
 
   return (
     <CashModalShell title="Confirmar cambio de precios" subtitle={scopeText} icon={<Percent size={18} />} isBusy={isSubmitting} onClose={onClose}>
-      <div className="p-6 space-y-3 text-xs">
+      <div className="min-h-0 flex-1 overflow-y-auto p-6 space-y-3 text-xs">
         <p className="text-sm text-text-primary leading-relaxed">
           Vas a <strong>{up ? 'subir' : 'bajar'} un {amount} %</strong> el precio de venta de <strong>{formatNumber(selected)}</strong>{' '}
           {selected === 1 ? 'producto' : 'productos'}.
@@ -44,7 +44,7 @@ export const ConfirmApplyModal: React.FC<ConfirmApplyModalProps> = ({ params, se
           <li>Si te equivocás, lo podés revertir desde el historial.</li>
         </ul>
         <CashFormError message={error} />
-        <div className="flex justify-end gap-2.5 pt-1">
+        <div className="modal-sticky-footer flex justify-end gap-2.5">
           <Button type="button" variant="secondary" size="sm" disabled={isSubmitting} onClick={onClose}>Volver</Button>
           <Button type="button" variant="primary" size="sm" disabled={isSubmitting} onClick={() => void confirm()} className="gap-1.5">
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}

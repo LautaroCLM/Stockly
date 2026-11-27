@@ -169,7 +169,7 @@ const StockAdjustmentModalBody: React.FC<StockAdjustmentModalProps> = ({ isOpen,
             placeholder="Detalle o justificación del ajuste físico..." className={`p-2.5 resize-none ${TEXT_FIELD}`} />
         </div>
 
-        <div className="pt-3 border-t border-border flex items-center justify-end gap-2.5">
+        <div className="modal-sticky-footer flex items-center justify-end gap-2.5">
           <Button variant="secondary" size="md" type="button" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
           <Button variant="primary" size="md" type="submit" disabled={isSubmitting} className="gap-1.5 shadow-md">
             {isSubmitting ? (

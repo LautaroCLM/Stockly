@@ -98,7 +98,7 @@ export const CollectionModal: React.FC<CollectionModalProps> = ({ kind, party, o
         <input aria-label="Nota (opcional)" maxLength={500} placeholder={labels.noteHint} value={notes}
           onChange={(e) => setNotes(e.target.value)} disabled={isSubmitting} className={CASH_FIELD_CLASS} />
         <CashFormError message={error?.message ?? null} uncertain={error?.uncertain} />
-        <div className="pt-3 border-t border-border flex justify-end gap-2.5">
+        <div className="modal-sticky-footer flex justify-end gap-2.5">
           <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
           <Button type="submit" variant="primary" size="sm" disabled={isSubmitting || total <= 0} className="gap-1.5">
             {isSubmitting && <Loader2 size={14} className="animate-spin" />}

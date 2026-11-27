@@ -46,7 +46,7 @@ const LabelsModalBody: React.FC<LabelsModalProps> = ({ labels, initialSelected, 
         <button type="button" onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-2"><X size={18} /></button>
       </div>
 
-      <div className="grid md:grid-cols-[1fr_auto] gap-5 p-5 max-h-[70vh] overflow-y-auto">
+      <div className="grid md:grid-cols-[1fr_auto] gap-5 p-5 min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-2 min-w-0">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">

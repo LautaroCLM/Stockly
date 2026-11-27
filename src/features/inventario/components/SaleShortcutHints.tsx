@@ -35,7 +35,8 @@ interface SaleShortcutHintsProps {
 
 /** Fila discreta con los atajos de teclado disponibles. */
 export const SaleShortcutHints: React.FC<SaleShortcutHintsProps> = ({ hints = SALE_HINTS.catalog, className = '' }) => (
-  <div className={`hidden md:flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-muted ${className}`} aria-label="Atajos de teclado">
+  <div // En pantallas bajas se oculta: el lugar es para los productos y los botones
+  className={`hidden md:flex [@media(max-height:700px)]:hidden flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-muted ${className}`} aria-label="Atajos de teclado">
     <Keyboard size={13} className="shrink-0" aria-hidden />
     {hints.map((hint) => (
       <span key={hint.label} className="flex items-center gap-1">

@@ -168,3 +168,17 @@
 @media (prefers-reduced-motion: reduce) {
   .cart-value-pulse { animation: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Ventanas con formulario: los botones quedan fijos abajo mientras el formulario se desplaza.
+   Se usa dentro de un <form> con padding p-6 (los márgenes negativos lo dejan a ras del borde).
+   --------------------------------------------------------------------------- */
+@layer components {
+  .modal-sticky-footer {
+    @apply sticky bottom-0 z-10 -mx-6 -mb-6 mt-4 border-t border-border bg-surface px-6 py-4;
+  }
+  /* Igual, para formularios con padding p-4 sm:p-5 */
+  .modal-sticky-footer-compact {
+    @apply sticky bottom-0 z-10 -mx-4 -mb-4 mt-3 border-t border-border bg-surface px-4 py-3 sm:-mx-5 sm:-mb-5 sm:px-5;
+  }
+}
