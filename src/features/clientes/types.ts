@@ -16,6 +16,8 @@ export interface Customer {
   taxId?: string | null;
   /** Condición frente al IVA (define si se le hace Factura A o B). */
   vatCondition: CustomerVatCondition;
+  /** Lista de precios del cliente (null: precio normal). */
+  priceListId: string | null;
   email?: string | null;
   phone?: string | null;
   address?: string | null;
@@ -34,6 +36,8 @@ export interface UpsertCustomerInput {
   taxId?: string | null;
   /** Si se omite, no se cambia (el cliente nuevo queda como consumidor final). */
   vatCondition?: CustomerVatCondition;
+  /** Si se omite, no se cambia. */
+  priceListId?: string | null;
   email?: string | null;
   phone?: string | null;
   address?: string | null;

@@ -18,6 +18,8 @@ export interface ProcessSaleParams {
   payments?: ProcessSalePaymentPayload[];
   notes?: string;
   customerId?: string | null;
+  priceListId?: string | null;
+  overridePriceList?: boolean;
 }
 
 export interface ProcessSaleRpcResponse {
@@ -50,6 +52,8 @@ export async function processSaleRpc(params: ProcessSaleParams): Promise<Process
       p_payments: params.payments ?? [],
       p_notes: params.notes ?? null,
       p_customer_id: params.customerId || null,
+      p_price_list_id: params.priceListId ?? null,
+      p_override_price_list: params.overridePriceList ?? false,
     }
   );
 

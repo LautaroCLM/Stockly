@@ -7,6 +7,8 @@ import { AnimatedCurrency } from '@/components/motion/AnimatedCurrency';
 import type { PaymentEntry, PaymentMethod } from '../types';
 import { buildSinglePayment, buildSplitPayments, singlePaymentSummary, splitPaymentSummary } from '../checkoutPayments';
 import { CustomerSelector } from './CustomerSelector';
+import { CheckoutPriceList } from '@/features/listas/components/CheckoutPriceList';
+import type { SalePricing, SalePricingArgs } from '@/features/listas/hooks/useSalePricing';
 import { SinglePaymentPanel, SplitPaymentPanel } from './PaymentPanels';
 import { ModalFrame } from '@/components/motion/ModalFrame';
 import { AnimatePresence } from 'motion/react';
@@ -20,13 +22,15 @@ interface CheckoutModalProps {
   total: number;
   customers?: Customer[];
   onClose: () => void;
-  onConfirmSale: (clientName: string, payments: PaymentEntry[], customerId?: string | null) => SaleResult | Promise<SaleResult> | void;
+  onConfirmSale: (clientName: string, payments: PaymentEntry[], customerId?: string | null, pricing?: SalePricingArgs) => SaleResult | Promise<SaleResult> | void;
+  /** Lista de precios de la venta (sale del cliente elegido). */
+  pricing?: SalePricing;
 }
 
 const MODE_BUTTON = 'py-2 text-xs font-semibold rounded-lg transition-all';
 
 /** Cobro de la venta: cliente, medio de pago (único o dividido) y confirmación. */
-const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, customers = [], onClose, onConfirmSale }) => {
+const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, customers = [], onClose, onConfirmSale, pricing }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [clientName, setClientName] = useState('Consumidor Final');
   const [paymentMode, setPaymentMode] = useState<'single' | 'split'>('single');
@@ -36,14 +40,16 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Cada apertura (o cambio de total) arranca un cobro limpio
+  // Cada apertura arranca un cobro limpio; si cambia el total (lista del cliente) se rehacen los montos
   useEffect(() => {
-    setCashReceived(total.toString());
-    setSplits([{ id: 'split-1', method: 'efectivo', amount: total }]);
     setErrorMessage(null);
     setIsSubmitting(false);
     setSelectedCustomer(null);
     setClientName('Consumidor Final');
+  }, [isOpen]);
+  useEffect(() => {
+    setCashReceived(total.toString());
+    setSplits([{ id: 'split-1', method: 'efectivo', amount: total }]);
   }, [total, isOpen]);
 
   // Sin cliente no hay cuenta corriente: si ya estaba elegida, vuelve a efectivo
@@ -83,7 +89,7 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
     setIsSubmitting(true);
     try {
       const name = selectedCustomer ? selectedCustomer.name : clientName.trim() || 'Consumidor Final';
-      const result = onConfirmSale(name, built.payments, selectedCustomer ? selectedCustomer.id : null);
+      const result = onConfirmSale(name, built.payments, selectedCustomer ? selectedCustomer.id : null, pricing?.saleArgs);
       if (result && typeof (result as Promise<SaleResult>).then === 'function') {
         (result as Promise<SaleResult>)
           .then((res) => {
@@ -98,7 +104,7 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
     }
   };
 
-  const canSubmit = !isSubmitting && !(paymentMode === 'split' && !splitSummary.isExact) && !(paymentMode === 'single' && cashInsufficient);
+  const canSubmit = !isSubmitting && !pricing?.isRepricing && !(paymentMode === 'split' && !splitSummary.isExact) && !(paymentMode === 'single' && cashInsufficient);
   confirmRef.current = () => {
     if (canSubmit) handleSubmit();
   };
@@ -130,9 +136,11 @@ const CheckoutModalBody: React.FC<CheckoutModalProps> = ({ isOpen, total, custom
           onSelectCustomer={(c) => {
             setSelectedCustomer(c);
             setClientName(c ? c.name : 'Consumidor Final');
+            pricing?.selectCustomer(c ? c.id : null);
           }}
           disabled={isSubmitting}
         />
+        {pricing && <CheckoutPriceList pricing={pricing} disabled={isSubmitting} />}
 
         <div className="space-y-2">
           <span className="text-xs font-semibold text-text-secondary">Modalidad de Pago:</span>

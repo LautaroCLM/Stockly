@@ -5,6 +5,7 @@ import type { useCart } from '@/features/inventario/hooks/useCart';
 import { useCheckout } from '@/features/inventario/hooks/useCheckout';
 import { useOpenCartShortcut } from '@/features/inventario/hooks/useOpenCartShortcut';
 import { useSaleNotice } from '@/features/ventas/hooks/useSaleNotice';
+import { useSalePricing } from '@/features/listas/hooks/useSalePricing';
 
 interface SaleFlowOptions {
   companyId: string;
@@ -14,10 +15,12 @@ interface SaleFlowOptions {
   reloadProducts: () => Promise<void>;
   /** Quien puede anular ventas ve "Deshacer" en el aviso de venta. */
   canCancelSales: boolean;
+  /** El Master Admin puede cambiar la lista de precios de una venta. */
+  isAdmin: boolean;
 }
 
 /** Venta en mostrador: carrito abierto/cerrado, cobro, comprobante, aviso con Deshacer y atajo F4. */
-export function useSaleFlow({ companyId, cart, products, customers, reloadProducts, canCancelSales }: SaleFlowOptions) {
+export function useSaleFlow({ companyId, cart, products, customers, reloadProducts, canCancelSales, isAdmin }: SaleFlowOptions) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
 
@@ -33,6 +36,9 @@ export function useSaleFlow({ companyId, cart, products, customers, reloadProduc
   }, [notifySale]);
 
   const checkout = useCheckout({ companyId, cart, products, customers, reloadProducts, onSaleCompleted: showReceipt });
+  const pricing = useSalePricing({
+    companyId, products, customers, isAdmin, active: checkout.isCheckoutOpen, applyPrices: cart.applyPrices,
+  });
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
@@ -43,5 +49,5 @@ export function useSaleFlow({ companyId, cart, products, customers, reloadProduc
     [cart.items]
   );
 
-  return { isCartOpen, openCart, closeCart, receiptSale, setReceiptSale, checkout, getItemQuantityInCart };
+  return { isCartOpen, openCart, closeCart, receiptSale, setReceiptSale, checkout, pricing, getItemQuantityInCart };
 }

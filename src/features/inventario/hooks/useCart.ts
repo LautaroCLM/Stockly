@@ -1,3 +1,4 @@
+import { isMiscItem } from '../miscItem';
 import { useState, useEffect, useCallback } from 'react';
 import { TenantId } from '@/types';
 import { CartItem, Product, CartState } from '../types';
@@ -151,6 +152,21 @@ export function useCart(tenantId: TenantId) {
     });
   }, []);
 
+  /**
+   * Vuelve a poner precio a las líneas del catálogo (lista de precios del cliente o precio normal).
+   * Los artículos varios conservan el precio escrito.
+   */
+  const applyPrices = useCallback((priceOf: (productId: string) => number | undefined) => {
+    setCartState((prev) => {
+      const items = prev.items.map((item) => {
+        if (isMiscItem(item)) return item;
+        const price = priceOf(item.productId);
+        return price === undefined || price === item.unitPrice ? item : { ...item, unitPrice: price };
+      });
+      return items.every((item, i) => item === prev.items[i]) ? prev : calculateTotals(items, prev.discountPercent);
+    });
+  }, []);
+
   const setDiscount = useCallback((percent: number) => {
     setCartState((prev) => calculateTotals(prev.items, percent));
   }, []);
@@ -179,6 +195,7 @@ export function useCart(tenantId: TenantId) {
     addMiscItem,
     updateQuantity,
     removeItem,
+    applyPrices,
     setDiscount,
     clearCart,
   };

@@ -104,6 +104,8 @@ export interface Sale {
   cancelReason?: string | null;
   /** Total reintegrado por devoluciones parciales. */
   returnedAmount?: number;
+  /** Lista de precios con la que se cobró (null: precio normal). */
+  priceListName?: string | null;
 }
 
 export type StockMovementDirection = 'increase' | 'decrease';

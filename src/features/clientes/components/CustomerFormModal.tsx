@@ -6,6 +6,8 @@ import { formatCuit } from '@/features/companies/utils/cuitValidator';
 import type { Customer, UpsertCustomerInput, CustomerActionResult, CustomerIdentificationType } from '../types';
 import { CustomerFormFields } from './CustomerFormFields';
 import { CustomerVatConditionField } from './CustomerVatConditionField';
+import { CustomerPriceListField } from './CustomerPriceListField';
+import type { PriceList } from '@/features/listas/types';
 import { customerVatConditionError, DEFAULT_CUSTOMER_VAT_CONDITION, type CustomerVatCondition } from '@/features/facturacion/vat';
 import { AnimatePresence, m } from 'motion/react';
 import { modalPanelVariants, overlayVariants } from '@/lib/motion';
@@ -14,6 +16,8 @@ interface CustomerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   customer?: Customer | null;
+  /** Listas de precios de la empresa (para asignarle una al cliente). */
+  priceLists?: PriceList[];
   onSave: (input: Omit<UpsertCustomerInput, 'companyId'>) => Promise<CustomerActionResult>;
 }
 
@@ -21,12 +25,14 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
   isOpen,
   onClose,
   customer,
+  priceLists = [],
   onSave,
 }) => {
   const [name, setName] = useState('');
   const [idType, setIdType] = useState<CustomerIdentificationType>('DNI');
   const [taxId, setTaxId] = useState('');
   const [vatCondition, setVatCondition] = useState<CustomerVatCondition>(DEFAULT_CUSTOMER_VAT_CONDITION);
+  const [priceListId, setPriceListId] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -49,6 +55,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
             : customer.taxId || ''
         );
         setVatCondition(customer.vatCondition);
+        setPriceListId(customer.priceListId);
         setEmail(customer.email || '');
         setPhone(customer.phone || '');
         setAddress(customer.address || '');
@@ -59,6 +66,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
         setIdType('DNI');
         setTaxId('');
         setVatCondition(DEFAULT_CUSTOMER_VAT_CONDITION);
+        setPriceListId(null);
         setEmail('');
         setPhone('');
         setAddress('');
@@ -100,6 +108,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
       identificationType: idType,
       taxId: taxId.trim() || null,
       vatCondition,
+      priceListId,
       email: email.trim() || null,
       phone: phone.trim() || null,
       address: address.trim() || null,
@@ -178,6 +187,7 @@ const CustomerFormModalBody: React.FC<CustomerFormModalProps> = ({
           />
 
           <CustomerVatConditionField value={vatCondition} error={vatError} disabled={isSubmitting} onChange={setVatCondition} />
+          <CustomerPriceListField lists={priceLists} value={priceListId} disabled={isSubmitting} onChange={setPriceListId} />
 
           {/* Footer buttons */}
           <div className="modal-sticky-footer flex items-center justify-end gap-3">

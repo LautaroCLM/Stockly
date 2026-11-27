@@ -455,14 +455,14 @@ isOneToOne: false
                   ]
                 },"customers": {
                   Row: {
-                    "address": string | null,"company_id": string,"created_at": string,"created_by": string | null,"email": string | null,"id": string,"identification_type": string,"is_active": boolean,"name": string,"notes": string | null,"phone": string | null,"tax_id": string | null,"updated_at": string,"vat_condition": string
+                    "address": string | null,"company_id": string,"created_at": string,"created_by": string | null,"email": string | null,"id": string,"identification_type": string,"is_active": boolean,"name": string,"notes": string | null,"phone": string | null,"price_list_id": string | null,"tax_id": string | null,"updated_at": string,"vat_condition": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"company_id": string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name": string,"notes"?: string | null,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
+                    "address"?: string | null,"company_id": string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name": string,"notes"?: string | null,"phone"?: string | null,"price_list_id"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
                   }
                   Update: {
-                    "address"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name"?: string,"notes"?: string | null,"phone"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
+                    "address"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string | null,"email"?: string | null,"id"?: string,"identification_type"?: string,"is_active"?: boolean,"name"?: string,"notes"?: string | null,"phone"?: string | null,"price_list_id"?: string | null,"tax_id"?: string | null,"updated_at"?: string,"vat_condition"?: string
                   }
                   Relationships: [
                     {
@@ -483,6 +483,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "profiles_public"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "fk_customers_price_list"
+      columns: ["company_id","price_list_id"]
+isOneToOne: false
+      referencedRelation: "price_lists"
+      referencedColumns: ["company_id","id"]
     }
                   ]
                 },"document_counters": {
@@ -875,6 +881,52 @@ isOneToOne: false
       referencedColumns: ["company_id","id"]
     }
                   ]
+                },"price_list_items": {
+                  Row: {
+                    "company_id": string,"price": number,"price_list_id": string,"product_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"price": number,"price_list_id": string,"product_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "company_id"?: string,"price"?: number,"price_list_id"?: string,"product_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_price_list_items_list"
+      columns: ["company_id","price_list_id"]
+isOneToOne: false
+      referencedRelation: "price_lists"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_price_list_items_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"price_lists": {
+                  Row: {
+                    "adjustment_percent": number,"company_id": string,"created_at": string,"created_by": string | null,"id": string,"is_active": boolean,"name": string,"rounding_step": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "adjustment_percent": number,"company_id": string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"rounding_step"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "adjustment_percent"?: number,"company_id"?: string,"created_at"?: string,"created_by"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"rounding_step"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "price_lists_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"product_costs": {
                   Row: {
                     "company_id": string,"cost_price": number,"product_id": string,"updated_at": string,"updated_by": string
@@ -1133,14 +1185,14 @@ isOneToOne: false
                   ]
                 },"sales": {
                   Row: {
-                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"company_id": string,"created_at": string,"created_by": string,"customer_id": string | null,"discount": number,"id": string,"notes": string | null,"payments": NonNullable<Json>,"sale_number": string,"status": string,"subtotal": number,"total_amount": number
+                    "cancel_reason": string | null,"cancelled_at": string | null,"cancelled_by": string | null,"company_id": string,"created_at": string,"created_by": string,"customer_id": string | null,"discount": number,"id": string,"notes": string | null,"payments": NonNullable<Json>,"price_list_id": string | null,"sale_number": string,"status": string,"subtotal": number,"total_amount": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"sale_number": string,"status"?: string,"subtotal": number,"total_amount": number
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"price_list_id"?: string | null,"sale_number": string,"status"?: string,"subtotal": number,"total_amount": number
                   }
                   Update: {
-                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"sale_number"?: string,"status"?: string,"subtotal"?: number,"total_amount"?: number
+                    "cancel_reason"?: string | null,"cancelled_at"?: string | null,"cancelled_by"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"customer_id"?: string | null,"discount"?: number,"id"?: string,"notes"?: string | null,"payments"?: NonNullable<Json>,"price_list_id"?: string | null,"sale_number"?: string,"status"?: string,"subtotal"?: number,"total_amount"?: number
                   }
                   Relationships: [
                     {
@@ -1148,6 +1200,12 @@ isOneToOne: false
       columns: ["company_id","customer_id"]
 isOneToOne: false
       referencedRelation: "customers"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_sales_price_list"
+      columns: ["company_id","price_list_id"]
+isOneToOne: false
+      referencedRelation: "price_lists"
       referencedColumns: ["company_id","id"]
     },{
       foreignKeyName: "sales_cancelled_by_fkey"
@@ -1492,6 +1550,11 @@ isOneToOne: true
 "preview_price_change":
 { Args: { "p_category_ids"?: (string)[],"p_company_id": string,"p_percent": number,"p_step": number,"p_supplier_ids"?: (string)[] }; Returns: Json
                            },
+"price_list_prices":
+{ Args: { "p_company_id": string,"p_price_list_id": string }; Returns: {
+              "is_fixed": boolean,"price": number,"product_id": string
+            }[]
+                           },
 "process_credit_purchase":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_invoice_number"?: string,"p_items": Json,"p_notes"?: string,"p_purchase_date"?: string,"p_supplier_id": string }; Returns: Json
                            },
@@ -1499,7 +1562,7 @@ isOneToOne: true
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_invoice_number"?: string,"p_items": Json,"p_notes"?: string,"p_purchase_date"?: string,"p_supplier_id": string }; Returns: Json
                            },
 "process_sale":
-{ Args: { "p_company_id": string,"p_customer_id"?: string,"p_discount"?: number,"p_idempotency_key": string,"p_items": Json,"p_notes"?: string,"p_payments"?: Json }; Returns: Json
+{ Args: { "p_company_id": string,"p_customer_id"?: string,"p_discount"?: number,"p_idempotency_key": string,"p_items": Json,"p_notes"?: string,"p_override_price_list"?: boolean,"p_payments"?: Json,"p_price_list_id"?: string }; Returns: Json
                            },
 "process_sale_return":
 { Args: { "p_company_id": string,"p_idempotency_key": string,"p_items": Json,"p_reason": string,"p_sale_id": string }; Returns: Json
@@ -1570,11 +1633,17 @@ isOneToOne: true
 "save_document_settings":
 { Args: { "p_address": string,"p_company_id": string,"p_email": string,"p_footer_note": string,"p_phone": string,"p_point_of_sale": number,"p_tax_condition": string }; Returns: undefined
                            },
+"save_price_list":
+{ Args: { "p_adjustment_percent": number,"p_company_id": string,"p_is_active": boolean,"p_name": string,"p_price_list_id": string,"p_rounding_step": number }; Returns: string
+                           },
 "set_company_logo":
 { Args: { "p_company_id": string,"p_image": string }; Returns: undefined
                            },
 "set_company_negative_stock_policy":
 { Args: { "p_allow_negative_stock": boolean,"p_company_id": string,"p_reason": string }; Returns: undefined
+                           },
+"set_customer_price_list":
+{ Args: { "p_company_id": string,"p_customer_id": string,"p_price_list_id": string }; Returns: undefined
                            },
 "set_customer_vat_condition":
 { Args: { "p_company_id": string,"p_customer_id": string,"p_vat_condition": string }; Returns: undefined
@@ -1584,6 +1653,9 @@ isOneToOne: true
                            },
 "set_module_permissions":
 { Args: { "p_company_id": string,"p_levels": Json }; Returns: number
+                           },
+"set_price_list_item":
+{ Args: { "p_company_id": string,"p_price": number,"p_price_list_id": string,"p_product_id": string }; Returns: undefined
                            },
 "set_product_vat_rate":
 { Args: { "p_company_id": string,"p_product_id": string,"p_vat_rate": number }; Returns: undefined

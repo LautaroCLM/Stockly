@@ -61,6 +61,12 @@ export const ReceiptTicket: React.FC<{ sale: Sale; company: Company; settings: D
             <span>{sale.customerDoc}</span>
           </div>
         )}
+        {sale.priceListName && (
+          <div className="flex justify-between gap-2">
+            <span>LISTA DE PRECIOS:</span>
+            <span className="uppercase text-right">{sale.priceListName}</span>
+          </div>
+        )}
       </div>
 
       {/* Items Table */}

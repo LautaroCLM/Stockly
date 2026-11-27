@@ -1,4 +1,5 @@
 import { isMiscItem } from '../miscItem';
+import type { SalePricingArgs } from '@/features/listas/hooks/useSalePricing';
 import { TenantId } from '@/types';
 import { CartItem, PaymentEntry, Sale } from '../types';
 import { isIdempotencyMismatchError } from '../saleIntent';
@@ -18,6 +19,8 @@ export interface ExecuteSaleParams {
   discountAmount: number;
   cartTotal: number;
   notes?: string;
+  /** Lista de precios de la venta (la del cliente, o la que eligió el admin). */
+  pricing?: SalePricingArgs;
 }
 
 /** Parámetros de process_sale sin la clave: define la "huella" del pedido. */
@@ -54,6 +57,8 @@ export function buildSaleRequest(params: ExecuteSaleParams): SaleRequest {
     })),
     notes: notes || (clientName ? `Cliente: ${clientName}` : undefined),
     customerId: params.customerId || null,
+    priceListId: params.pricing?.priceListId ?? null,
+    overridePriceList: params.pricing?.overridePriceList ?? false,
   };
 }
 
@@ -94,6 +99,7 @@ export async function executeSaleTransaction(
       total: rpcResponse.total_amount,
       payments,
       status: 'completada',
+      priceListName: params.pricing?.priceListName ?? null,
     };
 
     return {

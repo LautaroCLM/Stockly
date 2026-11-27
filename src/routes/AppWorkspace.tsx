@@ -76,6 +76,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     customers: customers.customers,
     reloadProducts: catalog.reloadProducts,
     canCancelSales: atLeast(effectiveLevel(isMasterAdmin, permissions.levels, 'anular_ventas'), 'operate'),
+    isAdmin: isMasterAdmin,
   });
   const { checkout, receiptSale, setReceiptSale, getItemQuantityInCart } = sale;
 
@@ -183,6 +184,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         isOpen={checkout.isCheckoutOpen}
         total={cart.total}
         customers={customers.customers}
+        pricing={sale.pricing}
         onClose={() => checkout.setIsCheckoutOpen(false)}
         onConfirmSale={checkout.confirmSale}
       />

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Customer, UpsertCustomerInput, CustomerActionResult } from '../types';
 import { fetchCustomers, setCustomerVatConditionRpc, upsertCustomerRpc, toggleCustomerStatusRpc } from '../api/customersApi';
 import { DEFAULT_CUSTOMER_VAT_CONDITION } from '@/features/facturacion/vat';
+import { setCustomerPriceListRpc } from '@/features/listas/api/priceListsApi';
 import { useOnDataChange } from '@/features/realtime/hooks/useOnDataChange';
 import type { DataTable } from '@/features/realtime/changeBus';
 import { toUserMessage } from '@/lib/errorMessages';
@@ -70,8 +71,16 @@ export function useCustomers(companyId: string) {
         });
 
         // Va después del upsert: la base valida el IVA contra el CUIT ya guardado
-        const current = customers.find((c) => c.id === customerId)?.vatCondition ?? DEFAULT_CUSTOMER_VAT_CONDITION;
+        const previous = customers.find((c) => c.id === customerId);
+        const current = previous?.vatCondition ?? DEFAULT_CUSTOMER_VAT_CONDITION;
         let vatError: string | null = null;
+        if (input.priceListId !== undefined && input.priceListId !== (previous?.priceListId ?? null)) {
+          try {
+            await setCustomerPriceListRpc(companyId, customerId, input.priceListId);
+          } catch (listErr) {
+            vatError = `El cliente se guardó, pero no su lista de precios (${toUserMessage(listErr, 'error de conexión')}).`;
+          }
+        }
         if (input.vatCondition && input.vatCondition !== current) {
           try {
             await setCustomerVatConditionRpc(companyId, customerId, input.vatCondition);

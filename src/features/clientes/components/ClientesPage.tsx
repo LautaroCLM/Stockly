@@ -8,6 +8,7 @@ import { CustomerCard } from './CustomerCard';
 import { CustomerFormModal } from './CustomerFormModal';
 import { CustomerFilters, filterCustomers, type CustomerStatusFilter } from './CustomerFilters';
 import { CustomersEmptyState } from './CustomersEmptyState';
+import { usePriceLists } from '@/features/listas/hooks/usePriceLists';
 
 interface ClientesPageProps {
   company: Company;
@@ -37,6 +38,7 @@ export const ClientesPage: React.FC<ClientesPageProps> = ({
   const [actionNotice, setActionNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isTogglingId, setIsTogglingId] = useState<string | null>(null);
 
+  const priceLists = usePriceLists(company.id);
   const filteredCustomers = useMemo(() => filterCustomers(customers, statusFilter, searchQuery), [customers, searchQuery, statusFilter]);
   const counts = useMemo(() => {
     const active = customers.filter((c) => c.isActive).length;
@@ -186,6 +188,7 @@ export const ClientesPage: React.FC<ClientesPageProps> = ({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         customer={editingCustomer}
+        priceLists={priceLists.lists}
         onSave={onSaveCustomer}
       />
     </div>

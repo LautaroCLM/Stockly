@@ -10,6 +10,7 @@ export interface CustomerDbRow {
   identification_type: string;
   tax_id: string | null;
   vat_condition: string;
+  price_list_id: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -41,7 +42,7 @@ export async function fetchCustomers(companyId: string): Promise<Customer[]> {
   const { data, error } = await fetchAllRows((from, to) =>
     supabase
       .from('customers')
-      .select('id, company_id, name, identification_type, tax_id, vat_condition, email, phone, address, notes, is_active, created_by, created_at, updated_at')
+      .select('id, company_id, name, identification_type, tax_id, vat_condition, price_list_id, email, phone, address, notes, is_active, created_by, created_at, updated_at')
       .eq('company_id', companyId)
       .order('name', { ascending: true })
       .order('id', { ascending: true })
@@ -59,6 +60,7 @@ export async function fetchCustomers(companyId: string): Promise<Customer[]> {
     identificationType: row.identification_type as Customer['identificationType'],
     taxId: row.tax_id,
     vatCondition: toCustomerVatCondition(row.vat_condition),
+    priceListId: row.price_list_id,
     email: row.email,
     phone: row.phone,
     address: row.address,
