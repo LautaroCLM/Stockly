@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
@@ -26,7 +26,7 @@ import { useWorkspaceNav } from './useWorkspaceNav';
 import { useSaleFlow } from './useSaleFlow';
 import { useCartFeedback } from '@/features/inventario/hooks/useCartFeedback';
 import { useWorkspaceNavigation } from './useWorkspaceNavigation';
-
+import { useStockLots } from '@/features/vencimientos/hooks/useStockLots';
 
 interface AppWorkspaceProps {
   user: User;
@@ -83,6 +83,11 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   // Campana del encabezado: stock bajo, deudas viejas, entradas sin salida y caja abierta de un día anterior.
   // Cada fuente se consulta solo si la persona tiene acceso a ese módulo.
   const levelOf = (module: Parameters<typeof effectiveLevel>[2]) => effectiveLevel(isMasterAdmin, permissions.levels, module);
+  // Vencimientos por lote: pestaña de Inventario, campana y aviso en el carrito (una sola carga)
+  const lots = useStockLots(companyId);
+  const { expiredLots, soonLots } = lots.summary;
+  const expiry = useMemo(() => (lots.lots.length > 0 ? { expiredLots, soonLots, warningDays: lots.warningDays } : null),
+    [lots.lots.length, expiredLots, soonLots, lots.warningDays]);
   const { notices } = useNotices({
     companyId,
     products: catalog.products,
@@ -90,6 +95,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
     canSeeAttendance: atLeast(levelOf('fichaje'), 'view') || atLeast(levelOf('personal'), 'view'),
     canSeeCash: atLeast(levelOf('caja'), 'view'),
     attendanceRoute: atLeast(levelOf('personal'), 'view') ? 'personal' : 'fichaje',
+    expiry,
   });
 
   // Menú: lo que permiten los permisos, menos lo que la persona ocultó en Mis preferencias
@@ -141,6 +147,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           customers={customers}
           members={members}
           settings={settings}
+          lots={lots}
           cart={{
             totalItemsCount: cart.totalItemsCount,
             total: cart.total,
@@ -165,6 +172,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         onClose={sale.closeCart}
         items={cart.items}
         products={catalog.products}
+        expiredProductIds={lots.summary.productsWithExpired}
         subtotal={cart.subtotal}
         discountPercent={cart.discountPercent}
         discountAmount={cart.discountAmount}

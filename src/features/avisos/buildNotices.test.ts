@@ -7,7 +7,7 @@ const daysAgo = (days: number) => new Date(NOW.getTime() - days * 86_400_000).to
 const hoursAgo = (hours: number) => new Date(NOW.getTime() - hours * 3_600_000).toISOString();
 
 const empty: NoticeSources = {
-  restock: [], customerDebts: null, supplierDebts: null, openAttendance: null, openCashSince: undefined, attendanceRoute: 'personal',
+  restock: [], customerDebts: null, supplierDebts: null, openAttendance: null, openCashSince: undefined, expiry: null, attendanceRoute: 'personal',
 };
 const sources = (changes: Partial<NoticeSources>): NoticeSources => ({ ...empty, ...changes });
 
@@ -83,5 +83,12 @@ describe('avisos de la campana', () => {
     const restock = ['A', 'B', 'C', 'D', 'E'].map((name) => ({ name, stock: 1, minStock: 5, unit: 'unidad' }));
     const [notice] = buildNotices(sources({ restock }), NOW);
     expect(notice?.detail).toContain('A, B, C y 2 más');
+  });
+
+  it('avisa lotes vencidos (urgente) y por vencer', () => {
+    const list = buildNotices(sources({ expiry: { expiredLots: 2, soonLots: 1, warningDays: 30 } }), NOW);
+    expect(list.map((n) => [n.id, n.severity])).toEqual([['expired-lots', 'danger'], ['soon-lots', 'warning']]);
+    expect(list[0].title).toBe('2 lotes vencidos con stock');
+    expect(list[1].title).toBe('1 lote vence en los próximos 30 días');
   });
 });

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ShoppingCart, X, FileText, Truck, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { formatLotDate } from '@/features/vencimientos/lotStatus';
 import { formatCurrency, formatDateShort } from '@/lib/formatters';
 import { formatCuit } from '@/features/companies/utils/cuitValidator';
 import type { Purchase } from '../types';
@@ -144,6 +145,11 @@ const PurchaseDetailModalBody: React.FC<PurchaseDetailModalProps> = ({
                         <div className="text-[10px] text-text-muted font-mono">
                           SKU: {item.product?.sku || 'N/A'}
                         </div>
+                        {item.expiresOn && (
+                          <div className="text-[10px] text-warning">
+                            Vence {formatLotDate(item.expiresOn)}{item.lotCode ? ` · Lote ${item.lotCode}` : ''}
+                          </div>
+                        )}
                       </td>
                       <td className="py-2.5 px-3 text-right font-medium text-text-primary whitespace-nowrap">
                         {item.quantity} {item.product?.unit || 'u'}

@@ -22,7 +22,7 @@ const PURCHASE_COLUMNS = `
   subtotal, total_amount, notes, created_by, created_at, cancelled_at, cancel_reason,
   supplier:suppliers ( id, name, tax_id, email, phone ),
   purchase_items (
-    id, company_id, purchase_id, product_id, quantity, unit_cost, subtotal, created_at,
+    id, company_id, purchase_id, product_id, quantity, unit_cost, subtotal, created_at, lot_code, expires_on,
     product:products ( name, sku, unit )
   )
 `;
@@ -93,6 +93,8 @@ export async function fetchPurchasesPage(
         unitCost: Number(item.unit_cost),
         subtotal: Number(item.subtotal),
         createdAt: item.created_at,
+        lotCode: item.lot_code,
+        expiresOn: item.expires_on,
         product: item.product
           ? { name: item.product.name, sku: item.product.sku, unit: item.product.unit }
           : undefined,
@@ -128,6 +130,7 @@ export async function processPurchaseRpc(
       product_id: item.productId,
       quantity: item.quantity,
       unit_cost: item.unitCost,
+      ...(item.expiresOn ? { expires_on: item.expiresOn, lot_code: item.lotCode?.trim() || null } : {}),
     })),
     p_invoice_number: input.invoiceNumber?.trim() || undefined,
     p_purchase_date: input.purchaseDate || undefined,

@@ -229,14 +229,14 @@ isOneToOne: false
                   ]
                 },"companies": {
                   Row: {
-                    "allow_negative_stock": boolean,"created_at": string,"created_by": string,"currency": string,"id": string,"is_active": boolean,"name": string,"owner_id": string,"tax_id": string | null,"timezone": string,"updated_at": string
+                    "allow_negative_stock": boolean,"created_at": string,"created_by": string,"currency": string,"expiry_warning_days": number,"id": string,"is_active": boolean,"name": string,"owner_id": string,"tax_id": string | null,"timezone": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "allow_negative_stock"?: boolean,"created_at"?: string,"created_by": string,"currency"?: string,"id"?: string,"is_active"?: boolean,"name": string,"owner_id": string,"tax_id"?: string | null,"timezone"?: string,"updated_at"?: string
+                    "allow_negative_stock"?: boolean,"created_at"?: string,"created_by": string,"currency"?: string,"expiry_warning_days"?: number,"id"?: string,"is_active"?: boolean,"name": string,"owner_id": string,"tax_id"?: string | null,"timezone"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "allow_negative_stock"?: boolean,"created_at"?: string,"created_by"?: string,"currency"?: string,"id"?: string,"is_active"?: boolean,"name"?: string,"owner_id"?: string,"tax_id"?: string | null,"timezone"?: string,"updated_at"?: string
+                    "allow_negative_stock"?: boolean,"created_at"?: string,"created_by"?: string,"currency"?: string,"expiry_warning_days"?: number,"id"?: string,"is_active"?: boolean,"name"?: string,"owner_id"?: string,"tax_id"?: string | null,"timezone"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -967,14 +967,14 @@ isOneToOne: false
                   ]
                 },"products": {
                   Row: {
-                    "barcode": string | null,"category_id": string | null,"company_id": string,"created_at": string,"current_stock": number,"description": string | null,"id": string,"is_active": boolean,"min_stock": number,"name": string,"selling_price": number,"sku": string,"supplier_id": string | null,"unit": string,"updated_at": string,"vat_rate": number
+                    "barcode": string | null,"category_id": string | null,"company_id": string,"created_at": string,"current_stock": number,"description": string | null,"id": string,"is_active": boolean,"min_stock": number,"name": string,"selling_price": number,"sku": string,"supplier_id": string | null,"tracks_expiry": boolean,"unit": string,"updated_at": string,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "barcode"?: string | null,"category_id"?: string | null,"company_id": string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name": string,"selling_price"?: number,"sku": string,"supplier_id"?: string | null,"unit"?: string,"updated_at"?: string,"vat_rate"?: number
+                    "barcode"?: string | null,"category_id"?: string | null,"company_id": string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name": string,"selling_price"?: number,"sku": string,"supplier_id"?: string | null,"tracks_expiry"?: boolean,"unit"?: string,"updated_at"?: string,"vat_rate"?: number
                   }
                   Update: {
-                    "barcode"?: string | null,"category_id"?: string | null,"company_id"?: string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name"?: string,"selling_price"?: number,"sku"?: string,"supplier_id"?: string | null,"unit"?: string,"updated_at"?: string,"vat_rate"?: number
+                    "barcode"?: string | null,"category_id"?: string | null,"company_id"?: string,"created_at"?: string,"current_stock"?: number,"description"?: string | null,"id"?: string,"is_active"?: boolean,"min_stock"?: number,"name"?: string,"selling_price"?: number,"sku"?: string,"supplier_id"?: string | null,"tracks_expiry"?: boolean,"unit"?: string,"updated_at"?: string,"vat_rate"?: number
                   }
                   Relationships: [
                     {
@@ -1013,14 +1013,14 @@ isOneToOne: false
                   ]
                 },"purchase_items": {
                   Row: {
-                    "company_id": string,"created_at": string,"id": string,"product_id": string,"purchase_id": string,"quantity": number,"subtotal": number,"unit_cost": number
+                    "company_id": string,"created_at": string,"expires_on": string | null,"id": string,"lot_code": string | null,"product_id": string,"purchase_id": string,"quantity": number,"subtotal": number,"unit_cost": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_id": string,"created_at"?: string,"id"?: string,"product_id": string,"purchase_id": string,"quantity": number,"subtotal": number,"unit_cost": number
+                    "company_id": string,"created_at"?: string,"expires_on"?: string | null,"id"?: string,"lot_code"?: string | null,"product_id": string,"purchase_id": string,"quantity": number,"subtotal": number,"unit_cost": number
                   }
                   Update: {
-                    "company_id"?: string,"created_at"?: string,"id"?: string,"product_id"?: string,"purchase_id"?: string,"quantity"?: number,"subtotal"?: number,"unit_cost"?: number
+                    "company_id"?: string,"created_at"?: string,"expires_on"?: string | null,"id"?: string,"lot_code"?: string | null,"product_id"?: string,"purchase_id"?: string,"quantity"?: number,"subtotal"?: number,"unit_cost"?: number
                   }
                   Relationships: [
                     {
@@ -1239,16 +1239,74 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"stock_movements": {
+                },"stock_lot_allocations": {
                   Row: {
-                    "company_id": string,"created_at": string,"created_by": string,"direction": string,"id": string,"new_stock": number,"notes": string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc": string | null,"reference_purchase_id": string | null,"reference_sale_id": string | null
+                    "company_id": string,"created_at": string,"direction": string,"id": string,"lot_id": string,"movement_id": string,"quantity": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_id": string,"created_at"?: string,"created_by": string,"direction": string,"id"?: string,"new_stock": number,"notes"?: string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null
+                    "company_id": string,"created_at"?: string,"direction": string,"id"?: string,"lot_id": string,"movement_id": string,"quantity": number
                   }
                   Update: {
-                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"direction"?: string,"id"?: string,"new_stock"?: number,"notes"?: string | null,"previous_stock"?: number,"product_id"?: string,"quantity"?: number,"reason"?: string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null
+                    "company_id"?: string,"created_at"?: string,"direction"?: string,"id"?: string,"lot_id"?: string,"movement_id"?: string,"quantity"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_lot_alloc_lot"
+      columns: ["company_id","lot_id"]
+isOneToOne: false
+      referencedRelation: "stock_lots"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_lot_alloc_movement"
+      columns: ["company_id","movement_id"]
+isOneToOne: false
+      referencedRelation: "stock_movements"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"stock_lots": {
+                  Row: {
+                    "company_id": string,"created_at": string,"expires_on": string | null,"id": string,"initial_quantity": number,"lot_code": string | null,"product_id": string,"purchase_id": string | null,"remaining_quantity": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"expires_on"?: string | null,"id"?: string,"initial_quantity"?: number,"lot_code"?: string | null,"product_id": string,"purchase_id"?: string | null,"remaining_quantity"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"expires_on"?: string | null,"id"?: string,"initial_quantity"?: number,"lot_code"?: string | null,"product_id"?: string,"purchase_id"?: string | null,"remaining_quantity"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_stock_lots_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_stock_lots_purchase"
+      columns: ["company_id","purchase_id"]
+isOneToOne: false
+      referencedRelation: "purchases"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "stock_lots_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"stock_movements": {
+                  Row: {
+                    "company_id": string,"created_at": string,"created_by": string,"direction": string,"expires_on": string | null,"id": string,"lot_code": string | null,"new_stock": number,"notes": string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc": string | null,"reference_purchase_id": string | null,"reference_sale_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"created_by": string,"direction": string,"expires_on"?: string | null,"id"?: string,"lot_code"?: string | null,"new_stock": number,"notes"?: string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"direction"?: string,"expires_on"?: string | null,"id"?: string,"lot_code"?: string | null,"new_stock"?: number,"notes"?: string | null,"previous_stock"?: number,"product_id"?: string,"quantity"?: number,"reason"?: string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -1651,14 +1709,28 @@ isOneToOne: true
 "set_employee_schedule":
 { Args: { "p_blocks": Json,"p_company_id": string,"p_employee_id": string }; Returns: number
                            },
+"set_expiry_warning_days":
+{ Args: { "p_company_id": string,"p_days": number }; Returns: undefined
+                           },
 "set_module_permissions":
 { Args: { "p_company_id": string,"p_levels": Json }; Returns: number
                            },
 "set_price_list_item":
 { Args: { "p_company_id": string,"p_price": number,"p_price_list_id": string,"p_product_id": string }; Returns: undefined
                            },
+"set_product_tracks_expiry":
+{ Args: { "p_company_id": string,"p_enabled": boolean,"p_product_id": string }; Returns: undefined
+                           },
 "set_product_vat_rate":
 { Args: { "p_company_id": string,"p_product_id": string,"p_vat_rate": number }; Returns: undefined
+                           },
+"split_stock_lot":
+{ Args: { "p_company_id": string,"p_expires_on": string,"p_lot_code": string,"p_lot_id": string,"p_quantity": number }; Returns: string
+                           },
+"stock_lots_list":
+{ Args: { "p_company_id": string }; Returns: {
+              "days_left": number,"expires_on": string,"initial_quantity": number,"lot_code": string,"lot_id": string,"product_id": string,"product_name": string,"purchase_number": string,"remaining_quantity": number,"sku": string,"unit": string
+            }[]
                            },
 "supplier_balances":
 { Args: { "p_company_id": string }; Returns: {
@@ -1678,6 +1750,9 @@ isOneToOne: true
                            },
 "update_product_cost":
 { Args: { "p_company_id": string,"p_cost_price": number,"p_product_id": string }; Returns: undefined
+                           },
+"update_stock_lot":
+{ Args: { "p_company_id": string,"p_expires_on": string,"p_lot_code": string,"p_lot_id": string }; Returns: undefined
                            },
 "upsert_category":
 { Args: { "p_category_id"?: string,"p_company_id": string,"p_description"?: string,"p_is_active"?: boolean,"p_name": string }; Returns: string
@@ -1716,6 +1791,9 @@ isOneToOne: true
                            },
 "void_supplier_payment":
 { Args: { "p_company_id": string,"p_payment_id": string,"p_reason": string }; Returns: Json
+                           },
+"write_off_stock_lot":
+{ Args: { "p_company_id": string,"p_idempotency_key": string,"p_lot_id": string }; Returns: Json
                            }
           }
           Enums: {

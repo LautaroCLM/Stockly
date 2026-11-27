@@ -27,6 +27,7 @@ interface UseNoticesOptions {
   canSeeAttendance: boolean;
   canSeeCash: boolean;
   attendanceRoute: RouteId;
+  expiry: NoticeSources['expiry'];
 }
 
 type RemoteSources = Pick<NoticeSources, 'customerDebts' | 'supplierDebts' | 'openAttendance' | 'openCashSince'>;
@@ -44,7 +45,7 @@ const startOfTodayIso = () => {
  * Si una consulta falla, se conserva lo último que se sabía de esa fuente.
  */
 export function useNotices(options: UseNoticesOptions): { notices: Notice[]; isLoading: boolean } {
-  const { companyId, products, canSeeDebts, canSeeAttendance, canSeeCash, attendanceRoute } = options;
+  const { companyId, products, canSeeDebts, canSeeAttendance, canSeeCash, attendanceRoute, expiry } = options;
   const [remote, setRemote] = useState<RemoteSources>(NO_REMOTE);
   const [isLoading, setIsLoading] = useState(true);
   const [now, setNow] = useState(() => new Date());
@@ -108,10 +109,11 @@ export function useNotices(options: UseNoticesOptions): { notices: Notice[]; isL
           restock: productsToRestock(products).map((p) => ({ name: p.name, stock: p.stock, minStock: p.minStock, unit: p.unit })),
           ...remote,
           attendanceRoute,
+          expiry,
         },
         now
       ),
-    [products, remote, attendanceRoute, now]
+    [products, remote, attendanceRoute, now, expiry]
   );
 
   useNewNoticeSound(notices, isLoading, companyId);

@@ -9,6 +9,8 @@ interface CartItemRowProps {
   item: CartItem;
   /** El producto fue desactivado: bloquea el cobro hasta quitarlo. */
   isInactive: boolean;
+  /** El producto tiene unidades vencidas: solo avisa, la venta sigue. */
+  hasExpired?: boolean;
   /** Línea elegida con el teclado. */
   isSelected?: boolean;
   onUpdateQuantity: (productId: string, quantity: number) => void;
@@ -19,7 +21,7 @@ const STEP_BUTTON =
   'w-6 h-6 rounded flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors';
 
 /** Un producto del carrito con su cantidad editable y subtotal. */
-export const CartItemRow: React.FC<CartItemRowProps> = ({ item, isInactive, isSelected = false, onUpdateQuantity, onRemove }) => {
+export const CartItemRow: React.FC<CartItemRowProps> = ({ item, isInactive, hasExpired = false, isSelected = false, onUpdateQuantity, onRemove }) => {
   // Destello cuando se suma una unidad a un producto que ya estaba (la línea nueva entra con su propia animación).
   // Se anima el mismo elemento: así los campos de la línea no pierden el foco.
   const rowRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,12 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({ item, isInactive, isSe
           <div className="flex items-center gap-1 text-[10px] font-semibold text-danger mt-1">
             <AlertTriangle size={11} className="shrink-0" />
             <span>Producto desactivado — Bloquea el cobro</span>
+          </div>
+        )}
+        {hasExpired && !isInactive && (
+          <div className="flex items-center gap-1 text-[10px] font-semibold text-warning mt-1">
+            <AlertTriangle size={11} className="shrink-0" />
+            <span>Tiene unidades vencidas: revisá la fecha antes de entregar</span>
           </div>
         )}
       </div>

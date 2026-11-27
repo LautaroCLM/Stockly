@@ -29,5 +29,7 @@ export interface NoticeSources {
   openAttendance: OpenAttendance[] | null;
   /** Fecha de apertura de la caja abierta, si hay una. */
   openCashSince: string | null | undefined;
+  /** Lotes vencidos y por vencer; null = sin acceso o productos sin vencimiento. */
+  expiry: { expiredLots: number; soonLots: number; warningDays: number } | null;
   attendanceRoute: RouteId;
 }

@@ -3,21 +3,10 @@ import { toUserMessage } from '@/lib/errorMessages';
 import type { ProductFormData } from '../types';
 import { createProductRpc, setProductActiveRpc } from '../api/productsApi';
 import { updateProductRpc } from '../api/productUpdateApi';
-import { setProductVatRateRpc, vatNotSavedMessage } from '../api/productVatApi';
-import { DEFAULT_VAT_RATE, type VatRate } from '@/features/facturacion/vat';
+import { DEFAULT_VAT_RATE } from '@/features/facturacion/vat';
 import { isNetworkOrUncertainError } from '@/lib/errorMessages';
 import type { CatalogContext, ProductOperationResult } from './catalogContext';
-
-/** Guarda el IVA solo si cambió; devuelve el error para el usuario o null. */
-async function saveVatIfChanged(companyId: string, productId: string, next: VatRate | undefined, current: VatRate) {
-  if (next === undefined || next === current) return null;
-  try {
-    await setProductVatRateRpc(companyId, productId, next);
-    return null;
-  } catch (err) {
-    return vatNotSavedMessage(toUserMessage(err, 'error de conexión'));
-  }
-}
+import { saveProductExtras } from './productExtras';
 
 /** Alta, modificación, desactivación y reactivación de productos. */
 export function useProductMutations(ctx: CatalogContext) {
@@ -45,8 +34,11 @@ export function useProductMutations(ctx: CatalogContext) {
           categoryId: formData.categoryId || undefined,
           supplierId: formData.supplierId || undefined,
         });
-        // El producto nace con 21 %: solo se llama si eligieron otra alícuota
-        const vatError = await saveVatIfChanged(tenantId, newId, formData.vatRate, DEFAULT_VAT_RATE);
+        // El producto nace con 21 % y sin vencimiento: solo se llama si eligieron otra cosa
+        const vatError = await saveProductExtras(tenantId, newId, {
+          nextVat: formData.vatRate, currentVat: DEFAULT_VAT_RATE,
+          nextTracksExpiry: formData.tracksExpiry, currentTracksExpiry: false,
+        });
         const fresh = await fetchAndApply();
         const created = fresh.find((p) => p.id === newId);
         if (vatError) return { success: false, partial: true, error: vatError, product: created };
@@ -99,8 +91,14 @@ export function useProductMutations(ctx: CatalogContext) {
         isMasterAdmin
       );
 
+      const extrasChanged =
+        (formData.vatRate !== undefined && formData.vatRate !== existing.vatRate) ||
+        (formData.tracksExpiry !== undefined && formData.tracksExpiry !== (existing.tracksExpiry ?? false));
       if (execResult.status === 'success') {
-        const vatError = await saveVatIfChanged(tenantId, id, formData.vatRate, existing.vatRate);
+        const vatError = await saveProductExtras(tenantId, id, {
+          nextVat: formData.vatRate, currentVat: existing.vatRate,
+          nextTracksExpiry: formData.tracksExpiry, currentTracksExpiry: existing.tracksExpiry ?? false,
+        });
         if (vatError) {
           const updated = (await fetchAndApply().catch(() => products)).find((p) => p.id === id);
           return { success: false, partial: true, error: vatError, product: updated };
@@ -108,7 +106,7 @@ export function useProductMutations(ctx: CatalogContext) {
       }
 
       // Si hubo cambios o el resultado es incierto, se relee el catálogo real del servidor
-      if (execResult.generalDataSaved || execResult.status === 'uncertain') {
+      if (execResult.generalDataSaved || extrasChanged || execResult.status === 'uncertain') {
         try {
           const updated = (await fetchAndApply()).find((p) => p.id === id);
           if (execResult.status === 'success') return { success: true, product: updated };

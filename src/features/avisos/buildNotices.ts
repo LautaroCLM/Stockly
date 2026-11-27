@@ -82,6 +82,21 @@ function cashNotice(sources: NoticeSources, now: Date): Notice | null {
   };
 }
 
+function expiryNotices(sources: NoticeSources): (Notice | null)[] {
+  const e = sources.expiry;
+  if (!e) return [];
+  return [
+    e.expiredLots > 0
+      ? { id: 'expired-lots', severity: 'danger', title: `${plural(e.expiredLots, 'lote vencido', 'lotes vencidos')} con stock`,
+          detail: 'Revisalos en Inventario → Vencimientos y dalos de baja si ya no se pueden vender.', route: 'inventario' }
+      : null,
+    e.soonLots > 0
+      ? { id: 'soon-lots', severity: 'warning', title: `${plural(e.soonLots, 'lote vence', 'lotes vencen')} en los próximos ${e.warningDays} días`,
+          detail: 'Conviene venderlos primero (las ventas ya descuentan del que vence antes).', route: 'inventario' }
+      : null,
+  ];
+}
+
 /** Avisos a mostrar en la campana, de lo más urgente a lo menos. Solo usa las fuentes disponibles. */
 export function buildNotices(sources: NoticeSources, now: Date = new Date()): Notice[] {
   const notices: (Notice | null)[] = [
@@ -94,6 +109,7 @@ export function buildNotices(sources: NoticeSources, now: Date = new Date()): No
       : null,
     attendanceNotice(sources, now),
     cashNotice(sources, now),
+    ...expiryNotices(sources),
   ];
   return notices
     .filter((n): n is Notice => n !== null)

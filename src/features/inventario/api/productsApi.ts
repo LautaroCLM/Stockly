@@ -60,7 +60,7 @@ export async function fetchProducts(
   const { data: prodRows, error: prodErr } = await fetchAllRows((from, to) =>
     supabase
       .from('products')
-      .select('id, company_id, sku, barcode, name, description, category_id, supplier_id, unit, selling_price, vat_rate, min_stock, current_stock, is_active, created_at, updated_at')
+      .select('id, company_id, sku, barcode, name, description, category_id, supplier_id, unit, selling_price, vat_rate, tracks_expiry, min_stock, current_stock, is_active, created_at, updated_at')
       .eq('company_id', companyId)
       .order('name', { ascending: true })
       .order('id', { ascending: true })
@@ -116,6 +116,7 @@ export async function fetchProducts(
       supplierId: row.supplier_id || undefined,
       salePrice: Number(row.selling_price),
       vatRate: toVatRate(row.vat_rate),
+      tracksExpiry: row.tracks_expiry,
       costPrice: cost,
       stock,
       minStock,

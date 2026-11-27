@@ -7,7 +7,7 @@ import { localDateInputValue } from '@/lib/localDate';
 import type { Supplier } from '@/features/proveedores/types';
 import type { Product } from '@/features/inventario/types';
 import type { CreatePurchaseInput, PurchaseActionResult, PurchaseDraftItem } from '../types';
-import { draftTotal, newDraftItem, validatePurchaseDraft, withQuantity, withUnitCost } from '../purchaseDraft';
+import { draftTotal, newDraftItem, validatePurchaseDraft, withLot, withQuantity, withUnitCost } from '../purchaseDraft';
 import { PurchaseDraftTable } from './PurchaseDraftTable';
 import { ProductAdder, PurchaseHeaderFields } from './PurchaseFormFields';
 import { AnimatePresence, m } from 'motion/react';
@@ -96,7 +96,10 @@ const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClo
         purchaseDate: purchaseDate || undefined,
         notes: notes.trim() || undefined,
         onCredit,
-        items: draftItems.map((it) => ({ productId: it.productId, quantity: it.quantity, unitCost: it.unitCost })),
+        items: draftItems.map((it) => ({
+          productId: it.productId, quantity: it.quantity, unitCost: it.unitCost,
+          ...(it.tracksExpiry ? { expiresOn: it.expiresOn, lotCode: it.lotCode } : {}),
+        })),
         idempotencyKey: idempotencyKeyRef.current,
       });
       if (res.success) {
@@ -153,6 +156,7 @@ const PurchaseFormModalBody: React.FC<PurchaseFormModalProps> = ({ isOpen, onClo
             <PurchaseDraftTable items={draftItems} disabled={isSubmitting}
               onUpdateQuantity={(id, quantity) => updateItem(id, (item) => withQuantity(item, quantity))}
               onUpdateUnitCost={(id, unitCost) => updateItem(id, (item) => withUnitCost(item, unitCost))}
+              onUpdateLot={(id, lot) => updateItem(id, (item) => withLot(item, lot))}
               onRemoveItem={(id) => setDraftItems((prev) => prev.filter((it) => it.productId !== id))} />
           </div>
           <label htmlFor="purchase-on-credit" className="flex items-start gap-2 p-3 rounded-xl bg-surface-2 border border-border cursor-pointer">

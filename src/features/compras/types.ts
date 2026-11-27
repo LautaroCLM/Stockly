@@ -7,6 +7,9 @@ export interface PurchaseItem {
   unitCost: number;
   subtotal: number;
   createdAt: string;
+  lotCode?: string | null;
+  /** Vencimiento de la línea (productos que controlan vencimiento). */
+  expiresOn?: string | null;
   product?: {
     name: string;
     sku: string;
@@ -49,6 +52,11 @@ export interface PurchaseDraftItem {
   quantity: number;
   unitCost: number;
   subtotal: number;
+  /** El producto controla vencimiento: la línea exige fecha. */
+  tracksExpiry: boolean;
+  /** Fecha ISO (YYYY-MM-DD) o '' si no se cargó. */
+  expiresOn: string;
+  lotCode: string;
 }
 
 export interface CreatePurchaseInput {
@@ -62,6 +70,8 @@ export interface CreatePurchaseInput {
     productId: string;
     quantity: number;
     unitCost: number;
+    expiresOn?: string;
+    lotCode?: string;
   }>;
   idempotencyKey?: string;
 }

@@ -8,7 +8,8 @@ import type { useCustomers } from '@/features/clientes/hooks/useCustomers';
 import type { useCompanyMembers } from '@/features/companies/hooks/useCompanyMembers';
 import type { useCompanySettings } from '@/features/companies/hooks/useCompanySettings';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
-import { InventarioPage } from '@/features/inventario/InventarioPage';
+import { InventarioScreen } from '@/features/inventario/InventarioScreen';
+import type { StockLotsState } from '@/features/vencimientos/hooks/useStockLots';
 import { VentasPage } from '@/features/ventas/VentasPage';
 import { DocumentosPage } from '@/features/documentos/DocumentosPage';
 import { PreciosScreen } from '@/features/precios/PreciosScreen';
@@ -52,6 +53,7 @@ interface WorkspaceRoutesProps {
   customers: ReturnType<typeof useCustomers>;
   members: ReturnType<typeof useCompanyMembers>;
   settings: ReturnType<typeof useCompanySettings>;
+  lots: StockLotsState;
   cart: {
     totalItemsCount: number;
     total: number;
@@ -92,7 +94,8 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       );
     case 'inventario':
       return (
-        <InventarioPage
+        <InventarioScreen
+          expiry={access('productos').canView ? { lotsState: props.lots, isMasterAdmin, onStockChanged: reloadCatalog(catalog, 'tras baja de lote') } : undefined}
           company={company}
           searchRequest={props.inventorySearch}
           products={catalog.products}

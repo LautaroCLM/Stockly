@@ -19,7 +19,14 @@ export function newDraftItem(product: Product): PurchaseDraftItem {
     quantity: 1,
     unitCost,
     subtotal: lineSubtotal(1, unitCost),
+    tracksExpiry: product.tracksExpiry ?? false,
+    expiresOn: '',
+    lotCode: '',
   };
+}
+
+export function withLot(item: PurchaseDraftItem, lot: { expiresOn?: string; lotCode?: string }): PurchaseDraftItem {
+  return { ...item, ...lot };
 }
 
 export function withQuantity(item: PurchaseDraftItem, quantity: number): PurchaseDraftItem {
@@ -45,6 +52,10 @@ export function validatePurchaseDraft(supplierId: string, items: PurchaseDraftIt
       return `El producto "${item.productName}" se mide en ${item.unit} y no admite cantidades fraccionadas.`;
     }
     if (item.unitCost < 0) return `El costo unitario para "${item.productName}" no puede ser negativo.`;
+    if (item.tracksExpiry && !/^\d{4}-\d{2}-\d{2}$/.test(item.expiresOn)) {
+      return `Indicá la fecha de vencimiento de "${item.productName}".`;
+    }
+    if (item.lotCode.trim().length > 50) return `El número de lote de "${item.productName}" no puede superar los 50 caracteres.`;
   }
   return null;
 }

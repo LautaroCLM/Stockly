@@ -128,6 +128,20 @@ export const ProductVatField: React.FC<{ values: ProductFormValues; onChange: Ch
   </div>
 );
 
+/** Control de vencimiento por lote: las compras piden fecha y las ventas salen del que vence primero. */
+export const ProductExpiryField: React.FC<{ values: ProductFormValues; onChange: Change; hasStock: boolean }> = ({ values, onChange, hasStock }) => (
+  <label className="flex items-start gap-2.5 p-3 rounded-xl border border-border bg-surface-2/60 cursor-pointer">
+    <input type="checkbox" checked={values.tracksExpiry} onChange={(e) => onChange('tracksExpiry', e.target.checked)} className="mt-0.5 accent-primary" />
+    <span className="space-y-0.5">
+      <span className="block text-xs font-semibold text-text-primary">Controla vencimiento</span>
+      <span className="block text-[10px] text-text-muted">
+        Cada compra pide fecha de vencimiento y las ventas descuentan primero lo que vence antes.
+        {hasStock && values.tracksExpiry && ' El stock actual queda "sin fecha"; podés cargarle la fecha en Inventario → Vencimientos.'}
+      </span>
+    </span>
+  </label>
+);
+
 /** Ganancia y margen estimados en tiempo real. */
 export const MarginBox: React.FC<{ costPrice: string; salePrice: string }> = ({ costPrice, salePrice }) => {
   const { grossProfit, margin, isNegativeMargin } = marginSummary(costPrice, salePrice);

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { toUserMessage } from '@/lib/errorMessages';
 import type { Product, ProductFormData } from '../types';
 import { initialProductFormValues, toProductFormData, validateProductForm, type ProductFormValues } from '../productForm';
-import { MarginBox, ProductIdentityFields, ProductPricingFields, ProductVatField } from './ProductFormFields';
+import { MarginBox, ProductExpiryField, ProductIdentityFields, ProductPricingFields, ProductVatField } from './ProductFormFields';
 import { ModalFrame } from '@/components/motion/ModalFrame';
 import { AnimatePresence } from 'motion/react';
 
@@ -120,6 +120,7 @@ const ProductFormModalBody: React.FC<ProductFormModalProps> = ({
         <ProductPricingFields values={values} canManageCosts={canManageCosts}
           costPlaceholder={costMissing ? 'Sin costo asignado' : '0.00'} onChange={change} />
         {showVat && <ProductVatField values={values} onChange={change} />}
+        <ProductExpiryField values={values} onChange={change} hasStock={mode === 'edit' && (initialProduct?.stock ?? 0) > 0} />
         {canManageCosts && <MarginBox costPrice={values.costPrice} salePrice={values.salePrice} />}
 
         <div className="space-y-1">

@@ -10,6 +10,9 @@ const item = (overrides: Partial<PurchaseDraftItem> = {}): PurchaseDraftItem => 
   quantity: 1,
   unitCost: 0,
   subtotal: 0,
+  tracksExpiry: false,
+  expiresOn: '',
+  lotCode: '',
   ...overrides,
 });
 
@@ -27,6 +30,11 @@ describe('compras: importes exactos', () => {
 });
 
 describe('validatePurchaseDraft', () => {
+  it('exige fecha de vencimiento si el producto la controla', () => {
+    expect(validatePurchaseDraft('s1', [item({ quantity: 1, tracksExpiry: true })])).toMatch(/fecha de vencimiento de "Latex"/);
+    expect(validatePurchaseDraft('s1', [item({ quantity: 1, tracksExpiry: true, expiresOn: '2027-01-31' })])).toBeNull();
+    expect(validatePurchaseDraft('s1', [item({ quantity: 1, expiresOn: '' })])).toBeNull();
+  });
   it('exige proveedor y al menos un producto', () => {
     expect(validatePurchaseDraft('', [item()])).toMatch(/proveedor/);
     expect(validatePurchaseDraft('s1', [])).toMatch(/al menos un producto/);

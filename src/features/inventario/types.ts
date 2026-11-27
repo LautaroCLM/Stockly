@@ -23,6 +23,8 @@ export interface Product {
   salePrice: number;
   /** Alícuota de IVA incluida en el precio de venta (para facturas A y B). */
   vatRate: VatRate;
+  /** Controla vencimiento por lote (las compras piden fecha). */
+  tracksExpiry?: boolean;
   costPrice: number | null;
   stock: number;
   minStock: number;
@@ -43,6 +45,7 @@ export interface ProductFormData {
   costPrice?: number | null;
   salePrice: number;
   vatRate?: VatRate;
+  tracksExpiry?: boolean;
   minStock: number;
   unit?: string;
   description?: string;

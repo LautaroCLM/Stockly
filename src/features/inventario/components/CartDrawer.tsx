@@ -14,6 +14,8 @@ interface CartDrawerProps {
   onClose: () => void;
   items: CartItem[];
   products: Product[];
+  /** Productos con unidades vencidas (aviso en la línea). */
+  expiredProductIds?: ReadonlySet<string>;
   subtotal: number;
   discountPercent: number;
   discountAmount: number;
@@ -122,7 +124,7 @@ const CartDrawerBody: React.FC<CartDrawerProps> = (props) => {
               {items.map((item, index) => (
                 <m.div key={item.productId} {...COLLAPSE} className="px-1">
                   <div className="py-1.5">
-                    <CartItemRow item={item} isInactive={inactiveIds.has(item.productId)} isSelected={index === selectedIndex}
+                    <CartItemRow item={item} isInactive={inactiveIds.has(item.productId)} hasExpired={props.expiredProductIds?.has(item.productId)} isSelected={index === selectedIndex}
                       onUpdateQuantity={props.onUpdateQuantity} onRemove={props.onRemoveItem} />
                   </div>
                 </m.div>

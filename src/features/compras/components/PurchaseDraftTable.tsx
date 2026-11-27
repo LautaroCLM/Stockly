@@ -3,10 +3,33 @@ import { Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import type { PurchaseDraftItem } from '../types';
 
+const LOT_FIELD = 'h-7 px-2 text-[11px] bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-1 focus:ring-primary';
+
+/** Fecha de vencimiento (obligatoria) y número de lote (opcional) de una línea. */
+const LotInputs: React.FC<{
+  item: PurchaseDraftItem;
+  disabled: boolean;
+  onChange: (lot: { expiresOn?: string; lotCode?: string }) => void;
+}> = ({ item, disabled, onChange }) => (
+  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+    <label className="flex items-center gap-1 text-[10px] text-text-secondary">
+      Vence<span className="text-danger">*</span>
+      <input type="date" value={item.expiresOn} disabled={disabled} aria-label={`Vencimiento de ${item.productName}`}
+        onChange={(e) => onChange({ expiresOn: e.target.value })} className={`${LOT_FIELD} ${item.expiresOn ? '' : 'border-warning/60'}`} />
+    </label>
+    <label className="flex items-center gap-1 text-[10px] text-text-secondary">
+      Lote
+      <input value={item.lotCode} disabled={disabled} maxLength={50} placeholder="Opcional" aria-label={`Lote de ${item.productName}`}
+        onChange={(e) => onChange({ lotCode: e.target.value })} className={`${LOT_FIELD} w-24`} />
+    </label>
+  </div>
+);
+
 interface PurchaseDraftTableProps {
   items: PurchaseDraftItem[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onUpdateUnitCost: (productId: string, cost: number) => void;
+  onUpdateLot: (productId: string, lot: { expiresOn?: string; lotCode?: string }) => void;
   onRemoveItem: (productId: string) => void;
   disabled?: boolean;
 }
@@ -15,6 +38,7 @@ export const PurchaseDraftTable: React.FC<PurchaseDraftTableProps> = ({
   items,
   onUpdateQuantity,
   onUpdateUnitCost,
+  onUpdateLot,
   onRemoveItem,
   disabled = false,
 }) => {
@@ -51,6 +75,9 @@ export const PurchaseDraftTable: React.FC<PurchaseDraftTableProps> = ({
                       <span>•</span>
                       <span>Unidad: {item.unit}</span>
                     </div>
+                    {item.tracksExpiry && (
+                      <LotInputs item={item} disabled={disabled} onChange={(lot) => onUpdateLot(item.productId, lot)} />
+                    )}
                   </td>
                   <td className="py-2 px-3 text-right">
                     <input
