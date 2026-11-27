@@ -8,8 +8,9 @@ import { PERIOD_LABELS, periodRange } from '@/features/finanzas/financeMath';
 import type { PeriodKey } from '@/features/finanzas/types';
 import type { Company } from '@/types';
 import {
-  fetchExpensesByCategory, fetchInventoryValuation, fetchProductSales, fetchSalesByDay,
+  fetchExpensesByCategory, fetchInventoryValuation, fetchProductSales, fetchSalesByDay, fetchVatSalesBook,
 } from './api/reportsApi';
+import { VatBookPanel } from './components/VatBookPanel';
 import { useReport } from './hooks/useReport';
 import { ReportPanel } from './components/ReportPanel';
 import {
@@ -25,7 +26,7 @@ interface InformesPageProps {
 
 const REPORT_KEYS = Object.keys(REPORT_LABELS) as ReportKey[];
 
-/** Informes: ventas por día, productos vendidos, inventario valuado y gastos, con exportación a CSV. */
+/** Informes: ventas por día, productos vendidos, inventario valuado, gastos y Libro IVA Ventas, con exportación. */
 export const InformesPage: React.FC<InformesPageProps> = ({ company, canView }) => {
   const [report, setReport] = useState<ReportKey>('ventas');
   const [period, setPeriod] = useState<PeriodKey>('month');
@@ -38,7 +39,8 @@ export const InformesPage: React.FC<InformesPageProps> = ({ company, canView }) 
   const products = useReport(useCallback(() => fetchProductSales(id, { from, to }), [id, from, to]), on('productos'));
   const inventory = useReport(useCallback(() => fetchInventoryValuation(id), [id]), on('inventario'));
   const expenses = useReport(useCallback(() => fetchExpensesByCategory(id, { from, to }), [id, from, to]), on('gastos'));
-  const active = { ventas: sales, productos: products, inventario: inventory, gastos: expenses }[report];
+  const vatBook = useReport(useCallback(() => fetchVatSalesBook(id, { from, to }), [id, from, to]), on('iva_ventas'));
+  const active = { ventas: sales, productos: products, inventario: inventory, gastos: expenses, iva_ventas: vatBook }[report];
   const usesPeriod = report !== 'inventario';
   const stamp = `${company.name}-${report}-${usesPeriod ? `${from}_${to}` : localDateInputValue()}`.replace(/[^\w.-]+/g, '_');
 
@@ -115,6 +117,7 @@ export const InformesPage: React.FC<InformesPageProps> = ({ company, canView }) 
           totals={expenseTotals(expenses.rows ?? [])} rowKey={(r) => r.category} filename={`${stamp}.csv`} onReload={() => void expenses.reload()}
           emptyText="No hubo gastos en este período." />
       )}
+      {report === 'iva_ventas' && <VatBookPanel report={vatBook} filename={stamp} />}
     </div>
   );
 };

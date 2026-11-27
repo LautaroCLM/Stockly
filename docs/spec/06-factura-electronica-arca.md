@@ -63,7 +63,10 @@ Estado: **plan, pendiente de confirmación** (2026-11-26).
    `pending_credit_notes` para el historial. La Edge Function manda `CbtesAsoc`. Una factura pendiente de una
    venta anulada ya no se emite. Una venta con devoluciones sigue sin poder facturarse (se factura antes).
    Plan original: Desde una devolución o una anulación de venta facturada, asociada a la factura original.
-5. **Libro IVA Ventas.** Informe por período con exportación a Excel para el contador.
+5. **Libro IVA Ventas. HECHA (2026-11-27).** Migración `20261202000001_vat_sales_book.sql` (`vat_sales_book`:
+   comprobantes autorizados del ambiente activo, IVA por alícuota, notas en negativo; permiso Informes).
+   Pestaña "Libro IVA Ventas" en Informes con totales y exportación a Excel (importes como números, con CAE) y CSV.
+   Plan original: Informe por período con exportación a Excel para el contador.
 6. **Paso a producción.** Certificado de producción, punto de venta real, primera factura real controlada.
 
 ## Lo que tiene que hacer la empresa en ARCA (no lo puede hacer Stockly)

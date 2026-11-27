@@ -1625,6 +1625,11 @@ isOneToOne: true
 "validate_cuit":
 { Args: { "p_cuit": string }; Returns: boolean
                            },
+"vat_sales_book":
+{ Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
+              "cae": string,"environment": string,"invoice_id": string,"invoice_type": number,"issue_date": string,"kind": string,"letter": string,"net_amount": number,"number": number,"point_of_sale": number,"receiver_doc_number": string,"receiver_doc_type": number,"receiver_name": string,"receiver_vat_condition": string,"total_amount": number,"vat_10_5": number,"vat_21": number,"vat_27": number,"vat_other": number
+            }[]
+                           },
 "void_attendance":
 { Args: { "p_company_id": string,"p_reason": string,"p_record_id": string }; Returns: string
                            },

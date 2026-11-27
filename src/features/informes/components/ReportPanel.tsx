@@ -1,4 +1,4 @@
-import { AlertTriangle, Download, Loader2 } from 'lucide-react';
+import { AlertTriangle, Download, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { downloadCsv, toCsv } from '../csv';
@@ -15,10 +15,12 @@ interface ReportPanelProps<T> {
   filename: string;
   emptyText: string;
   onReload: () => void;
+  /** Exportación a Excel (.xlsx), para los informes que la ofrecen. */
+  onExportExcel?: () => void;
 }
 
 /** Tabla de un informe con estados de carga, vacío y error, y exportación a CSV. */
-export function ReportPanel<T>({ rows, isLoading, error, columns, totals, rowKey, filename, emptyText, onReload }: ReportPanelProps<T>) {
+export function ReportPanel<T>({ rows, isLoading, error, columns, totals, rowKey, filename, emptyText, onReload, onExportExcel }: ReportPanelProps<T>) {
   const exportCsv = () => {
     if (!rows) return;
     const body = rows.map((row) => columns.map((c) => c.csv(row)));
@@ -48,10 +50,18 @@ export function ReportPanel<T>({ rows, isLoading, error, columns, totals, rowKey
         <>
           <div className="flex items-center justify-between text-xs text-text-muted">
             <span>{rows.length} {rows.length === 1 ? 'fila' : 'filas'}{isLoading && ' · actualizando...'}</span>
-            <Button variant="secondary" size="sm" onClick={exportCsv} className="gap-1.5 h-8">
-              <Download size={13} />
-              <span>Exportar CSV</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              {onExportExcel && (
+                <Button variant="secondary" size="sm" onClick={onExportExcel} className="gap-1.5 h-8">
+                  <FileSpreadsheet size={13} />
+                  <span>Exportar Excel</span>
+                </Button>
+              )}
+              <Button variant="secondary" size="sm" onClick={exportCsv} className="gap-1.5 h-8">
+                <Download size={13} />
+                <span>Exportar CSV</span>
+              </Button>
+            </div>
           </div>
           <Card className="border-border bg-surface overflow-x-auto">
             <table className="w-full text-xs min-w-[560px]">
