@@ -16,7 +16,12 @@ export interface InvoiceData {
   status: 'pending' | 'authorized' | 'rejected';
   attemptNumber: number | null;
   vatLines: { arcaVatId: number; base: number; amount: number }[];
+  /** Factura que corrige una nota de crédito (null en facturas). */
+  associated: { invoiceType: number; pointOfSale: number; number: number; issueDate: string } | null;
 }
+
+/** Tipos sin IVA discriminado: Factura C (11) y Nota de Crédito C (13). */
+const isTypeC = (invoiceType: number) => invoiceType === 11 || invoiceType === 13;
 
 const money = (n: number) => n.toFixed(2);
 /** 2026-11-27 → 20261127 */
@@ -30,9 +35,16 @@ const envelope = (body: string) =>
 const authXml = (a: WsfeAuth) =>
   `<ar:Auth><ar:Token>${escapeXml(a.token)}</ar:Token><ar:Sign>${escapeXml(a.sign)}</ar:Sign><ar:Cuit>${a.cuit}</ar:Cuit></ar:Auth>`;
 
-/** FECAESolicitar: el orden de los campos es el del WSDL de ARCA. Concepto 1 = productos. */
+/**
+ * FECAESolicitar: el orden de los campos es el del WSDL de ARCA. Concepto 1 = productos.
+ * Una nota de crédito informa en CbtesAsoc la factura que corrige (del mismo emisor).
+ */
 export function buildCaeRequestEnvelope(auth: WsfeAuth, inv: InvoiceData, number: number): string {
-  const isC = inv.invoiceType === 11;
+  const isC = isTypeC(inv.invoiceType);
+  const a = inv.associated;
+  const associated = a === null ? '' :
+    `<ar:CbtesAsoc><ar:CbteAsoc><ar:Tipo>${a.invoiceType}</ar:Tipo><ar:PtoVta>${a.pointOfSale}</ar:PtoVta>` +
+    `<ar:Nro>${a.number}</ar:Nro><ar:Cuit>${auth.cuit}</ar:Cuit><ar:CbteFch>${toArcaDate(a.issueDate)}</ar:CbteFch></ar:CbteAsoc></ar:CbtesAsoc>`;
   const iva = isC || inv.vatLines.length === 0 ? '' :
     `<ar:Iva>${inv.vatLines.map((l) =>
       `<ar:AlicIva><ar:Id>${l.arcaVatId}</ar:Id><ar:BaseImp>${money(l.base)}</ar:BaseImp><ar:Importe>${money(l.amount)}</ar:Importe></ar:AlicIva>`
@@ -47,6 +59,7 @@ export function buildCaeRequestEnvelope(auth: WsfeAuth, inv: InvoiceData, number
     `<ar:ImpIVA>${money(isC ? 0 : inv.vatAmount)}</ar:ImpIVA>` +
     '<ar:MonId>PES</ar:MonId><ar:MonCotiz>1</ar:MonCotiz>' +
     `<ar:CondicionIVAReceptorId>${inv.receiverVatConditionId}</ar:CondicionIVAReceptorId>` +
+    associated +
     iva;
   return envelope(
     `<ar:FECAESolicitar>${authXml(auth)}<ar:FeCAEReq>` +

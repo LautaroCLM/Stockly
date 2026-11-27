@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatCurrency } from '@/lib/formatters';
 import type { InvoiceDetail } from '../invoiceTypes';
-import { receiverDocLabel } from '../invoiceFormat';
+import { invoiceLabel, receiverDocLabel } from '../invoiceFormat';
 import { CUSTOMER_VAT_CONDITION_LABELS, formatVatRate, toCustomerVatCondition, toVatRate } from '../vat';
 
 const Line: React.FC<{ label: string; value: string; strong?: boolean }> = ({ label, value, strong }) => (
@@ -15,6 +15,11 @@ export const InvoicePreview: React.FC<{ invoice: InvoiceDetail }> = ({ invoice }
   const doc = receiverDocLabel(invoice.receiverDocType, invoice.receiverDocNumber);
   return (
     <div className="space-y-3 text-xs">
+      {invoice.associated && (
+        <p className="text-text-secondary">
+          Corrige la {invoiceLabel({ ...invoice.associated, kind: 'invoice' })}.
+        </p>
+      )}
       <div className="p-3 rounded-lg bg-surface-2 border border-border space-y-1">
         <div className="text-[11px] uppercase tracking-wider text-text-muted">Receptor</div>
         <div className="font-semibold text-text-primary">{invoice.receiverName}</div>
@@ -32,7 +37,7 @@ export const InvoicePreview: React.FC<{ invoice: InvoiceDetail }> = ({ invoice }
         <Line label="Total" value={formatCurrency(invoice.totalAmount)} strong />
       </div>
       {invoice.environment === 'homologacion' && (
-        <p className="text-[11px] text-warning">Ambiente de prueba (homologación): la factura no tiene validez fiscal.</p>
+        <p className="text-[11px] text-warning">Ambiente de prueba (homologación): el comprobante no tiene validez fiscal.</p>
       )}
     </div>
   );

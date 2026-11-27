@@ -9,6 +9,7 @@ const B: InvoiceData = {
   id: 'i1', invoiceType: 6, pointOfSale: 3, issueDate: '2026-11-27', receiverDocType: 99, receiverDocNumber: '0',
   receiverVatConditionId: 5, netAmount: 1080, vatAmount: 207.9, totalAmount: 1287.9, status: 'pending', attemptNumber: null,
   vatLines: [{ arcaVatId: 4, base: 180, amount: 18.9 }, { arcaVatId: 5, base: 900, amount: 189 }],
+  associated: null,
 };
 
 describe('FECAESolicitar', () => {
@@ -20,6 +21,21 @@ describe('FECAESolicitar', () => {
     expect(xml).toContain('<ar:ImpIVA>207.90</ar:ImpIVA>');
     expect(xml).toContain('<ar:CondicionIVAReceptorId>5</ar:CondicionIVAReceptorId><ar:Iva>');
     expect(xml).toContain('<ar:AlicIva><ar:Id>4</ar:Id><ar:BaseImp>180.00</ar:BaseImp><ar:Importe>18.90</ar:Importe></ar:AlicIva>');
+  });
+
+  it('la nota de crédito informa la factura asociada después de la condición del receptor', () => {
+    const nc = { ...B, invoiceType: 8, associated: { invoiceType: 6, pointOfSale: 3, number: 16, issueDate: '2026-11-27' } };
+    const xml = buildCaeRequestEnvelope(AUTH, nc, 4);
+    expect(xml).toContain('<ar:CbteTipo>8</ar:CbteTipo>');
+    expect(xml).toContain('</ar:CondicionIVAReceptorId><ar:CbtesAsoc><ar:CbteAsoc><ar:Tipo>6</ar:Tipo><ar:PtoVta>3</ar:PtoVta>' +
+      '<ar:Nro>16</ar:Nro><ar:Cuit>20329642330</ar:Cuit><ar:CbteFch>20261127</ar:CbteFch></ar:CbteAsoc></ar:CbtesAsoc><ar:Iva>');
+    expect(buildCaeRequestEnvelope(AUTH, B, 1)).not.toContain('CbtesAsoc');
+  });
+
+  it('la nota de crédito C tampoco lleva IVA', () => {
+    const xml = buildCaeRequestEnvelope(AUTH, { ...B, invoiceType: 13, vatLines: [], associated: { invoiceType: 11, pointOfSale: 1, number: 2, issueDate: '2026-11-27' } }, 1);
+    expect(xml).toContain('<ar:ImpIVA>0.00</ar:ImpIVA>');
+    expect(xml).not.toContain('<ar:Iva>');
   });
 
   it('la Factura C no lleva IVA', () => {

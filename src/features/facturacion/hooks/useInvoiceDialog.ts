@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toUserMessage } from '@/lib/errorMessages';
-import { authorizeInvoice, fetchInvoiceDetail, prepareInvoiceRpc } from '../api/invoicesApi';
-import type { InvoiceDetail } from '../invoiceTypes';
+import { authorizeInvoice, fetchInvoiceDetail } from '../api/invoicesApi';
+import type { InvoiceDetail, InvoiceValueResult } from '../invoiceTypes';
 
 export type InvoiceStep = 'loading' | 'ready' | 'sending' | 'failed';
 
 /**
- * Factura de una venta: la prepara (o abre la existente), pide el CAE y vuelve a leerla.
- * `existingId` abre una factura ya creada sin prepararla de nuevo.
+ * Factura o nota de crédito: la prepara (o abre la existente), pide el CAE y vuelve a leerla.
+ * `existingId` abre un comprobante ya creado; si es null se llama a `prepare`.
  */
-export function useInvoiceDialog(companyId: string, saleId: string, existingId: string | null, onChanged: () => void) {
+export function useInvoiceDialog(
+  companyId: string, existingId: string | null, prepare: () => Promise<InvoiceValueResult<string>>, onChanged: () => void
+) {
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [step, setStep] = useState<InvoiceStep>('loading');
   const [message, setMessage] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export function useInvoiceDialog(companyId: string, saleId: string, existingId: 
     let alive = true;
     void (async () => {
       if (existingId) return load(existingId);
-      const prepared = await prepareInvoiceRpc(companyId, saleId);
+      const prepared = await prepare();
       if (!alive) return;
       if (!prepared.ok) {
         setMessage(prepared.message);
@@ -39,8 +41,8 @@ export function useInvoiceDialog(companyId: string, saleId: string, existingId: 
       await load(prepared.value);
     })();
     return () => { alive = false; };
-    // Solo al abrir: onChanged cambia en cada render del padre y no debe volver a preparar la factura
-  }, [companyId, saleId, existingId, load]);
+    // Solo al abrir: prepare y onChanged cambian en cada render del padre y no deben volver a preparar
+  }, [companyId, existingId, load]);
 
   const emit = useCallback(async () => {
     if (!invoice) return;

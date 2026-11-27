@@ -3,7 +3,7 @@ import { arcaQrUrl, displayUnitPrice, formatInvoiceNumber, invoiceLabel, receive
 import type { InvoiceDetail } from './invoiceTypes';
 
 const INV: InvoiceDetail = {
-  id: 'i', saleId: 's', letter: 'B', pointOfSale: 3, number: 16, status: 'authorized', arcaMessage: null, createdAt: '',
+  id: 'i', saleId: 's', kind: 'invoice', saleReturnId: null, associated: null, letter: 'B', pointOfSale: 3, number: 16, status: 'authorized', arcaMessage: null, createdAt: '',
   environment: 'homologacion', invoiceType: 6, issueDate: '2026-11-27', receiverDocType: 99, receiverDocNumber: '0',
   receiverName: 'Consumidor final', receiverVatCondition: 'consumidor_final', receiverAddress: null, subtotal: 1431,
   discount: 143.1, netAmount: 1080, vatAmount: 207.9, totalAmount: 1287.9, cae: '76123456789012', caeExpiresAt: '2026-12-07',
@@ -15,6 +15,7 @@ describe('formato de factura', () => {
     expect(formatInvoiceNumber(3, 16)).toBe('00003-00000016');
     expect(invoiceLabel(INV)).toBe('Factura B 00003-00000016');
     expect(invoiceLabel({ ...INV, number: null })).toBe('Factura B (sin número todavía)');
+    expect(invoiceLabel({ ...INV, kind: 'credit_note', number: 4 })).toBe('Nota de crédito B 00003-00000004');
   });
   it('muestra el documento del receptor solo si está identificado', () => {
     expect(receiverDocLabel(80, '30712345671')).toBe('CUIT 30712345671');

@@ -21,6 +21,13 @@ export async function getInvoiceContext(userClient: SupabaseClient, companyId: s
   return { userId: String(d.userId), environment: toEnvironment(d.environment), cuit: String(d.cuit ?? '') };
 }
 
+function toAssociated(raw: unknown): InvoiceData['associated'] {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const a = raw as Record<string, unknown>;
+  if (typeof a.number !== 'number') throw new Error('La factura asociada no tiene número de ARCA.');
+  return { invoiceType: Number(a.invoiceType), pointOfSale: Number(a.pointOfSale), number: a.number, issueDate: String(a.issueDate) };
+}
+
 function toInvoice(raw: unknown): InvoiceData {
   const d = raw as Record<string, unknown>;
   const lines = Array.isArray(d.vatLines) ? (d.vatLines as Record<string, unknown>[]) : [];
@@ -38,6 +45,7 @@ function toInvoice(raw: unknown): InvoiceData {
     status: d.status === 'authorized' || d.status === 'rejected' ? d.status : 'pending',
     attemptNumber: typeof d.attemptNumber === 'number' ? d.attemptNumber : null,
     vatLines: lines.map((l) => ({ arcaVatId: Number(l.arcaVatId), base: Number(l.base), amount: Number(l.amount) })),
+    associated: toAssociated(d.associated),
   };
 }
 

@@ -56,7 +56,13 @@ Estado: **plan, pendiente de confirmación** (2026-11-26).
    Quedan para después: impresión A4, envío por WhatsApp y el tilde "Facturar" en el carrito.
    Plan original de la tanda: Elegir A/B/C según emisor y cliente, IVA discriminado en la A, CAE + vencimiento + QR,
    impresión 80 mm y A4, envío por WhatsApp como el ticket. Estado "Pendiente / Autorizada / Rechazada".
-4. **Notas de crédito.** Desde una devolución o una anulación de venta facturada, asociada a la factura original.
+4. **Notas de crédito. HECHA en código (2026-11-27), falta probar el CAE real.**
+   Migración `20261201000001_credit_notes.sql`: las notas viven en `invoices` (kind `credit_note`, tipos 3/8/13)
+   asociadas a la factura; `prepare_credit_note` (anulación: copia la factura; devolución: lo devuelto con la
+   alícuota de cada ítem en la factura, vía `invoice_items.sale_item_id`), tope = total de la factura,
+   `pending_credit_notes` para el historial. La Edge Function manda `CbtesAsoc`. Una factura pendiente de una
+   venta anulada ya no se emite. Una venta con devoluciones sigue sin poder facturarse (se factura antes).
+   Plan original: Desde una devolución o una anulación de venta facturada, asociada a la factura original.
 5. **Libro IVA Ventas.** Informe por período con exportación a Excel para el contador.
 6. **Paso a producción.** Certificado de producción, punto de venta real, primera factura real controlada.
 

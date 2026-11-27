@@ -6,8 +6,9 @@ export function formatInvoiceNumber(pointOfSale: number, number: number | null):
   return number === null ? `${pos}-(sin número)` : `${pos}-${String(number).padStart(8, '0')}`;
 }
 
-export function invoiceLabel(inv: Pick<InvoiceSummary, 'letter' | 'pointOfSale' | 'number'>): string {
-  return inv.number === null ? `Factura ${inv.letter} (sin número todavía)` : `Factura ${inv.letter} ${formatInvoiceNumber(inv.pointOfSale, inv.number)}`;
+export function invoiceLabel(inv: Pick<InvoiceSummary, 'letter' | 'pointOfSale' | 'number'> & { kind?: InvoiceSummary['kind'] }): string {
+  const name = inv.kind === 'credit_note' ? 'Nota de crédito' : 'Factura';
+  return inv.number === null ? `${name} ${inv.letter} (sin número todavía)` : `${name} ${inv.letter} ${formatInvoiceNumber(inv.pointOfSale, inv.number)}`;
 }
 
 const DOC_TYPE_LABELS: Record<number, string> = { 80: 'CUIT', 86: 'CUIL', 96: 'DNI' };

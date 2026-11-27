@@ -669,14 +669,14 @@ isOneToOne: false
                   ]
                 },"invoice_items": {
                   Row: {
-                    "company_id": string,"description": string,"id": string,"invoice_id": string,"line_total": number,"position": number,"quantity": number,"unit_price": number,"vat_rate": number
+                    "company_id": string,"description": string,"id": string,"invoice_id": string,"line_total": number,"position": number,"quantity": number,"sale_item_id": string | null,"unit_price": number,"vat_rate": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_id": string,"description": string,"id"?: string,"invoice_id": string,"line_total": number,"position": number,"quantity": number,"unit_price": number,"vat_rate": number
+                    "company_id": string,"description": string,"id"?: string,"invoice_id": string,"line_total": number,"position": number,"quantity": number,"sale_item_id"?: string | null,"unit_price": number,"vat_rate": number
                   }
                   Update: {
-                    "company_id"?: string,"description"?: string,"id"?: string,"invoice_id"?: string,"line_total"?: number,"position"?: number,"quantity"?: number,"unit_price"?: number,"vat_rate"?: number
+                    "company_id"?: string,"description"?: string,"id"?: string,"invoice_id"?: string,"line_total"?: number,"position"?: number,"quantity"?: number,"sale_item_id"?: string | null,"unit_price"?: number,"vat_rate"?: number
                   }
                   Relationships: [
                     {
@@ -684,6 +684,12 @@ isOneToOne: false
       columns: ["company_id","invoice_id"]
 isOneToOne: false
       referencedRelation: "invoices"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_invoice_items_sale_item"
+      columns: ["company_id","sale_item_id"]
+isOneToOne: false
+      referencedRelation: "sale_items"
       referencedColumns: ["company_id","id"]
     }
                   ]
@@ -709,21 +715,33 @@ isOneToOne: false
                   ]
                 },"invoices": {
                   Row: {
-                    "arca_message": string | null,"attempt_number": number | null,"authorized_at": string | null,"cae": string | null,"cae_expires_at": string | null,"company_id": string,"created_at": string,"created_by": string,"discount": number,"environment": string,"id": string,"invoice_type": number,"issue_date": string,"letter": string,"net_amount": number,"number": number | null,"point_of_sale": number,"receiver_address": string | null,"receiver_doc_number": string,"receiver_doc_type": number,"receiver_name": string,"receiver_vat_condition": string,"receiver_vat_condition_id": number,"sale_id": string,"status": string,"subtotal": number,"total_amount": number,"updated_at": string,"vat_amount": number
+                    "arca_message": string | null,"associated_invoice_id": string | null,"attempt_number": number | null,"authorized_at": string | null,"cae": string | null,"cae_expires_at": string | null,"company_id": string,"created_at": string,"created_by": string,"discount": number,"environment": string,"id": string,"invoice_type": number,"issue_date": string,"kind": string,"letter": string,"net_amount": number,"number": number | null,"point_of_sale": number,"receiver_address": string | null,"receiver_doc_number": string,"receiver_doc_type": number,"receiver_name": string,"receiver_vat_condition": string,"receiver_vat_condition_id": number,"sale_id": string,"sale_return_id": string | null,"status": string,"subtotal": number,"total_amount": number,"updated_at": string,"vat_amount": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "arca_message"?: string | null,"attempt_number"?: number | null,"authorized_at"?: string | null,"cae"?: string | null,"cae_expires_at"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"discount": number,"environment": string,"id"?: string,"invoice_type": number,"issue_date": string,"letter": string,"net_amount": number,"number"?: number | null,"point_of_sale": number,"receiver_address"?: string | null,"receiver_doc_number": string,"receiver_doc_type": number,"receiver_name": string,"receiver_vat_condition": string,"receiver_vat_condition_id": number,"sale_id": string,"status"?: string,"subtotal": number,"total_amount": number,"updated_at"?: string,"vat_amount": number
+                    "arca_message"?: string | null,"associated_invoice_id"?: string | null,"attempt_number"?: number | null,"authorized_at"?: string | null,"cae"?: string | null,"cae_expires_at"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"discount": number,"environment": string,"id"?: string,"invoice_type": number,"issue_date": string,"kind"?: string,"letter": string,"net_amount": number,"number"?: number | null,"point_of_sale": number,"receiver_address"?: string | null,"receiver_doc_number": string,"receiver_doc_type": number,"receiver_name": string,"receiver_vat_condition": string,"receiver_vat_condition_id": number,"sale_id": string,"sale_return_id"?: string | null,"status"?: string,"subtotal": number,"total_amount": number,"updated_at"?: string,"vat_amount": number
                   }
                   Update: {
-                    "arca_message"?: string | null,"attempt_number"?: number | null,"authorized_at"?: string | null,"cae"?: string | null,"cae_expires_at"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"discount"?: number,"environment"?: string,"id"?: string,"invoice_type"?: number,"issue_date"?: string,"letter"?: string,"net_amount"?: number,"number"?: number | null,"point_of_sale"?: number,"receiver_address"?: string | null,"receiver_doc_number"?: string,"receiver_doc_type"?: number,"receiver_name"?: string,"receiver_vat_condition"?: string,"receiver_vat_condition_id"?: number,"sale_id"?: string,"status"?: string,"subtotal"?: number,"total_amount"?: number,"updated_at"?: string,"vat_amount"?: number
+                    "arca_message"?: string | null,"associated_invoice_id"?: string | null,"attempt_number"?: number | null,"authorized_at"?: string | null,"cae"?: string | null,"cae_expires_at"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"discount"?: number,"environment"?: string,"id"?: string,"invoice_type"?: number,"issue_date"?: string,"kind"?: string,"letter"?: string,"net_amount"?: number,"number"?: number | null,"point_of_sale"?: number,"receiver_address"?: string | null,"receiver_doc_number"?: string,"receiver_doc_type"?: number,"receiver_name"?: string,"receiver_vat_condition"?: string,"receiver_vat_condition_id"?: number,"sale_id"?: string,"sale_return_id"?: string | null,"status"?: string,"subtotal"?: number,"total_amount"?: number,"updated_at"?: string,"vat_amount"?: number
                   }
                   Relationships: [
                     {
+      foreignKeyName: "fk_invoices_associated"
+      columns: ["company_id","associated_invoice_id"]
+isOneToOne: false
+      referencedRelation: "invoices"
+      referencedColumns: ["company_id","id"]
+    },{
       foreignKeyName: "fk_invoices_sale"
       columns: ["company_id","sale_id"]
 isOneToOne: false
       referencedRelation: "sales"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_invoices_sale_return"
+      columns: ["company_id","sale_return_id"]
+isOneToOne: false
+      referencedRelation: "sale_returns"
       referencedColumns: ["company_id","id"]
     },{
       foreignKeyName: "invoices_company_id_fkey"
@@ -1459,6 +1477,14 @@ isOneToOne: true
                            },
 "open_cash_session":
 { Args: { "p_company_id": string,"p_notes"?: string,"p_opening_amount": number }; Returns: Json
+                           },
+"pending_credit_notes":
+{ Args: { "p_company_id": string,"p_sale_ids": (string)[] }; Returns: {
+              "amount": number,"return_number": string,"sale_id": string,"sale_return_id": string
+            }[]
+                           },
+"prepare_credit_note":
+{ Args: { "p_company_id": string,"p_sale_id": string,"p_sale_return_id": string }; Returns: string
                            },
 "prepare_invoice":
 { Args: { "p_company_id": string,"p_sale_id": string }; Returns: string

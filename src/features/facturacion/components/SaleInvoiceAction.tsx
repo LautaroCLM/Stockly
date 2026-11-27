@@ -1,44 +1,71 @@
 import React from 'react';
-import { FileCheck2, FileClock, FileX2, ReceiptText } from 'lucide-react';
+import { FileCheck2, FileClock, FileMinus2, FileX2, ReceiptText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import type { InvoiceSummary } from '../invoiceTypes';
+import { formatCurrency } from '@/lib/formatters';
+import type { CreditNoteNeed, SaleInvoicesState } from '../invoiceTypes';
 import { invoiceLabel } from '../invoiceFormat';
 
 interface Props {
-  invoice: InvoiceSummary | undefined;
+  state: SaleInvoicesState | undefined;
   /** La venta se puede facturar (completada, sin devoluciones). */
   canInvoiceSale: boolean;
   /** El usuario puede facturar y la empresa emite factura electrónica. */
   canInvoice: boolean;
-  onOpen: (invoiceId: string | null) => void;
+  /** Abrir la factura (null: prepararla). */
+  onOpenInvoice: (invoiceId: string | null) => void;
+  /** Abrir una nota de crédito existente o preparar la que falta. */
+  onOpenCreditNote: (invoiceId: string | null, need: CreditNoteNeed | null) => void;
 }
 
 const BUTTON = 'h-7 px-2.5 text-xs gap-1';
 
-/** Estado de la factura de una venta en el historial: ver, reintentar o facturar. */
-export const SaleInvoiceAction: React.FC<Props> = ({ invoice, canInvoiceSale, canInvoice, onOpen }) => {
+/** Factura y notas de crédito de una venta en el historial: ver, reintentar, facturar o acreditar. */
+export const SaleInvoiceAction: React.FC<Props> = ({ state, canInvoiceSale, canInvoice, onOpenInvoice, onOpenCreditNote }) => {
+  const invoice = state?.invoice;
+  const notes = state?.creditNotes ?? [];
+  const needs = canInvoice ? (state?.needs ?? []) : [];
+
+  let main: React.ReactNode = null;
   if (invoice?.status === 'authorized') {
-    return (
-      <Button variant="secondary" size="sm" className={BUTTON} title={invoiceLabel(invoice)} onClick={() => onOpen(invoice.id)}>
+    main = (
+      <Button variant="secondary" size="sm" className={BUTTON} title={invoiceLabel(invoice)} onClick={() => onOpenInvoice(invoice.id)}>
         <FileCheck2 size={13} className="text-success" /><span>Factura {invoice.letter}</span>
       </Button>
     );
-  }
-  if (!canInvoice) return null;
-  if (invoice?.status === 'pending') {
-    return (
-      <Button variant="secondary" size="sm" className={`${BUTTON} text-warning`} title={invoice.arcaMessage ?? 'Factura sin CAE'} onClick={() => onOpen(invoice.id)}>
+  } else if (canInvoice && invoice?.status === 'pending') {
+    main = (
+      <Button variant="secondary" size="sm" className={`${BUTTON} text-warning`} title={invoice.arcaMessage ?? 'Factura sin CAE'} onClick={() => onOpenInvoice(invoice.id)}>
         <FileClock size={13} /><span>Factura pendiente</span>
       </Button>
     );
+  } else if (canInvoice && canInvoiceSale) {
+    const rejected = invoice?.status === 'rejected';
+    main = (
+      <Button variant="secondary" size="sm" className={BUTTON} title={rejected ? `Rechazada: ${invoice?.arcaMessage ?? ''}` : 'Emitir factura electrónica'}
+        onClick={() => onOpenInvoice(null)}>
+        {rejected ? <FileX2 size={13} className="text-danger" /> : <ReceiptText size={13} />}
+        <span>Facturar</span>
+      </Button>
+    );
   }
-  if (!canInvoiceSale) return null;
-  const rejected = invoice?.status === 'rejected';
+
   return (
-    <Button variant="secondary" size="sm" className={BUTTON} title={rejected ? `Rechazada: ${invoice?.arcaMessage ?? ''}` : 'Emitir factura electrónica'}
-      onClick={() => onOpen(null)}>
-      {rejected ? <FileX2 size={13} className="text-danger" /> : <ReceiptText size={13} />}
-      <span>Facturar</span>
-    </Button>
+    <>
+      {main}
+      {notes.map((nc) => (
+        <Button key={nc.id} variant="secondary" size="sm" className={`${BUTTON} ${nc.status === 'pending' ? 'text-warning' : ''}`}
+          title={nc.status === 'pending' ? (nc.arcaMessage ?? 'Nota de crédito sin CAE') : invoiceLabel(nc)} onClick={() => onOpenCreditNote(nc.id, null)}>
+          <FileMinus2 size={13} className={nc.status === 'authorized' ? 'text-success' : ''} />
+          <span>{nc.status === 'pending' ? 'NC pendiente' : `NC ${nc.letter}`}</span>
+        </Button>
+      ))}
+      {needs.map((need) => (
+        <Button key={need.saleReturnId ?? 'anulacion'} variant="secondary" size="sm" className={`${BUTTON} text-warning`}
+          title={`${need.saleReturnId ? `Devolución ${need.returnNumber}` : 'Venta anulada'}: falta acreditar ${formatCurrency(need.amount)}`}
+          onClick={() => onOpenCreditNote(null, need)}>
+          <FileMinus2 size={13} /><span>Emitir nota de crédito</span>
+        </Button>
+      ))}
+    </>
   );
 };

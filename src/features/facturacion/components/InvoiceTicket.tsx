@@ -21,7 +21,7 @@ interface Props {
   logo: string | null;
 }
 
-/** Factura electrónica en rollo de 80 mm: datos del emisor, receptor, ítems, IVA, CAE y QR de ARCA. */
+/** Factura o nota de crédito en rollo de 80 mm: emisor, receptor, ítems, IVA, CAE y QR de ARCA. */
 export const InvoiceTicket: React.FC<Props> = ({ invoice, company, settings, arca, logo }) => {
   const [qr, setQr] = useState<string | null>(null);
   const qrUrl = arcaQrUrl(invoice, company.cuit);
@@ -47,7 +47,9 @@ export const InvoiceTicket: React.FC<Props> = ({ invoice, company, settings, arc
         {settings.address && <div>{settings.address}</div>}
         {arca.grossIncomeNumber && <div>IIBB: {arca.grossIncomeNumber}</div>}
         {arca.activityStartDate && <div>Inicio de actividades: {formatDateShort(arca.activityStartDate)}</div>}
-        <div className="mt-1.5 py-1 border-4 border-black font-extrabold text-sm tracking-widest">FACTURA {invoice.letter}</div>
+        <div className="mt-1.5 py-1 border-4 border-black font-extrabold text-sm tracking-widest">
+          {invoice.kind === 'credit_note' ? 'NOTA DE CRÉDITO' : 'FACTURA'} {invoice.letter}
+        </div>
         <div>Código {String(invoice.invoiceType).padStart(2, '0')} · ORIGINAL</div>
         {invoice.environment === 'homologacion' && <div className="border-2 border-black py-0.5">PRUEBA - SIN VALIDEZ FISCAL</div>}
       </div>
@@ -55,6 +57,9 @@ export const InvoiceTicket: React.FC<Props> = ({ invoice, company, settings, arc
       <div className={`py-2 space-y-1 ${DIVIDER}`}>
         <Row label="NRO:" value={formatInvoiceNumber(invoice.pointOfSale, invoice.number)} />
         <Row label="FECHA:" value={formatDateShort(invoice.issueDate)} />
+        {invoice.associated && (
+          <Row label="ASOCIADA A:" value={`FACT. ${invoice.associated.letter} ${formatInvoiceNumber(invoice.associated.pointOfSale, invoice.associated.number)}`} />
+        )}
         <div className="pt-1 uppercase break-words">{invoice.receiverName}</div>
         {doc && <div>{doc}</div>}
         <div>{condition}</div>

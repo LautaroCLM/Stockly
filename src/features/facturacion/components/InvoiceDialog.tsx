@@ -9,22 +9,23 @@ import { useDocumentSettings } from '@/features/documentos/hooks/useDocumentSett
 import { useArcaSettings } from '../hooks/useArcaSettings';
 import { useInvoiceDialog } from '../hooks/useInvoiceDialog';
 import { invoiceLabel } from '../invoiceFormat';
+import type { InvoiceValueResult } from '../invoiceTypes';
 import { InvoicePreview } from './InvoicePreview';
 import { InvoiceTicket } from './InvoiceTicket';
 
 interface Props {
   company: Company;
-  saleId: string;
   saleNumber: string;
-  /** Factura ya creada (pendiente, rechazada o autorizada); null para prepararla. */
+  /** Comprobante ya creado (pendiente, rechazado o autorizado); null para prepararlo con `prepare`. */
   invoiceId: string | null;
+  prepare: () => Promise<InvoiceValueResult<string>>;
   onClose: () => void;
   onChanged: () => void;
 }
 
-/** Facturar una venta: revisar, pedir el CAE a ARCA e imprimir la factura autorizada. */
-export const InvoiceDialog: React.FC<Props> = ({ company, saleId, saleNumber, invoiceId, onClose, onChanged }) => {
-  const { invoice, step, message, emit } = useInvoiceDialog(company.id, saleId, invoiceId, onChanged);
+/** Factura o nota de crédito de una venta: revisar, pedir el CAE a ARCA e imprimir el comprobante autorizado. */
+export const InvoiceDialog: React.FC<Props> = ({ company, saleNumber, invoiceId, prepare, onClose, onChanged }) => {
+  const { invoice, step, message, emit } = useInvoiceDialog(company.id, invoiceId, prepare, onChanged);
   const { settings } = useDocumentSettings(company.id, true);
   const arca = useArcaSettings(company.id);
   const { logo } = useCompanyLogo(company.id);
@@ -35,7 +36,7 @@ export const InvoiceDialog: React.FC<Props> = ({ company, saleId, saleNumber, in
   const shownMessage = message ?? (invoice && invoice.status !== 'authorized' ? invoice.arcaMessage : null);
 
   return (
-    <ModalFrame ariaLabel={`Factura de la venta ${saleNumber}`} onBackdropClick={isSending ? () => undefined : onClose} panelClassName="max-w-lg print:hidden">
+    <ModalFrame ariaLabel={`Comprobante de la venta ${saleNumber}`} onBackdropClick={isSending ? () => undefined : onClose} panelClassName="max-w-lg print:hidden">
       <div className="p-4 px-6 border-b border-border flex items-center justify-between bg-surface-2/60">
         <div className="flex items-center gap-2">
           <ReceiptText size={18} className="text-primary" />
@@ -48,7 +49,7 @@ export const InvoiceDialog: React.FC<Props> = ({ company, saleId, saleNumber, in
 
       <div className="min-h-0 flex-1 overflow-y-auto p-6 space-y-3">
         {step === 'loading' && (
-          <div className="flex items-center justify-center gap-2 py-8 text-xs text-text-muted"><Loader2 size={16} className="animate-spin text-primary" /> Preparando la factura...</div>
+          <div className="flex items-center justify-center gap-2 py-8 text-xs text-text-muted"><Loader2 size={16} className="animate-spin text-primary" /> Preparando el comprobante...</div>
         )}
         {shownMessage && (
           <div role="alert" className="p-3 rounded-lg bg-danger/10 border border-danger/30 text-danger text-xs flex items-start gap-2">
@@ -61,11 +62,11 @@ export const InvoiceDialog: React.FC<Props> = ({ company, saleId, saleNumber, in
       <div className="p-4 px-6 border-t border-border bg-surface-2/60 flex items-center justify-between gap-3">
         <Button variant="secondary" size="md" onClick={onClose} disabled={isSending}>Cerrar</Button>
         {authorized ? (
-          <Button variant="primary" size="md" onClick={() => window.print()} className="gap-2"><Printer size={16} /><span>Imprimir factura</span></Button>
+          <Button variant="primary" size="md" onClick={() => window.print()} className="gap-2"><Printer size={16} /><span>Imprimir</span></Button>
         ) : invoice?.status === 'pending' ? (
           <Button variant="primary" size="md" onClick={() => void emit()} disabled={isSending} className="gap-2">
             {isSending ? <Loader2 size={16} className="animate-spin" /> : <ReceiptText size={16} />}
-            <span>{isSending ? 'Pidiendo el CAE a ARCA...' : invoice.arcaMessage ? 'Reintentar' : 'Emitir factura'}</span>
+            <span>{isSending ? 'Pidiendo el CAE a ARCA...' : invoice.arcaMessage ? 'Reintentar' : invoice.kind === 'credit_note' ? 'Emitir nota de crédito' : 'Emitir factura'}</span>
           </Button>
         ) : null}
       </div>
