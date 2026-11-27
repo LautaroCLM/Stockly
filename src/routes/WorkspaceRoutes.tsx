@@ -45,6 +45,9 @@ interface WorkspaceRoutesProps {
   /** Permisos del rol empleado (null mientras cargan). */
   permissionLevels: ModuleLevels | null;
   inventorySearch: { query: string; id: number } | null;
+  /** Búsquedas pedidas desde la paleta Ctrl+K. */
+  customerSearch: { query: string; id: number } | null;
+  salesSearch: { query: string; id: number } | null;
   /** Pedido de reposición desde el Dashboard (cambia en cada pedido). */
   restockRequest: number;
   onRequestRestock: () => void;
@@ -134,7 +137,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
         <VentasPage company={company} customers={customers.customers} isMasterAdmin={access('anular_ventas').canOperate}
           onViewReceipt={props.onViewReceipt} onNavigateToInventario={goTo('inventario')}
           onSaleCancelled={reloadCatalog(catalog, 'tras anulación')} canInvoice={access('facturacion').canOperate}
-          canEditSeller={access('personal').canOperate} />
+          canEditSeller={access('personal').canOperate} searchRequest={props.salesSearch} />
       );
     case 'documentos':
       return <DocumentosPage company={company} {...access('documentos')} isMasterAdmin={isMasterAdmin} products={catalog.products} customers={customers.customers} />;
@@ -184,7 +187,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       return (
         <ClientesPage company={company} customers={customers.customers} isLoading={customers.isLoading}
           error={customers.error} isMasterAdmin={access('clientes').canOperate} onReload={customers.reloadCustomers}
-          onSaveCustomer={customers.saveCustomer} onToggleStatus={customers.toggleStatus} />
+          onSaveCustomer={customers.saveCustomer} onToggleStatus={customers.toggleStatus} searchRequest={props.customerSearch} />
       );
     case 'config-miembros':
       return (

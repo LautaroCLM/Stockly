@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { Company } from '@/types';
 import type { CompanyRole } from '@/features/companies/types';
@@ -30,6 +30,7 @@ import { useStockLots } from '@/features/vencimientos/hooks/useStockLots';
 import { useWarehouses } from '@/features/depositos/hooks/useWarehouses';
 import { WarehouseSwitcher } from '@/features/depositos/components/WarehouseSwitcher';
 import { CashReminder } from '@/features/caja/components/CashReminder';
+import { WorkspaceCommandPalette } from '@/features/busqueda/components/WorkspaceCommandPalette';
 
 interface AppWorkspaceProps {
   user: User;
@@ -72,6 +73,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   const members = useCompanyMembers(companyId, isMasterAdmin);
   const settings = useCompanySettings(companyId);
   const warehouses = useWarehouses(companyId);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const sale = useSaleFlow({
     companyId,
@@ -127,8 +129,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         cartItemsCount={cart.totalItemsCount}
         cartTotal={cart.total}
         onOpenCart={sale.openCart}
-        onSearch={navigation.searchInventory}
-        searchProducts={catalog.products}
+        onOpenSearch={() => setSearchOpen(true)}
         userName={profile?.full_name || undefined}
         userEmail={user.email || undefined}
         onSignOut={onSignOut}
@@ -145,6 +146,8 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           isMasterAdmin={isMasterAdmin}
           permissionLevels={permissions.levels}
           inventorySearch={navigation.inventorySearch}
+          customerSearch={navigation.customerSearch}
+          salesSearch={navigation.salesSearch}
           restockRequest={navigation.restockRequest}
           onRequestRestock={navigation.requestRestock}
           catalog={catalog}
@@ -206,6 +209,9 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
       />
 
       <CashReminder companyId={companyId} notices={notices} onOpenCash={() => setActiveRoute('caja')} />
+      <WorkspaceCommandPalette isOpen={searchOpen} setOpen={setSearchOpen} sections={nav.visible} products={catalog.products}
+        customers={customers.customers} onNavigate={setActiveRoute} onSearchIn={navigation.searchIn} onOpenCart={sale.openCart}
+        onAddToCart={(product) => { cart.addItem(product, 1); cartFeedback(); }} />
 
       <ReceiptModal
         isOpen={receiptSale !== null}

@@ -1,42 +1,17 @@
-import React, { useMemo, useState } from 'react';
-import { X } from 'lucide-react';
-import { ProductSearchBox } from '@/features/inventario/components/ProductSearchBox';
-import type { Product } from '@/features/inventario/types';
+import React from 'react';
+import { Search } from 'lucide-react';
 
-interface HeaderSearchProps {
-  /** Busca el texto en el catálogo de productos de la empresa activa. */
-  onSearch: (query: string) => void;
-  /** Catálogo de la empresa activa, para sugerir mientras se escribe. */
-  products: readonly Product[];
-}
+/** Mac usa Cmd; el resto, Ctrl. */
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
-/** Buscador global: sugiere productos al escribir y, al elegir uno o presionar Enter, abre Inventario filtrado. */
-export const HeaderSearch: React.FC<HeaderSearchProps> = ({ onSearch, products }) => {
-  const [query, setQuery] = useState('');
-  const activeProducts = useMemo(() => products.filter((p) => p.isActive !== false), [products]);
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    onSearch(query.trim());
-  };
-
-  return (
-    <form role="search" onSubmit={handleSubmit} className="w-full">
-      <ProductSearchBox
-        value={query}
-        onChange={setQuery}
-        products={activeProducts}
-        onPick={(text) => onSearch(text.trim())}
-        ariaLabel="Buscar producto en el inventario"
-        placeholder="Buscar producto por nombre, SKU o código"
-        inputClassName="w-full h-9 pl-9 pr-8 text-xs bg-surface-2/60 hover:bg-surface-2 border border-border/80 focus:border-primary/50 focus:bg-surface-2 focus:outline-none rounded-lg text-text-primary placeholder:text-text-muted transition-colors"
-        trailing={query ? (
-          <button type="button" onClick={() => setQuery('')} title="Borrar búsqueda"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-0.5">
-            <X size={13} />
-          </button>
-        ) : null}
-      />
-    </form>
-  );
-};
+/** Botón del encabezado que abre la búsqueda global (también con Ctrl+K desde cualquier pantalla). */
+export const HeaderSearch: React.FC<{ onOpen: () => void }> = ({ onOpen }) => (
+  <button type="button" onClick={onOpen} aria-label="Buscar en Stockly (Ctrl+K)"
+    className="w-full h-9 pl-3 pr-2 flex items-center gap-2 text-xs text-text-muted bg-surface-2/60 hover:bg-surface-2 border border-border/80 hover:border-border-active rounded-lg transition-colors">
+    <Search size={14} className="shrink-0" />
+    <span className="flex-1 min-w-0 text-left truncate">Buscar productos, clientes, ventas…</span>
+    <kbd className="hidden lg:inline shrink-0 text-[10px] font-medium border border-border rounded px-1.5 py-0.5 bg-surface">
+      {isMac ? '⌘' : 'Ctrl'} K
+    </kbd>
+  </button>
+);

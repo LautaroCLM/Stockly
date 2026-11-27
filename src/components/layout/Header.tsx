@@ -8,7 +8,6 @@ import { bumpElement } from '@/lib/motion/flash';
 import { Menu, ShoppingCart } from 'lucide-react';
 import { NoticesBell } from '@/features/avisos/components/NoticesBell';
 import type { Notice } from '@/features/avisos/types';
-import type { Product } from '@/features/inventario/types';
 import { HeaderSearch } from './HeaderSearch';
 import { ConnectionBadge } from './ConnectionBadge';
 import { ThemeToggle } from './ThemeToggle';
@@ -22,9 +21,8 @@ interface HeaderProps {
   onOpenMobileSidebar: () => void;
   onQuickSaleClick: () => void;
   /** Buscar productos desde el encabezado (abre Inventario filtrado). */
-  onSearch: (query: string) => void;
-  /** Catálogo para las sugerencias del buscador. */
-  searchProducts: readonly Product[];
+  /** Abre la búsqueda global (Ctrl+K). */
+  onOpenSearch: () => void;
   onOpenCart?: () => void;
   /** Avisos de la campana (stock bajo, deudas viejas, caja abierta, etc.). */
   notices?: Notice[];
@@ -41,8 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectCompany,
   onOpenMobileSidebar,
   onQuickSaleClick,
-  onSearch,
-  searchProducts,
+  onOpenSearch,
   onOpenCart,
   notices = [],
   onNoticeSelect,
@@ -87,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Middle: búsqueda de productos */}
       <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
-        <HeaderSearch onSearch={onSearch} products={searchProducts} />
+        <HeaderSearch onOpen={onOpenSearch} />
       </div>
 
       {/* Right: Quick actions, cart badge, notifications, status */}

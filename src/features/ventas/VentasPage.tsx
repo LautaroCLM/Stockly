@@ -32,6 +32,8 @@ interface VentasPageProps {
   canInvoice: boolean;
   /** Permiso de Personal (operar): corregir el vendedor de una venta. */
   canEditSeller?: boolean;
+  /** Búsqueda pedida desde otra pantalla (Ctrl+K). */
+  searchRequest?: { query: string; id: number } | null;
 }
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -45,6 +47,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
   onSaleCancelled,
   canInvoice,
   canEditSeller = false,
+  searchRequest = null,
 }) => {
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const [saleToReturn, setSaleToReturn] = useState<Sale | null>(null);
@@ -57,7 +60,11 @@ export const VentasPage: React.FC<VentasPageProps> = ({
   const seller = useSaleSellerEdit(company.id, canEditSeller, reload);
 
   // El texto se envía al servidor recién cuando el usuario deja de escribir
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchRequest?.query ?? '');
+  useEffect(() => {
+    if (searchRequest) setSearchQuery(searchRequest.query);
+    // Solo un pedido nuevo (otro id) cambia la búsqueda
+  }, [searchRequest?.id]);
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(searchQuery), SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);

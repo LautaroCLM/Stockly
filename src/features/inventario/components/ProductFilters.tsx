@@ -40,7 +40,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 }) => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // F2, Ctrl+K o '/' (fuera de un campo de texto) llevan al buscador, salvo que haya otra ventana abierta
+  // F2 o '/' (fuera de un campo de texto) llevan al buscador, salvo que haya otra ventana abierta
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (isDialogOpen()) return;
@@ -68,7 +68,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           onSubmit={onSearchSubmit}
           onArrowDownOut={onFocusTable}
           ariaLabel="Buscar productos"
-          placeholder="Buscar por Nombre, SKU o Código de Barras... (F2 o Ctrl+K)"
+          placeholder="Buscar por Nombre, SKU o Código de Barras... (F2)"
           inputClassName="w-full h-9 pl-9 pr-16 text-xs bg-surface-2 border border-border/80 focus:border-primary focus:bg-surface-2 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none transition-colors"
           trailing={searchQuery ? (
             <button

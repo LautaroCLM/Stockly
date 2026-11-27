@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Company } from '@/types';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,8 @@ interface ClientesPageProps {
   onReload: () => Promise<void>;
   onSaveCustomer: (input: Omit<UpsertCustomerInput, 'companyId'>) => Promise<CustomerActionResult>;
   onToggleStatus: (customer: Customer, newStatus: boolean) => Promise<CustomerActionResult>;
+  /** Búsqueda pedida desde otra pantalla (Ctrl+K). */
+  searchRequest?: { query: string; id: number } | null;
 }
 
 export const ClientesPage: React.FC<ClientesPageProps> = ({
@@ -30,8 +32,13 @@ export const ClientesPage: React.FC<ClientesPageProps> = ({
   onReload,
   onSaveCustomer,
   onToggleStatus,
+  searchRequest = null,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchRequest?.query ?? '');
+  useEffect(() => {
+    if (searchRequest) setSearchQuery(searchRequest.query);
+    // Solo un pedido nuevo (otro id) cambia la búsqueda
+  }, [searchRequest?.id]);
   const [statusFilter, setStatusFilter] = useState<CustomerStatusFilter>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);

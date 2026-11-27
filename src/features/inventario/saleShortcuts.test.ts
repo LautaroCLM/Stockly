@@ -58,9 +58,9 @@ describe('teclas', () => {
     expect(isMinusKey({ key: '-', ctrlKey: true })).toBe(false);
   });
 
-  it('F2 y Ctrl+K buscan; F4 cobra', () => {
+  it('F2 busca en Inventario (Ctrl+K es la búsqueda global); F4 cobra', () => {
     expect(isSearchKey({ key: 'F2' })).toBe(true);
-    expect(isSearchKey({ key: 'K', ctrlKey: true })).toBe(true);
+    expect(isSearchKey({ key: 'K', ctrlKey: true })).toBe(false);
     expect(isSearchKey({ key: 'k' })).toBe(false);
     expect(isCheckoutKey({ key: 'F4' })).toBe(true);
   });

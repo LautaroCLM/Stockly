@@ -23,8 +23,8 @@ export function isDialogOpen(doc: Document = document): boolean {
 export const isPlusKey = (e: KeyInput) => !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === '+' || e.key === 'Add');
 export const isMinusKey = (e: KeyInput) => !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === '-' || e.key === 'Subtract');
 export const isCheckoutKey = (e: KeyInput) => e.key === 'F4';
-export const isSearchKey = (e: KeyInput) =>
-  e.key === 'F2' || (Boolean(e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k');
+/** F2 lleva al buscador de Inventario (Ctrl+K abre la búsqueda global en cualquier pantalla). */
+export const isSearchKey = (e: KeyInput) => e.key === 'F2';
 
 /**
  * Producto que corresponde a lo escrito o escaneado en el buscador, para agregarlo con Enter.

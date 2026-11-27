@@ -3,7 +3,6 @@ import { RouteId, Company, NavSection } from '@/types';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import type { Notice } from '@/features/avisos/types';
-import type { Product } from '@/features/inventario/types';
 import { withCartBadge } from './navSections';
 
 interface AppShellProps {
@@ -17,9 +16,8 @@ interface AppShellProps {
   cartTotal?: number;
   onOpenCart?: () => void;
   /** Búsqueda de productos desde el encabezado. */
-  onSearch: (query: string) => void;
-  /** Catálogo para las sugerencias del buscador del encabezado. */
-  searchProducts: readonly Product[];
+  /** Abre la búsqueda global (Ctrl+K). */
+  onOpenSearch: () => void;
   userName?: string;
   userEmail?: string;
   onSignOut?: () => void;
@@ -40,8 +38,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   cartItemsCount = 0,
   cartTotal = 0,
   onOpenCart,
-  onSearch,
-  searchProducts,
+  onOpenSearch,
   userName,
   userEmail,
   onSignOut,
@@ -73,8 +70,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           onSelectCompany={onSelectCompany}
           onOpenMobileSidebar={() => setIsOpenMobile(true)}
           onQuickSaleClick={() => onNavigate('inventario')}
-          onSearch={onSearch}
-          searchProducts={searchProducts}
+          onOpenSearch={onOpenSearch}
           cartItemsCount={cartItemsCount}
           cartTotal={cartTotal}
           onOpenCart={onOpenCart}
