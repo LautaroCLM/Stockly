@@ -1,5 +1,7 @@
 #[cfg(desktop)]
 mod fullscreen;
+#[cfg(desktop)]
+mod updater;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,6 +16,8 @@ pub fn run() {
       }
       #[cfg(desktop)]
       fullscreen::setup(app)?;
+      #[cfg(desktop)]
+      updater::setup(app)?;
       Ok(())
     })
     .run(tauri::generate_context!())

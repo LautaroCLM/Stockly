@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Stockly",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.laperla.stockly",
   "build": {
     "frontendDist": "../desktop"
@@ -44,6 +44,18 @@
         "languages": [
           "Spanish"
         ]
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFBMTBFNkZCRDNGMzE3OUIKUldTYkYvUFQrK1lRcW5CMDVYSWNXWDJsdDUrVzhoVTkvRXdmaHpFNzhJOS82cXZsWkQ3YmZjTmkK",
+      "endpoints": [
+        "https://github.com/LautaroCLM/Stockly/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
       }
     }
   }
