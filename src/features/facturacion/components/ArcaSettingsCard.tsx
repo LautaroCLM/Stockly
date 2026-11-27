@@ -11,6 +11,7 @@ import { useArcaSettings } from '../hooks/useArcaSettings';
 import { formatArcaPointOfSale } from '../arcaSettingsForm';
 import { invoiceLettersFor } from '../vat';
 import { ArcaSettingsModal } from './ArcaSettingsModal';
+import { ArcaCertificateSection } from './ArcaCertificateSection';
 
 const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="space-y-1">
@@ -19,7 +20,7 @@ const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   </div>
 );
 
-/** Datos fiscales para la factura electrónica de ARCA. La conexión con ARCA llega en la próxima tanda. */
+/** Datos fiscales, certificado digital y conexión con ARCA para la factura electrónica. */
 export const ArcaSettingsCard: React.FC<{ company: Company; isMasterAdmin: boolean }> = ({ company, isMasterAdmin }) => {
   const arca = useArcaSettings(company.id);
   const issuer = useDocumentSettings(company.id, true);
@@ -57,9 +58,10 @@ export const ArcaSettingsCard: React.FC<{ company: Company; isMasterAdmin: boole
           <Row label="Inicio de actividades" value={arca.settings.activityStartDate ? formatDateShort(arca.settings.activityStartDate) : ''} />
           <Row label="Ingresos brutos" value={arca.settings.grossIncomeNumber} />
         </div>
+        <ArcaCertificateSection companyId={company.id} cuit={company.cuit} isMasterAdmin={isMasterAdmin} />
         <p className="p-2.5 rounded-lg bg-surface-2 border border-border text-[11px] text-text-muted leading-relaxed flex items-start gap-2">
           <AlertTriangle size={13} className="shrink-0 mt-0.5 text-warning" />
-          <span>Todavía no está conectada con ARCA: el certificado digital y la emisión de facturas se agregan en la próxima etapa.</span>
+          <span>La emisión de facturas desde las ventas se agrega en la próxima etapa.</span>
         </p>
       </CardContent>
       <AnimatePresence>

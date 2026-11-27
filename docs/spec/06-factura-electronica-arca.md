@@ -36,7 +36,12 @@ Estado: **plan, pendiente de confirmación** (2026-11-26).
    La condición de IVA del emisor sigue en `document_settings.tax_condition`.
    El campo de IVA del producto solo se muestra si la empresa es Responsable Inscripto.
    Migración `20261128000001_arca_fiscal_data.sql`, tests pgTAP `35_arca_fiscal_data.test.sql`.
-2. **Conexión con ARCA (homologación).** Pantalla del certificado (Stockly genera la clave y el pedido CSR
+2. **Conexión con ARCA (homologación). HECHA en código (2026-11-27), falta probarla con un certificado real.**
+   Migración `20261129000001_arca_credentials.sql` (clave en Vault, token de WSAA guardado, `get_arca_status`),
+   Edge Function `supabase/functions/arca` (acciones `generate_csr`, `upload_certificate`, `test_connection`),
+   tests pgTAP `36_arca_credentials.test.sql` y vitest en `supabase/functions/arca/lib`.
+   Typecheck de la función: `tsc -p tsconfig.functions.json` (incluido en `npm run typecheck`).
+   Pantalla del certificado (Stockly genera la clave y el pedido CSR
    dentro de la Edge Function, así la clave privada nunca pasa por el navegador) y "Probar conexión".
    Edge Function con WSAA + WSFEv1: último número, pedir CAE, consultar un comprobante.
    Tests con respuestas grabadas de ARCA.

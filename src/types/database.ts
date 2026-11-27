@@ -23,22 +23,62 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "arca_settings": {
+            "arca_credentials": {
                   Row: {
-                    "activity_start_date": string | null,"company_id": string,"gross_income_number": string | null,"point_of_sale": number | null,"updated_at": string,"updated_by": string | null
+                    "certificate_expires_at": string | null,"certificate_pem": string | null,"certificate_subject": string | null,"company_id": string,"csr_pem": string,"environment": string,"key_secret_id": string,"last_test_at": string | null,"last_test_message": string | null,"last_test_ok": boolean | null,"updated_at": string,"updated_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "activity_start_date"?: string | null,"company_id": string,"gross_income_number"?: string | null,"point_of_sale"?: number | null,"updated_at"?: string,"updated_by"?: string | null
+                    "certificate_expires_at"?: string | null,"certificate_pem"?: string | null,"certificate_subject"?: string | null,"company_id": string,"csr_pem": string,"environment": string,"key_secret_id": string,"last_test_at"?: string | null,"last_test_message"?: string | null,"last_test_ok"?: boolean | null,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Update: {
-                    "activity_start_date"?: string | null,"company_id"?: string,"gross_income_number"?: string | null,"point_of_sale"?: number | null,"updated_at"?: string,"updated_by"?: string | null
+                    "certificate_expires_at"?: string | null,"certificate_pem"?: string | null,"certificate_subject"?: string | null,"company_id"?: string,"csr_pem"?: string,"environment"?: string,"key_secret_id"?: string,"last_test_at"?: string | null,"last_test_message"?: string | null,"last_test_ok"?: boolean | null,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "arca_credentials_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"arca_settings": {
+                  Row: {
+                    "activity_start_date": string | null,"company_id": string,"environment": string,"gross_income_number": string | null,"point_of_sale": number | null,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "activity_start_date"?: string | null,"company_id": string,"environment"?: string,"gross_income_number"?: string | null,"point_of_sale"?: number | null,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "activity_start_date"?: string | null,"company_id"?: string,"environment"?: string,"gross_income_number"?: string | null,"point_of_sale"?: number | null,"updated_at"?: string,"updated_by"?: string | null
                   }
                   Relationships: [
                     {
       foreignKeyName: "arca_settings_company_id_fkey"
       columns: ["company_id"]
 isOneToOne: true
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"arca_tokens": {
+                  Row: {
+                    "company_id": string,"environment": string,"expires_at": string,"service": string,"sign": string,"token": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"environment": string,"expires_at": string,"service": string,"sign": string,"token": string
+                  }
+                  Update: {
+                    "company_id"?: string,"environment"?: string,"expires_at"?: string,"service"?: string,"sign"?: string,"token"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "arca_tokens_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
       referencedRelation: "companies"
       referencedColumns: ["id"]
     }
@@ -1197,6 +1237,27 @@ isOneToOne: true
 "apply_price_change":
 { Args: { "p_batch_id": string,"p_category_ids"?: (string)[],"p_company_id": string,"p_excluded_ids"?: (string)[],"p_note"?: string,"p_percent": number,"p_step": number,"p_supplier_ids"?: (string)[] }; Returns: Json
                            },
+"arca_admin_context":
+{ Args: { "p_company_id": string }; Returns: Json
+                           },
+"arca_get_credentials":
+{ Args: { "p_company_id": string,"p_environment": string }; Returns: Json
+                           },
+"arca_get_token":
+{ Args: { "p_company_id": string,"p_environment": string,"p_service": string }; Returns: Json
+                           },
+"arca_store_certificate":
+{ Args: { "p_certificate_pem": string,"p_company_id": string,"p_environment": string,"p_expires_at": string,"p_subject": string,"p_user_id": string }; Returns: undefined
+                           },
+"arca_store_csr":
+{ Args: { "p_company_id": string,"p_csr_pem": string,"p_environment": string,"p_private_key_pem": string,"p_user_id": string }; Returns: undefined
+                           },
+"arca_store_test_result":
+{ Args: { "p_company_id": string,"p_environment": string,"p_message": string,"p_ok": boolean }; Returns: undefined
+                           },
+"arca_store_token":
+{ Args: { "p_company_id": string,"p_environment": string,"p_expires_at": string,"p_service": string,"p_sign": string,"p_token": string }; Returns: undefined
+                           },
 "attendance_report":
 { Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
               "days_worked": number,"employee_id": string,"employee_name": string,"late_count": number,"open_count": number,"scheduled_minutes": number,"worked_minutes": number
@@ -1263,6 +1324,9 @@ isOneToOne: true
                            },
 "financial_summary":
 { Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: Json
+                           },
+"get_arca_status":
+{ Args: { "p_company_id": string }; Returns: Json
                            },
 "get_module_permissions":
 { Args: { "p_company_id": string }; Returns: {
