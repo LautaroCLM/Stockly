@@ -67,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Menu size={20} />
         </button>
 
-        <div className="flex items-center gap-2 text-xs text-text-muted font-medium">
+        <div className="hidden xl:flex items-center gap-2 text-xs text-text-muted font-medium">
           <img
             src="/stockly.png"
             alt="Logo de Stockly"
@@ -131,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
           variant="primary"
           size="sm"
           onClick={onQuickSaleClick}
-          className="hidden sm:inline-flex items-center gap-1.5 shadow-md shadow-primary/20"
+          className="hidden xl:inline-flex items-center gap-1.5 shadow-md shadow-primary/20"
         >
           <span>Nueva Venta</span>
         </Button>
@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <ThemeToggle />
 
-        <NoticesBell notices={notices} onSelect={(route) => onNoticeSelect?.(route)} />
+        <NoticesBell companyId={activeCompany.id} notices={notices} onSelect={(route) => onNoticeSelect?.(route)} />
 
         <ConnectionBadge />
       </div>

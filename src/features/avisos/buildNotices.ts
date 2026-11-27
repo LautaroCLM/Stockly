@@ -81,6 +81,7 @@ function cashNotice(sources: NoticeSources, now: Date): Notice | null {
       title: 'La caja está cerrada',
       detail: 'Abrila con el efectivo inicial antes de empezar a cobrar.',
       route: 'caja',
+      pinned: 'Se va al abrir la caja',
     };
   }
   if (!sources.openCashSince) return null;
@@ -91,6 +92,7 @@ function cashNotice(sources: NoticeSources, now: Date): Notice | null {
     title: 'La caja sigue abierta de un día anterior',
     detail: 'Conviene hacer el arqueo y cerrarla antes de seguir con la caja de hoy.',
     route: 'caja',
+    pinned: 'Se va al cerrar la caja',
   };
 }
 

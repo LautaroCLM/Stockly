@@ -10,6 +10,8 @@ export interface Notice {
   detail: string;
   /** Pantalla a la que lleva el aviso al hacer clic. */
   route: RouteId;
+  /** Fijo: no se puede borrar; se va solo cuando se resuelve. El texto explica cómo. */
+  pinned?: string;
 }
 
 /** Entrada de personal que sigue abierta (todavía no se marcó la salida). */

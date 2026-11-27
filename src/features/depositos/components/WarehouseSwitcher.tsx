@@ -6,12 +6,12 @@ import type { WarehousesState } from '../hooks/useWarehouses';
 export const WarehouseSwitcher: React.FC<{ warehouses: WarehousesState }> = ({ warehouses }) => {
   if (!warehouses.isMulti || !warehouses.current) return null;
   return (
-    <label className="hidden sm:flex items-center gap-1.5 h-9 pl-2.5 pr-1 rounded-lg border border-border bg-surface-2 text-xs text-text-secondary"
+    <label className="hidden md:flex items-center gap-1.5 h-9 pl-2.5 pr-1 rounded-lg border border-border bg-surface-2 text-xs text-text-secondary min-w-0 shrink"
       title="Depósito de esta PC: las ventas, compras, ajustes y conteos hechos acá mueven el stock de este depósito">
       <WarehouseIcon size={14} className="text-primary shrink-0" />
-      <span className="hidden lg:inline">Depósito</span>
+      <span className="hidden 2xl:inline">Depósito</span>
       <select aria-label="Depósito de esta PC" value={warehouses.current.id} onChange={(e) => warehouses.choose(e.target.value)}
-        className="h-7 bg-transparent text-text-primary font-semibold focus:outline-none cursor-pointer">
+        className="h-7 max-w-[7.5rem] truncate bg-transparent text-text-primary font-semibold focus:outline-none cursor-pointer">
         {warehouses.active.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
       </select>
     </label>
