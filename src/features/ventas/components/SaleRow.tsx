@@ -15,10 +15,12 @@ interface SaleRowProps {
   onReturn?: (sale: Sale) => void;
   /** Ver los comprobantes de devolución de la venta. */
   onViewReturns?: (sale: Sale) => void;
+  /** Botón de factura electrónica (ver, reintentar o facturar). */
+  invoiceAction?: React.ReactNode;
 }
 
 /** Una venta del historial: comprobante, cliente, ítems, medios de pago y total. */
-export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt, onCancel, onReturn, onViewReturns }) => {
+export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt, onCancel, onReturn, onViewReturns, invoiceAction }) => {
   const isCancelled = sale.status === 'anulada';
   return (
     <tr className="hover:bg-surface-2/50 transition-colors group">
@@ -58,6 +60,7 @@ export const SaleRow: React.FC<SaleRowProps> = ({ sale, canCancel, onViewReceipt
             <Eye size={13} />
             <span>Ticket</span>
           </Button>
+          {invoiceAction}
           {onViewReturns && (sale.returnedAmount ?? 0) > 0 && (
             <Button variant="secondary" size="sm" onClick={() => onViewReturns(sale)} className="h-7 px-2.5 text-xs gap-1" title="Ver comprobantes de devolución">
               <Receipt size={13} />

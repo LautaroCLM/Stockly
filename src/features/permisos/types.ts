@@ -1,6 +1,7 @@
 export const MODULE_KEYS = [
   'productos', 'caja', 'clientes', 'proveedores', 'anular_ventas',
   'compras', 'cobros_pagos', 'gastos', 'finanzas', 'informes', 'maquinas', 'personal', 'fichaje', 'documentos', 'precios',
+  'facturacion',
 ] as const;
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 
@@ -68,6 +69,12 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
     options: ['none', 'operate'],
     levelLabels: { none: 'No puede cambiar precios', operate: 'Puede cambiar precios' },
   },
+  facturacion: {
+    label: 'Factura electrónica',
+    description: 'Emitir facturas de ARCA desde el historial de ventas. Las facturas emitidas las ven todos.',
+    options: ['none', 'operate'],
+    levelLabels: { none: 'No puede facturar', operate: 'Puede facturar' },
+  },
 };
 
 /** Lo que puede hacer un empleado cuando nadie configuró nada: lo de siempre. */
@@ -75,6 +82,7 @@ export const DEFAULT_LEVELS: ModuleLevels = {
   productos: 'none', caja: 'operate', clientes: 'view', proveedores: 'view', anular_ventas: 'none',
   compras: 'none', cobros_pagos: 'none', gastos: 'none', finanzas: 'none',
   informes: 'none', maquinas: 'none', personal: 'none', fichaje: 'operate', documentos: 'none', precios: 'none',
+  facturacion: 'none',
 };
 
 export interface PermissionTemplate {
@@ -98,7 +106,7 @@ export const PERMISSION_TEMPLATES: PermissionTemplate[] = [
     levels: {
       ...DEFAULT_LEVELS,
       productos: 'operate', clientes: 'operate', proveedores: 'operate',
-      compras: 'operate', cobros_pagos: 'operate', gastos: 'operate', documentos: 'operate',
+      compras: 'operate', cobros_pagos: 'operate', gastos: 'operate', documentos: 'operate', facturacion: 'operate',
     },
   },
   {
@@ -109,6 +117,7 @@ export const PERMISSION_TEMPLATES: PermissionTemplate[] = [
       productos: 'none', caja: 'view', clientes: 'view', proveedores: 'view', anular_ventas: 'none',
       compras: 'view', cobros_pagos: 'view', gastos: 'view', finanzas: 'view',
       informes: 'view', maquinas: 'view', personal: 'view', fichaje: 'operate', documentos: 'view', precios: 'none',
+      facturacion: 'none',
     },
   },
 ];

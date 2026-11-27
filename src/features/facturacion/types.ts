@@ -46,4 +46,4 @@ export const EMPTY_ARCA_STATUS: ArcaStatus = {
   certificateSubject: null, lastTestAt: null, lastTestOk: null, lastTestMessage: null,
 };
 
-export type ArcaFunctionAction = 'generate_csr' | 'upload_certificate' | 'test_connection';
+export type ArcaFunctionAction = 'generate_csr' | 'upload_certificate' | 'test_connection' | 'authorize_invoice';

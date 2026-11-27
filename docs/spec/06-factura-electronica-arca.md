@@ -46,7 +46,15 @@ Estado: **plan, pendiente de confirmación** (2026-11-26).
    Edge Function con WSAA + WSFEv1: último número, pedir CAE, consultar un comprobante.
    Tests con respuestas grabadas de ARCA.
    Ojo: `customers.tax_id` guarda el CUIT con guiones; a ARCA se le manda solo con dígitos.
-3. **Emitir facturas.** Elegir A/B/C según emisor y cliente, IVA discriminado en la A, CAE + vencimiento + QR,
+3. **Emitir facturas. HECHA en código (2026-11-27), falta probar el CAE real con el certificado.**
+   Migración `20261130000001_invoices.sql`: `invoices`, `invoice_items`, `invoice_vat_lines`, turno de numeración
+   y `prepare_invoice` (letra, receptor e IVA por alícuota con el descuento prorrateado, calculados en la base).
+   Edge Function: acción `authorize_invoice` (último número + 1, FECAESolicitar; si un intento quedó sin respuesta,
+   FECompConsultar antes de pedir otro número, para no duplicar). Permiso nuevo `facturacion`.
+   Historial de ventas: botón "Facturar" / "Factura pendiente" / "Factura A|B|C"; impresión 80 mm con CAE y QR.
+   Regla a confirmar en homologación: un Responsable Inscripto hace Factura A a monotributistas (RG 5003).
+   Quedan para después: impresión A4, envío por WhatsApp y el tilde "Facturar" en el carrito.
+   Plan original de la tanda: Elegir A/B/C según emisor y cliente, IVA discriminado en la A, CAE + vencimiento + QR,
    impresión 80 mm y A4, envío por WhatsApp como el ticket. Estado "Pendiente / Autorizada / Rechazada".
 4. **Notas de crédito.** Desde una devolución o una anulación de venta facturada, asociada a la factura original.
 5. **Libro IVA Ventas.** Informe por período con exportación a Excel para el contador.

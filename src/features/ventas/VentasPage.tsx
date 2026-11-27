@@ -16,6 +16,7 @@ import { SaleReturnModal } from './components/SaleReturnModal';
 import { ReturnReceiptModal } from './components/ReturnReceiptModal';
 import { useReturnReceipts } from './hooks/useReturnReceipts';
 import { useToast } from '@/components/feedback/ToastProvider';
+import { useSaleInvoicing } from './hooks/useSaleInvoicing';
 
 interface VentasPageProps {
   company: Company;
@@ -26,6 +27,8 @@ interface VentasPageProps {
   onNavigateToInventario: () => void;
   /** Se invoca tras anular una venta (el stock cambió). */
   onSaleCancelled: () => void;
+  /** Permiso de facturación electrónica. */
+  canInvoice: boolean;
 }
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -37,6 +40,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
   onViewReceipt,
   onNavigateToInventario,
   onSaleCancelled,
+  canInvoice,
 }) => {
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const [saleToReturn, setSaleToReturn] = useState<Sale | null>(null);
@@ -45,6 +49,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
   // Paginación y búsqueda se resuelven en el servidor (ver useSalesHistory)
   const { sales, total, hasMore, isLoading, isLoadingMore, error, setSearch, loadMore, reload } =
     useSalesHistory(company.id, customers);
+  const invoicing = useSaleInvoicing(company, sales, canInvoice);
 
   // El texto se envía al servidor recién cuando el usuario deja de escribir
   const [searchQuery, setSearchQuery] = useState('');
@@ -144,7 +149,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
                   </tr>
                 ) : (
                   sales.map((sale) => (
-                    <SaleRow key={sale.id} sale={sale} canCancel={isMasterAdmin} onViewReceipt={onViewReceipt} onCancel={setSaleToCancel} onReturn={setSaleToReturn} onViewReturns={(s) => void openReturnReceipts(s)} />
+                    <SaleRow key={sale.id} sale={sale} canCancel={isMasterAdmin} onViewReceipt={onViewReceipt} onCancel={setSaleToCancel} onReturn={setSaleToReturn} onViewReturns={(s) => void openReturnReceipts(s)} invoiceAction={invoicing.actionFor(sale)} />
                   ))
                 )}
               </tbody>
@@ -186,6 +191,7 @@ export const VentasPage: React.FC<VentasPageProps> = ({
           notify({ message: `Devolución ${number} registrada`, detail: `Devolvé ${formatCurrency(amount)} en efectivo al cliente.` });
           if (returnedSale) void openReturnReceipts(returnedSale, number);
         }} />
+      {invoicing.dialog}
       <ReturnReceiptModal sale={receipt?.sale ?? null} company={company} returns={receipt?.returns ?? []} initialNumber={receipt?.number}
         onClose={closeReceipt} />
     </div>

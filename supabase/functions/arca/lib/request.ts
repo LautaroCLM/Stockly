@@ -2,7 +2,8 @@
 export type ArcaRequest =
   | { action: 'generate_csr'; companyId: string }
   | { action: 'upload_certificate'; companyId: string; certificatePem: string }
-  | { action: 'test_connection'; companyId: string };
+  | { action: 'test_connection'; companyId: string }
+  | { action: 'authorize_invoice'; companyId: string; invoiceId: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_CERTIFICATE_LENGTH = 20_000;
@@ -20,6 +21,11 @@ export function parseArcaRequest(raw: unknown): ArcaRequest {
       return { action: 'generate_csr', companyId };
     case 'test_connection':
       return { action: 'test_connection', companyId };
+    case 'authorize_invoice': {
+      const invoiceId = body.invoiceId;
+      if (typeof invoiceId !== 'string' || !UUID.test(invoiceId)) throw new BadRequestError('Factura inválida.');
+      return { action: 'authorize_invoice', companyId, invoiceId };
+    }
     case 'upload_certificate': {
       const pem = body.certificatePem;
       if (typeof pem !== 'string' || pem.trim() === '' || pem.length > MAX_CERTIFICATE_LENGTH) {

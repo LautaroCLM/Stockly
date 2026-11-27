@@ -4,6 +4,10 @@ import {
   buildDummyEnvelope, buildLastAuthorizedEnvelope, parseDummyResponse, parseLastAuthorizedResponse, wsfeAction,
   type DummyResult, type LastAuthorizedResult, type WsfeAuth,
 } from './wsfeMessages.ts';
+import {
+  buildCaeRequestEnvelope, buildConsultEnvelope, parseCaeResponse, parseConsultResponse,
+  type CaeResult, type ConsultResult, type InvoiceData,
+} from './wsfeInvoice.ts';
 
 const TIMEOUT_MS = 25_000;
 
@@ -49,4 +53,21 @@ export async function wsfeLastAuthorized(
     buildLastAuthorizedEnvelope(auth, pointOfSale, invoiceType)
   );
   return parseLastAuthorizedResponse(xml);
+}
+
+/** Pide el CAE. Si ARCA no responde, tira ArcaUnavailableError: el resultado queda incierto. */
+export async function wsfeCaeRequest(
+  environment: ArcaEnvironment, auth: WsfeAuth, invoice: InvoiceData, number: number
+): Promise<CaeResult> {
+  const xml = await soapPost(ARCA_URLS[environment].wsfe, wsfeAction('FECAESolicitar'), buildCaeRequestEnvelope(auth, invoice, number));
+  return parseCaeResponse(xml);
+}
+
+export async function wsfeConsult(
+  environment: ArcaEnvironment, auth: WsfeAuth, pointOfSale: number, invoiceType: number, number: number
+): Promise<ConsultResult> {
+  const xml = await soapPost(
+    ARCA_URLS[environment].wsfe, wsfeAction('FECompConsultar'), buildConsultEnvelope(auth, pointOfSale, invoiceType, number)
+  );
+  return parseConsultResponse(xml);
 }

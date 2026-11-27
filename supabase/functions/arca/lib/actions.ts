@@ -1,12 +1,12 @@
-import { wsaaLogin, wsfeDummy, wsfeLastAuthorized } from './arcaClient.ts';
-import { CertificateError, generateKeyAndCsr, inspectCertificate, signTra } from './certs.ts';
+import { accessTicket } from './access.ts';
+import { wsfeDummy, wsfeLastAuthorized } from './arcaClient.ts';
+import { CertificateError, generateKeyAndCsr, inspectCertificate } from './certs.ts';
 import type { AdminContext, CredentialsStore } from './db.ts';
 import { INVOICE_TYPE_CODES, cuitDigits, lettersForTaxCondition } from './endpoints.ts';
 import type { ArcaResponse } from './request.ts';
-import { buildTra, type AccessTicket } from './wsaaMessages.ts';
+import type { AccessTicket } from './wsaaMessages.ts';
 import { serversAreUp } from './wsfeMessages.ts';
 
-const SERVICE = 'wsfe';
 const ENV_LABEL = { homologacion: 'homologación', produccion: 'producción' } as const;
 
 function requireCuit(ctx: AdminContext): string {
@@ -29,17 +29,6 @@ export async function uploadCertificate(ctx: AdminContext, store: CredentialsSto
   const info = inspectCertificate(certificatePem, creds.privateKeyPem, cuit, new Date());
   await store.saveCertificate(certificatePem.trim(), info.expiresAt, info.subject, ctx.userId);
   return { ok: true, message: 'Certificado cargado. Ahora probá la conexión.', data: { ...info } };
-}
-
-/** Acceso de WSAA: el guardado si sigue vigente, o uno nuevo (ARCA no da otro mientras haya uno válido). */
-async function accessTicket(ctx: AdminContext, store: CredentialsStore, certificatePem: string, privateKeyPem: string) {
-  const cached = await store.cachedTicket(SERVICE);
-  if (cached) return { ok: true as const, ticket: cached };
-  const now = new Date();
-  const login = await wsaaLogin(ctx.environment, signTra(buildTra(SERVICE, now), certificatePem, privateKeyPem, now));
-  if (!login.ok) return login;
-  await store.saveTicket(SERVICE, login.ticket);
-  return { ok: true as const, ticket: login.ticket };
 }
 
 async function lastNumbers(ctx: AdminContext, ticket: AccessTicket, cuit: string, pointOfSale: number) {
@@ -74,7 +63,7 @@ export async function testConnection(ctx: AdminContext, store: CredentialsStore)
   }
 
   const cuit = requireCuit(ctx);
-  const access = await accessTicket(ctx, store, creds.certificatePem, creds.privateKeyPem);
+  const access = await accessTicket(ctx.environment, store, creds.certificatePem, creds.privateKeyPem);
   if (!access.ok) return finish(false, access.message, true);
   if (ctx.pointOfSale === null) {
     return finish(false, `El acceso a ARCA (${env}) funciona, pero falta cargar el punto de venta electrónico.`, true);

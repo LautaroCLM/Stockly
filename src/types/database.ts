@@ -43,6 +43,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"arca_numbering_locks": {
+                  Row: {
+                    "company_id": string,"environment": string,"invoice_id": string,"invoice_type": number,"locked_until": string,"point_of_sale": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"environment": string,"invoice_id": string,"invoice_type": number,"locked_until": string,"point_of_sale": number
+                  }
+                  Update: {
+                    "company_id"?: string,"environment"?: string,"invoice_id"?: string,"invoice_type"?: number,"locked_until"?: string,"point_of_sale"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "arca_numbering_locks_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"arca_settings": {
                   Row: {
                     "activity_start_date": string | null,"company_id": string,"environment": string,"gross_income_number": string | null,"point_of_sale": number | null,"updated_at": string,"updated_by": string | null
@@ -647,6 +667,72 @@ isOneToOne: false
       referencedColumns: ["company_id","id"]
     }
                   ]
+                },"invoice_items": {
+                  Row: {
+                    "company_id": string,"description": string,"id": string,"invoice_id": string,"line_total": number,"position": number,"quantity": number,"unit_price": number,"vat_rate": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"description": string,"id"?: string,"invoice_id": string,"line_total": number,"position": number,"quantity": number,"unit_price": number,"vat_rate": number
+                  }
+                  Update: {
+                    "company_id"?: string,"description"?: string,"id"?: string,"invoice_id"?: string,"line_total"?: number,"position"?: number,"quantity"?: number,"unit_price"?: number,"vat_rate"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_invoice_items_invoice"
+      columns: ["company_id","invoice_id"]
+isOneToOne: false
+      referencedRelation: "invoices"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"invoice_vat_lines": {
+                  Row: {
+                    "arca_vat_id": number,"base_amount": number,"company_id": string,"invoice_id": string,"vat_amount": number,"vat_rate": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "arca_vat_id": number,"base_amount": number,"company_id": string,"invoice_id": string,"vat_amount": number,"vat_rate": number
+                  }
+                  Update: {
+                    "arca_vat_id"?: number,"base_amount"?: number,"company_id"?: string,"invoice_id"?: string,"vat_amount"?: number,"vat_rate"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_invoice_vat_invoice"
+      columns: ["company_id","invoice_id"]
+isOneToOne: false
+      referencedRelation: "invoices"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"invoices": {
+                  Row: {
+                    "arca_message": string | null,"attempt_number": number | null,"authorized_at": string | null,"cae": string | null,"cae_expires_at": string | null,"company_id": string,"created_at": string,"created_by": string,"discount": number,"environment": string,"id": string,"invoice_type": number,"issue_date": string,"letter": string,"net_amount": number,"number": number | null,"point_of_sale": number,"receiver_address": string | null,"receiver_doc_number": string,"receiver_doc_type": number,"receiver_name": string,"receiver_vat_condition": string,"receiver_vat_condition_id": number,"sale_id": string,"status": string,"subtotal": number,"total_amount": number,"updated_at": string,"vat_amount": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "arca_message"?: string | null,"attempt_number"?: number | null,"authorized_at"?: string | null,"cae"?: string | null,"cae_expires_at"?: string | null,"company_id": string,"created_at"?: string,"created_by": string,"discount": number,"environment": string,"id"?: string,"invoice_type": number,"issue_date": string,"letter": string,"net_amount": number,"number"?: number | null,"point_of_sale": number,"receiver_address"?: string | null,"receiver_doc_number": string,"receiver_doc_type": number,"receiver_name": string,"receiver_vat_condition": string,"receiver_vat_condition_id": number,"sale_id": string,"status"?: string,"subtotal": number,"total_amount": number,"updated_at"?: string,"vat_amount": number
+                  }
+                  Update: {
+                    "arca_message"?: string | null,"attempt_number"?: number | null,"authorized_at"?: string | null,"cae"?: string | null,"cae_expires_at"?: string | null,"company_id"?: string,"created_at"?: string,"created_by"?: string,"discount"?: number,"environment"?: string,"id"?: string,"invoice_type"?: number,"issue_date"?: string,"letter"?: string,"net_amount"?: number,"number"?: number | null,"point_of_sale"?: number,"receiver_address"?: string | null,"receiver_doc_number"?: string,"receiver_doc_type"?: number,"receiver_name"?: string,"receiver_vat_condition"?: string,"receiver_vat_condition_id"?: number,"sale_id"?: string,"status"?: string,"subtotal"?: number,"total_amount"?: number,"updated_at"?: string,"vat_amount"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_invoices_sale"
+      columns: ["company_id","sale_id"]
+isOneToOne: false
+      referencedRelation: "sales"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "invoices_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"machines": {
                   Row: {
                     "brand": string | null,"company_id": string,"created_at": string,"created_by": string,"id": string,"identifier": string | null,"machine_type": string,"model": string | null,"model_year": number | null,"name": string,"notes": string | null,"status": string,"updated_at": string
@@ -1243,8 +1329,20 @@ isOneToOne: true
 "arca_get_credentials":
 { Args: { "p_company_id": string,"p_environment": string }; Returns: Json
                            },
+"arca_get_invoice":
+{ Args: { "p_invoice_id": string }; Returns: Json
+                           },
 "arca_get_token":
 { Args: { "p_company_id": string,"p_environment": string,"p_service": string }; Returns: Json
+                           },
+"arca_invoice_context":
+{ Args: { "p_company_id": string,"p_invoice_id": string }; Returns: Json
+                           },
+"arca_lock_numbering":
+{ Args: { "p_invoice_id": string,"p_seconds": number }; Returns: boolean
+                           },
+"arca_set_invoice_attempt":
+{ Args: { "p_invoice_id": string,"p_number": number }; Returns: undefined
                            },
 "arca_store_certificate":
 { Args: { "p_certificate_pem": string,"p_company_id": string,"p_environment": string,"p_expires_at": string,"p_subject": string,"p_user_id": string }; Returns: undefined
@@ -1252,11 +1350,17 @@ isOneToOne: true
 "arca_store_csr":
 { Args: { "p_company_id": string,"p_csr_pem": string,"p_environment": string,"p_private_key_pem": string,"p_user_id": string }; Returns: undefined
                            },
+"arca_store_invoice_result":
+{ Args: { "p_cae": string,"p_cae_expires_at": string,"p_invoice_id": string,"p_message": string,"p_number": number,"p_status": string }; Returns: undefined
+                           },
 "arca_store_test_result":
 { Args: { "p_company_id": string,"p_environment": string,"p_message": string,"p_ok": boolean }; Returns: undefined
                            },
 "arca_store_token":
 { Args: { "p_company_id": string,"p_environment": string,"p_expires_at": string,"p_service": string,"p_sign": string,"p_token": string }; Returns: undefined
+                           },
+"arca_unlock_numbering":
+{ Args: { "p_invoice_id": string }; Returns: undefined
                            },
 "attendance_report":
 { Args: { "p_company_id": string,"p_from": string,"p_to": string }; Returns: {
@@ -1355,6 +1459,9 @@ isOneToOne: true
                            },
 "open_cash_session":
 { Args: { "p_company_id": string,"p_notes"?: string,"p_opening_amount": number }; Returns: Json
+                           },
+"prepare_invoice":
+{ Args: { "p_company_id": string,"p_sale_id": string }; Returns: string
                            },
 "preview_price_change":
 { Args: { "p_category_ids"?: (string)[],"p_company_id": string,"p_percent": number,"p_step": number,"p_supplier_ids"?: (string)[] }; Returns: Json

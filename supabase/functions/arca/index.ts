@@ -1,11 +1,13 @@
 // Edge Function `arca`: única pieza de Stockly que habla con ARCA (ex AFIP).
-// Acciones: generar el pedido de certificado, cargar el certificado y probar la conexión.
-// Solo el Master Admin de la empresa puede usarla; la clave privada nunca sale de acá.
+// Acciones: certificado y conexión (solo el Master Admin) y autorizar facturas (permiso de facturación).
+// La clave privada nunca sale de acá.
 import { createClient } from '@supabase/supabase-js';
 import { generateCsr, testConnection, uploadCertificate } from './lib/actions.ts';
 import { ArcaUnavailableError } from './lib/arcaClient.ts';
+import { authorizeInvoice } from './lib/authorize.ts';
 import { CertificateError } from './lib/certs.ts';
 import { CredentialsStore, ForbiddenError, getAdminContext } from './lib/db.ts';
+import { InvoiceStore, getInvoiceContext } from './lib/invoiceStore.ts';
 import { BadRequestError, parseArcaRequest, type ArcaResponse } from './lib/request.ts';
 
 const CORS_HEADERS = {
@@ -47,9 +49,15 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: authorization } },
       auth: { persistSession: false },
     });
-    const ctx = await getAdminContext(userClient, request.companyId);
-
     const serviceClient = createClient(url, env('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false } });
+
+    if (request.action === 'authorize_invoice') {
+      const invoiceCtx = await getInvoiceContext(userClient, request.companyId, request.invoiceId);
+      const creds = new CredentialsStore(serviceClient, request.companyId, invoiceCtx.environment);
+      return reply(await authorizeInvoice(invoiceCtx, creds, new InvoiceStore(serviceClient, request.invoiceId)));
+    }
+
+    const ctx = await getAdminContext(userClient, request.companyId);
     const store = new CredentialsStore(serviceClient, request.companyId, ctx.environment);
 
     switch (request.action) {

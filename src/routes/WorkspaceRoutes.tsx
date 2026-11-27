@@ -126,7 +126,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       return (
         <VentasPage company={company} customers={customers.customers} isMasterAdmin={access('anular_ventas').canOperate}
           onViewReceipt={props.onViewReceipt} onNavigateToInventario={goTo('inventario')}
-          onSaleCancelled={reloadCatalog(catalog, 'tras anulación')} />
+          onSaleCancelled={reloadCatalog(catalog, 'tras anulación')} canInvoice={access('facturacion').canOperate} />
       );
     case 'documentos':
       return <DocumentosPage company={company} {...access('documentos')} isMasterAdmin={isMasterAdmin} products={catalog.products} customers={customers.customers} />;
