@@ -6,10 +6,11 @@ import type { Product } from '../types';
 
 /** Cuántas unidades del producto hay en el carrito (bloqueado si el producto está inactivo). */
 export const CartIndicator: React.FC<{ quantity: number; isInactive: boolean }> = ({ quantity, isInactive }) => {
-  if (quantity <= 0) return <span className="text-[11px] text-text-muted">—</span>;
+  // Todos los estados tienen la misma altura y no se parten en dos líneas: la fila nunca cambia de tamaño al agregar
+  if (quantity <= 0) return <span className="inline-flex h-6 items-center text-[11px] text-text-muted">—</span>;
   return isInactive ? (
     <span title="Producto desactivado en carrito"
-      className="inline-flex items-center gap-1 text-[10px] font-semibold text-danger px-2 py-0.5 rounded-full bg-danger/10 border border-danger/30">
+      className="inline-flex h-6 items-center gap-1 whitespace-nowrap text-[10px] font-semibold text-danger px-2 rounded-full bg-danger/10 border border-danger/30">
       <AlertTriangle size={11} />
       {quantity} (bloqueado)
     </span>
@@ -17,7 +18,7 @@ export const CartIndicator: React.FC<{ quantity: number; isInactive: boolean }> 
     // Cada vez que cambia la cantidad, la etiqueta hace un pequeño resorte
     <m.span key={quantity} initial={{ scale: 0.82, opacity: 0.6 }} animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 520, damping: 20 }}
-      className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent px-2 py-0.5 rounded-full bg-accent/10 border border-accent/25">
+      className="inline-flex h-6 items-center gap-1 whitespace-nowrap text-[11px] font-semibold text-accent px-2 rounded-full bg-accent/10 border border-accent/25">
       <Check size={11} />
       {quantity} en carrito
     </m.span>
@@ -93,7 +94,7 @@ export const ProductRowActions: React.FC<ProductRowActionsProps> = ({ product, i
               <Ban size={13} />
             </button>
           )}
-          <Button variant={isInCart ? 'secondary' : 'primary'} size="sm" onClick={act(onAddToCart)} className="h-7 px-2.5 text-xs font-medium"
+          <Button variant={isInCart ? 'secondary' : 'primary'} size="sm" onClick={act(onAddToCart)} className="h-7 w-[5.5rem] shrink-0 justify-center whitespace-nowrap px-0 text-xs font-medium"
             title={`Agregar ${product.name} al carrito (o presiona Enter)`}>
             <AnimatePresence mode="wait" initial={false}>
               <m.span key={justAdded ? 'added' : isInCart ? 'sum' : 'add'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}

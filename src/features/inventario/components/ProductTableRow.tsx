@@ -115,7 +115,7 @@ export const ProductTableRow: React.FC<ProductTableRowProps> = ({
       </td>
 
       {/* Cart Indicator */}
-      <td className="py-2.5 px-3 text-center">
+      <td className="py-2.5 px-3 text-center whitespace-nowrap">
         <CartIndicator quantity={quantityInCart} isInactive={isInactive} />
       </td>
 

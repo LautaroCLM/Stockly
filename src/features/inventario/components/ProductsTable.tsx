@@ -47,8 +47,8 @@ export const ProductsTable: React.FC<ProductsTableProps> = (props) => {
                 <th className="py-2.5 px-3">Producto / Categoría</th>
                 <th className="py-2.5 px-3 text-right">Precio Venta</th>
                 <th className="py-2.5 px-3 text-right">Stock</th>
-                <th className="py-2.5 px-3 text-center">En Carrito</th>
-                <th className="py-2.5 px-4 text-right">Acciones</th>
+                <th className="py-2.5 px-3 text-center w-[7.5rem] whitespace-nowrap">En Carrito</th>
+                <th className="py-2.5 px-4 text-right whitespace-nowrap">Acciones</th>
               </tr>
             </thead>
             <tbody>

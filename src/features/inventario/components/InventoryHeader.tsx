@@ -94,14 +94,12 @@ export const InventoryHeader: React.FC<InventoryHeaderProps> = ({
         <span>Exportar Excel</span>
       </Button>
 
-      <Button variant="primary" size="md" onClick={onOpenCart} className="shadow-lg shadow-primary/20 relative">
+      <Button variant="primary" size="md" onClick={onOpenCart} className="shadow-lg shadow-primary/20 relative min-w-[14.5rem] justify-center">
         <ShoppingCart size={16} />
         <span>Carrito ({cartItemsCount})</span>
-        {cartItemsCount > 0 && (
-          <span className="font-bold tabular-nums ml-1 px-1.5 py-0.2 rounded bg-black/30 text-xs">
-            {formatCurrency(cartTotal)}
-          </span>
-        )}
+        <span className={`font-bold tabular-nums ml-1 px-1.5 py-0.2 rounded bg-black/30 text-xs transition-opacity ${cartItemsCount > 0 ? '' : 'opacity-50'}`}>
+          {formatCurrency(cartTotal)}
+        </span>
       </Button>
     </div>
   </div>
