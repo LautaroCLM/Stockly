@@ -31,6 +31,7 @@ import { useWarehouses } from '@/features/depositos/hooks/useWarehouses';
 import { WarehouseSwitcher } from '@/features/depositos/components/WarehouseSwitcher';
 import { CashReminder } from '@/features/caja/components/CashReminder';
 import { WorkspaceCommandPalette } from '@/features/busqueda/components/WorkspaceCommandPalette';
+import { setErrorContext } from '@/lib/monitoring/errorReporting';
 
 interface AppWorkspaceProps {
   user: User;
@@ -74,6 +75,8 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   const settings = useCompanySettings(companyId);
   const warehouses = useWarehouses(companyId);
   const [searchOpen, setSearchOpen] = useState(false);
+  // Cada error se informa con el usuario (solo su id), la empresa y la pantalla
+  useEffect(() => setErrorContext({ userId: user.id, companyId, route: activeRoute }), [user.id, companyId, activeRoute]);
 
   const sale = useSaleFlow({
     companyId,

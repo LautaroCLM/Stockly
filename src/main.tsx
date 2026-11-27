@@ -3,10 +3,14 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { applyTheme, getInitialTheme } from './lib/theme';
+import { initErrorReporting } from './lib/monitoring/errorReporting';
 import './index.css';
 
 // Se aplica antes de renderizar para que no parpadee el tema equivocado.
 applyTheme(getInitialTheme());
+
+// Alertas de errores (solo en producción y con clave de Sentry)
+initErrorReporting();
 
 const rootElement = document.getElementById('root');
 

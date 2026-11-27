@@ -1,5 +1,6 @@
 import React from 'react';
 import { ErrorFallback } from './ErrorFallback';
+import { reportError } from '@/lib/monitoring/errorReporting';
 
 interface ErrorBoundaryProps {
   /** "page": falla una pantalla y el menú sigue; "app": falla todo y hay que recargar. */
@@ -23,6 +24,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     console.error('Error al mostrar la pantalla:', error, info.componentStack);
+    reportError(error, { alcance: this.props.scope === 'app' ? 'app completa' : 'pantalla' });
   }
 
   componentDidUpdate(previous: ErrorBoundaryProps): void {

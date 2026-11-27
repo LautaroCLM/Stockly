@@ -5,6 +5,10 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    // Commit que publica Vercel; en desarrollo, "local". Sentry lo usa para ubicar cada error.
+    __APP_RELEASE__: JSON.stringify((process.env.VERCEL_GIT_COMMIT_SHA ?? 'local').slice(0, 7)),
+  },
   plugins: [
     react(),
     VitePWA({
