@@ -15,6 +15,8 @@ const REASON_OPTIONS: [string, string][] = [
   ['cancellation', 'Anulaciones de venta'],
   ['sale_return', 'Devoluciones de venta'],
   ['purchase_cancellation', 'Anulaciones de compra'],
+  ['transfer_out', 'Transferencias (salida)'],
+  ['transfer_in', 'Transferencias (entrada)'],
 ];
 
 interface MovementFiltersProps {

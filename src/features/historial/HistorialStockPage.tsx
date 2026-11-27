@@ -13,6 +13,8 @@ interface HistorialStockPageProps {
   /** Catálogo completo: la búsqueda por nombre o SKU se resuelve contra él. */
   products: Product[];
   onNavigateToInventario: () => void;
+  /** Muestra el depósito de cada movimiento (empresas con más de un depósito). */
+  showWarehouse?: boolean;
 }
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -21,6 +23,7 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
   company,
   products,
   onNavigateToInventario,
+  showWarehouse = false,
 }) => {
   // Paginación y filtros se resuelven en el servidor (ver useMovementsHistory)
   const {
@@ -161,7 +164,7 @@ export const HistorialStockPage: React.FC<HistorialStockPageProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  movements.map((mov) => <MovementRow key={mov.id} movement={mov} />)
+                  movements.map((mov) => <MovementRow key={mov.id} movement={mov} showWarehouse={showWarehouse} />)
                 )}
               </tbody>
             </table>

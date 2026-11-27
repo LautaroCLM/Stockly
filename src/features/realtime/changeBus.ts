@@ -30,7 +30,9 @@ export type DataTable =
   | 'document_settings'
   | 'employees'
   | 'employee_schedules'
-  | 'attendance_records';
+  | 'attendance_records'
+  | 'warehouses'
+  | 'stock_transfers';
 
 /** 'all' = recargar todo (al volver a la pestaña o recuperar la conexión). */
 export type DataChange = DataTable | 'all';

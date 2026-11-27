@@ -27,6 +27,8 @@ import { useSaleFlow } from './useSaleFlow';
 import { useCartFeedback } from '@/features/inventario/hooks/useCartFeedback';
 import { useWorkspaceNavigation } from './useWorkspaceNavigation';
 import { useStockLots } from '@/features/vencimientos/hooks/useStockLots';
+import { useWarehouses } from '@/features/depositos/hooks/useWarehouses';
+import { WarehouseSwitcher } from '@/features/depositos/components/WarehouseSwitcher';
 
 interface AppWorkspaceProps {
   user: User;
@@ -68,6 +70,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
   const customers = useCustomers(companyId);
   const members = useCompanyMembers(companyId, isMasterAdmin);
   const settings = useCompanySettings(companyId);
+  const warehouses = useWarehouses(companyId);
 
   const sale = useSaleFlow({
     companyId,
@@ -128,6 +131,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
         userEmail={user.email || undefined}
         onSignOut={onSignOut}
         notices={notices}
+        headerContext={<WarehouseSwitcher warehouses={warehouses} />}
       >
         <PageEnter routeKey={activeRoute}>
         <ErrorBoundary scope="page" resetKey={activeRoute}>
@@ -148,6 +152,7 @@ export const AppWorkspace: React.FC<AppWorkspaceProps> = ({
           members={members}
           settings={settings}
           lots={lots}
+          warehouses={warehouses}
           cart={{
             totalItemsCount: cart.totalItemsCount,
             total: cart.total,

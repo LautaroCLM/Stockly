@@ -25,6 +25,8 @@ interface AppShellProps {
   onSignOut?: () => void;
   /** Productos activos en o bajo su stock mínimo (alerta del header). */
   notices?: Notice[];
+  /** Contenido extra del encabezado junto a la empresa. */
+  headerContext?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -45,6 +47,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   onSignOut,
   notices = [],
   children,
+  headerContext,
 }) => {
   const [isOpenMobile, setIsOpenMobile] = useState(false);
 
@@ -77,6 +80,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           onOpenCart={onOpenCart}
           notices={notices}
           onNoticeSelect={onNavigate}
+          contextSlot={headerContext}
         />
 
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto">

@@ -30,6 +30,8 @@ export const COMPANY_SCOPED_TABLES: readonly DataTable[] = [
   'employees',
   'employee_schedules',
   'attendance_records',
+  'warehouses',
+  'stock_transfers',
 ];
 
 export type ChannelStatus = 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR';

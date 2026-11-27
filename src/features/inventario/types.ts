@@ -126,7 +126,9 @@ export type StockMovementReason =
   | 'sale'
   | 'cancellation'
   | 'purchase_cancellation'
-  | 'sale_return';
+  | 'sale_return'
+  | 'transfer_in'
+  | 'transfer_out';
 
 export interface StockMovement {
   id: string;
@@ -144,6 +146,8 @@ export interface StockMovement {
   notes?: string;
   createdBy: string;
   createdAt: string;
+  /** Depósito del movimiento. */
+  warehouseName?: string;
 }
 
 export interface StockAdjustmentData {

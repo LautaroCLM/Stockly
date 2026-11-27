@@ -997,6 +997,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"product_stock": {
+                  Row: {
+                    "company_id": string,"product_id": string,"quantity": number,"updated_at": string,"warehouse_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"product_id": string,"quantity"?: number,"updated_at"?: string,"warehouse_id": string
+                  }
+                  Update: {
+                    "company_id"?: string,"product_id"?: string,"quantity"?: number,"updated_at"?: string,"warehouse_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_product_stock_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_product_stock_warehouse"
+      columns: ["company_id","warehouse_id"]
+isOneToOne: false
+      referencedRelation: "warehouses"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
                 },"products": {
                   Row: {
                     "barcode": string | null,"category_id": string | null,"company_id": string,"created_at": string,"current_stock": number,"description": string | null,"id": string,"is_active": boolean,"min_stock": number,"name": string,"selling_price": number,"sku": string,"supplier_id": string | null,"tracks_expiry": boolean,"unit": string,"updated_at": string,"vat_rate": number
@@ -1337,14 +1363,14 @@ isOneToOne: false
                   ]
                 },"stock_movements": {
                   Row: {
-                    "company_id": string,"created_at": string,"created_by": string,"direction": string,"expires_on": string | null,"id": string,"lot_code": string | null,"new_stock": number,"notes": string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc": string | null,"reference_purchase_id": string | null,"reference_sale_id": string | null
+                    "company_id": string,"created_at": string,"created_by": string,"direction": string,"expires_on": string | null,"id": string,"lot_code": string | null,"new_stock": number,"notes": string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc": string | null,"reference_purchase_id": string | null,"reference_sale_id": string | null,"warehouse_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "company_id": string,"created_at"?: string,"created_by": string,"direction": string,"expires_on"?: string | null,"id"?: string,"lot_code"?: string | null,"new_stock": number,"notes"?: string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null
+                    "company_id": string,"created_at"?: string,"created_by": string,"direction": string,"expires_on"?: string | null,"id"?: string,"lot_code"?: string | null,"new_stock": number,"notes"?: string | null,"previous_stock": number,"product_id": string,"quantity": number,"reason": string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null,"warehouse_id": string
                   }
                   Update: {
-                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"direction"?: string,"expires_on"?: string | null,"id"?: string,"lot_code"?: string | null,"new_stock"?: number,"notes"?: string | null,"previous_stock"?: number,"product_id"?: string,"quantity"?: number,"reason"?: string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null
+                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"direction"?: string,"expires_on"?: string | null,"id"?: string,"lot_code"?: string | null,"new_stock"?: number,"notes"?: string | null,"previous_stock"?: number,"product_id"?: string,"quantity"?: number,"reason"?: string,"reference_doc"?: string | null,"reference_purchase_id"?: string | null,"reference_sale_id"?: string | null,"warehouse_id"?: string
                   }
                   Relationships: [
                     {
@@ -1366,6 +1392,12 @@ isOneToOne: false
       referencedRelation: "sales"
       referencedColumns: ["company_id","id"]
     },{
+      foreignKeyName: "fk_stock_movements_warehouse"
+      columns: ["company_id","warehouse_id"]
+isOneToOne: false
+      referencedRelation: "warehouses"
+      referencedColumns: ["company_id","id"]
+    },{
       foreignKeyName: "stock_movements_company_id_fkey"
       columns: ["company_id"]
 isOneToOne: false
@@ -1382,6 +1414,64 @@ isOneToOne: false
       columns: ["created_by"]
 isOneToOne: false
       referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"stock_transfer_items": {
+                  Row: {
+                    "company_id": string,"id": string,"product_id": string,"quantity": number,"transfer_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"id"?: string,"product_id": string,"quantity": number,"transfer_id": string
+                  }
+                  Update: {
+                    "company_id"?: string,"id"?: string,"product_id"?: string,"quantity"?: number,"transfer_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_transfer_items_product"
+      columns: ["company_id","product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_transfer_items_transfer"
+      columns: ["company_id","transfer_id"]
+isOneToOne: false
+      referencedRelation: "stock_transfers"
+      referencedColumns: ["company_id","id"]
+    }
+                  ]
+                },"stock_transfers": {
+                  Row: {
+                    "company_id": string,"created_at": string,"created_by": string,"from_warehouse_id": string,"id": string,"idempotency_key": string,"notes": string | null,"to_warehouse_id": string,"transfer_number": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"created_by": string,"from_warehouse_id": string,"id"?: string,"idempotency_key": string,"notes"?: string | null,"to_warehouse_id": string,"transfer_number": string
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"created_by"?: string,"from_warehouse_id"?: string,"id"?: string,"idempotency_key"?: string,"notes"?: string | null,"to_warehouse_id"?: string,"transfer_number"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "fk_stock_transfers_from"
+      columns: ["company_id","from_warehouse_id"]
+isOneToOne: false
+      referencedRelation: "warehouses"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "fk_stock_transfers_to"
+      columns: ["company_id","to_warehouse_id"]
+isOneToOne: false
+      referencedRelation: "warehouses"
+      referencedColumns: ["company_id","id"]
+    },{
+      foreignKeyName: "stock_transfers_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
       referencedColumns: ["id"]
     }
                   ]
@@ -1466,6 +1556,26 @@ isOneToOne: true
       columns: ["user_id"]
 isOneToOne: true
       referencedRelation: "profiles_public"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"warehouses": {
+                  Row: {
+                    "company_id": string,"created_at": string,"id": string,"is_active": boolean,"is_default": boolean,"name": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_id": string,"created_at"?: string,"id"?: string,"is_active"?: boolean,"is_default"?: boolean,"name": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "company_id"?: string,"created_at"?: string,"id"?: string,"is_active"?: boolean,"is_default"?: boolean,"name"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "warehouses_company_id_fkey"
+      columns: ["company_id"]
+isOneToOne: false
+      referencedRelation: "companies"
       referencedColumns: ["id"]
     }
                   ]
@@ -1581,6 +1691,9 @@ isOneToOne: true
                            },
 "create_product":
 { Args: { "p_barcode"?: string,"p_category_id"?: string,"p_company_id": string,"p_cost_price"?: number,"p_description"?: string,"p_min_stock"?: number,"p_name": string,"p_selling_price"?: number,"p_sku": string,"p_supplier_id"?: string,"p_unit"?: string }; Returns: string
+                           },
+"create_stock_transfer":
+{ Args: { "p_company_id": string,"p_from": string,"p_idempotency_key": string,"p_items": Json,"p_notes"?: string,"p_to": string }; Returns: Json
                            },
 "customer_balances":
 { Args: { "p_company_id": string }; Returns: {
@@ -1745,6 +1858,9 @@ isOneToOne: true
 "save_price_list":
 { Args: { "p_adjustment_percent": number,"p_company_id": string,"p_is_active": boolean,"p_name": string,"p_price_list_id": string,"p_rounding_step": number }; Returns: string
                            },
+"save_warehouse":
+{ Args: { "p_company_id": string,"p_is_active": boolean,"p_name": string,"p_warehouse_id": string }; Returns: string
+                           },
 "set_company_logo":
 { Args: { "p_company_id": string,"p_image": string }; Returns: undefined
                            },
@@ -1756,6 +1872,9 @@ isOneToOne: true
                            },
 "set_customer_vat_condition":
 { Args: { "p_company_id": string,"p_customer_id": string,"p_vat_condition": string }; Returns: undefined
+                           },
+"set_default_warehouse":
+{ Args: { "p_company_id": string,"p_warehouse_id": string }; Returns: undefined
                            },
 "set_employee_commission":
 { Args: { "p_company_id": string,"p_employee_id": string,"p_percent": number }; Returns: undefined

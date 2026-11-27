@@ -17,10 +17,12 @@ export const REASON_LABELS: Record<string, { label: string; badge: BadgeVariant 
   cancellation: { label: 'Anulación Venta', badge: 'warning' },
   sale_return: { label: 'Devolución Venta', badge: 'warning' },
   purchase_cancellation: { label: 'Anulación Compra', badge: 'warning' },
+  transfer_out: { label: 'Transferencia (sale)', badge: 'neutral' },
+  transfer_in: { label: 'Transferencia (entra)', badge: 'neutral' },
 };
 
 /** Un movimiento de stock: fecha, producto, motivo, variación, saldo, comprobante y autor. */
-export const MovementRow: React.FC<{ movement: StockMovement }> = ({ movement: mov }) => {
+export const MovementRow: React.FC<{ movement: StockMovement; showWarehouse?: boolean }> = ({ movement: mov, showWarehouse = false }) => {
   const reason = REASON_LABELS[mov.reason] || { label: mov.reason, badge: 'neutral' as const };
   const isIncrease = mov.direction === 'increase';
   const reference = mov.referenceDoc || mov.referenceSaleId;
@@ -36,6 +38,7 @@ export const MovementRow: React.FC<{ movement: StockMovement }> = ({ movement: m
       </td>
       <td className="py-3 px-3">
         <Badge variant={reason.badge} size="sm">{reason.label}</Badge>
+        {showWarehouse && mov.warehouseName && <div className="text-[10px] text-text-muted mt-0.5">{mov.warehouseName}</div>}
       </td>
       <td className="py-3 px-3 text-right font-mono font-bold tabular-nums">
         <span className={isIncrease ? 'text-emerald-400' : 'text-danger'}>

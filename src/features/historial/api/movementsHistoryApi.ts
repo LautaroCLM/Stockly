@@ -24,7 +24,7 @@ export interface MovementsPage {
 }
 
 const MOVEMENT_COLUMNS =
-  'id, company_id, product_id, direction, reason, quantity, previous_stock, new_stock, reference_sale_id, reference_doc, notes, created_by, created_at, product:products(name, sku)';
+  'id, company_id, product_id, direction, reason, quantity, previous_stock, new_stock, reference_sale_id, reference_doc, notes, created_by, created_at, product:products(name, sku), warehouse:warehouses(name)';
 
 function searchFilter(filters: MovementFilters): string | null {
   return buildSearchOrFilter(filters.search, ['reference_doc', 'notes'], {
@@ -83,6 +83,7 @@ export async function fetchMovementsPage(
       notes: row.notes || undefined,
       createdBy: authorNames.get(row.created_by) || 'Personal autorizado',
       createdAt: row.created_at,
+      warehouseName: row.warehouse?.name,
     })),
   };
 }

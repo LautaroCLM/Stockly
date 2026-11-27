@@ -29,6 +29,8 @@ interface HeaderProps {
   /** Avisos de la campana (stock bajo, deudas viejas, caja abierta, etc.). */
   notices?: Notice[];
   onNoticeSelect?: (route: RouteId) => void;
+  /** Contenido extra junto a la empresa (ej. depósito de esta PC). */
+  contextSlot?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -44,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCart,
   notices = [],
   onNoticeSelect,
+  contextSlot,
 }) => {
   // El botón del carrito rebota cuando le suman un producto (no al cargar la pantalla)
   const cartButtonRef = useRef<HTMLButtonElement>(null);
@@ -79,6 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
           activeCompany={activeCompany}
           onSelectCompany={onSelectCompany}
         />
+        {contextSlot}
       </div>
 
       {/* Middle: búsqueda de productos */}

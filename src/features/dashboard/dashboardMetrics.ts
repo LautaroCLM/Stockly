@@ -137,6 +137,8 @@ const REASON_LABELS: Record<string, string> = {
   cancellation: 'Anulación de venta',
   sale_return: 'Devolución de venta',
   purchase_cancellation: 'Anulación de compra',
+  transfer_in: 'Transferencia (entra)',
+  transfer_out: 'Transferencia (sale)',
 };
 
 export function timeAgo(isoDate: string, now: Date): string {

@@ -10,6 +10,7 @@ import type { useCompanySettings } from '@/features/companies/hooks/useCompanySe
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { InventarioScreen } from '@/features/inventario/InventarioScreen';
 import type { StockLotsState } from '@/features/vencimientos/hooks/useStockLots';
+import type { WarehousesState } from '@/features/depositos/hooks/useWarehouses';
 import { VentasPage } from '@/features/ventas/VentasPage';
 import { DocumentosPage } from '@/features/documentos/DocumentosPage';
 import { PreciosScreen } from '@/features/precios/PreciosScreen';
@@ -54,6 +55,7 @@ interface WorkspaceRoutesProps {
   members: ReturnType<typeof useCompanyMembers>;
   settings: ReturnType<typeof useCompanySettings>;
   lots: StockLotsState;
+  warehouses: WarehousesState;
   cart: {
     totalItemsCount: number;
     total: number;
@@ -96,6 +98,8 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
       return (
         <InventarioScreen
           expiry={access('productos').canView ? { lotsState: props.lots, isMasterAdmin, onStockChanged: reloadCatalog(catalog, 'tras baja de lote') } : undefined}
+          depositos={isMasterAdmin || (props.warehouses.isMulti && access('productos').canView) ? { warehouses: props.warehouses, isMasterAdmin,
+            canTransfer: access('productos').canOperate, onStockChanged: reloadCatalog(catalog, 'tras transferencia') } : undefined}
           company={company}
           searchRequest={props.inventorySearch}
           products={catalog.products}
@@ -137,7 +141,7 @@ export const WorkspaceRoutes: React.FC<WorkspaceRoutesProps> = (props) => {
     case 'precios':
       return <PreciosScreen company={company} {...access('precios')} categories={categories.categories} suppliers={suppliers.suppliers} products={catalog.products} onPricesChanged={reloadCatalog(catalog, 'tras cambio de precios')} />;
     case 'historial':
-      return <HistorialStockPage company={company} products={catalog.products} onNavigateToInventario={goTo('inventario')} />;
+      return <HistorialStockPage company={company} products={catalog.products} onNavigateToInventario={goTo('inventario')} showWarehouse={props.warehouses.warehouses.length > 1} />;
     case 'caja':
       return <CajaPage company={company} canOperate={access('caja').canOperate} />;
     case 'finanzas':
